@@ -1,0 +1,525 @@
+:root {
+  /* Core Colors */
+  --primary-50: #eef2ff;
+  --primary-100: #e0e7ff;
+  --primary-200: #c7d2fe;
+  --primary-300: #a5b4fc;
+  --primary-400: #818cf8;
+  --primary-500: #6366f1;
+  --primary-600: #4f46e5;
+  --primary-700: #4338ca;
+  --primary-800: #3730a3;
+  --primary-900: #312e81;
+  
+  /* Neutral Colors */
+  --neutral-50: #fafafa;
+  --neutral-100: #f4f4f5;
+  --neutral-200: #e4e4e7;
+  --neutral-300: #d4d4d8;
+  --neutral-400: #a1a1aa;
+  --neutral-500: #71717a;
+  --neutral-600: #52525b;
+  --neutral-700: #3f3f46;
+  --neutral-800: #27272a;
+  --neutral-900: #18181b;
+  --neutral-950: #09090b;
+
+  /* Semantic Colors */
+  --success-50: #f0fdf4;
+  --success-500: #22c55e;
+  --success-700: #15803d;
+  
+  --error-50: #fef2f2;
+  --error-500: #ef4444;
+  --error-700: #b91c1c;
+  
+  --warning-50: #fffbeb;
+  --warning-500: #f59e0b;
+  --warning-700: #b45309;
+
+  /* Surface Colors */
+  --surface-0: var(--neutral-950);
+  --surface-1: var(--neutral-900);
+  --surface-2: var(--neutral-800);
+  --surface-3: var(--neutral-700);
+  
+  /* Text Colors */
+  --text-primary: var(--neutral-50);
+  --text-secondary: var(--neutral-400);
+  --text-tertiary: var(--neutral-500);
+  --text-brand: var(--primary-400);
+  
+  /* Accent Colors */
+  --accent-blue: var(--primary-400);
+  --accent-green: var(--success-500);
+  --accent-red: var(--error-500);
+  
+  /* Effects */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  
+  /* Transitions */
+  --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  
+  /* Typography */
+  --font-family: 'Space Mono', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  
+  /* Z-index */
+  --z-widget: 10;
+  --z-overlay: 20;
+  --z-modal: 30;
+  --z-popover: 40;
+  --z-tooltip: 50;
+
+  --text: white;
+  --gray-200: #b4b8bb;
+  --gray-300: #80868b;
+  --gray-500: #5f6368;
+  --gray-600: #444444;
+  --gray-700: #202020;
+  --gray-800: #171717;
+  --gray-900: #111111;
+  --gray-1000: #0a0a0a;
+  --border-stroke: #444444;
+  --accent-blue-active-bg: #001233;
+  --accent-blue-active: #98beff;
+  --accent-blue-headers: #448dff;
+
+  --midnight-blue: rgb(0, 18, 51);
+  --blue-30: #99beff;
+
+  --accent-red: #ff4600;
+
+  --background: var(--gray-900);
+  --color: var(--text);
+
+  scrollbar-color: var(--gray-600) var(--gray-900);
+  scrollbar-width: thin;
+
+  /* */
+  --Neutral-00: #000;
+  --Neutral-5: #181a1b;
+  --Neutral-10: #1c1f21;
+  --Neutral-15: #232729;
+  --Neutral-20: #2a2f31;
+  --Neutral-30: #404547;
+  --Neutral-50: #707577;
+  --Neutral-60: #888d8f;
+  --Neutral-80: #c3c6c7;
+  --Neutral-90: #e1e2e3;
+
+  --Green-500: #0d9c53;
+  --Green-700: #025022;
+
+  --Blue-500: #1f94ff;
+  --Blue-800: #0f3557;
+
+  --Red-400: #ff9c7a;
+  --Red-500: #ff4600;
+  --Red-600: #e03c00;
+  --Red-700: #bd3000;
+}
+
+body {
+  font-family: "Space Mono", monospace;
+  background: var(--Neutral-30);
+}
+
+.material-symbols-outlined {
+  &.filled {
+    font-variation-settings:
+      "FILL" 1,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+  }
+}
+
+.space-mono-regular {
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.space-mono-bold {
+  font-family: "Space Mono", monospace;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.space-mono-regular-italic {
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.space-mono-bold-italic {
+  font-family: "Space Mono", monospace;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.hidden {
+  display: none;
+}
+
+.flex {
+  display: flex;
+}
+
+.h-screen-full {
+  height: 100vh;
+}
+
+.w-screen-full {
+  width: 100vw;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+@media (prefers-reduced-motion: no-preference) {}
+
+.streaming-console {
+  background: var(--Neutral-5);
+  color: var(--gray-300);
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+
+  a,
+  a:visited,
+  a:active {
+    color: var(--gray-300);
+  }
+
+  .disabled {
+    pointer-events: none;
+
+    >* {
+      pointer-events: none;
+    }
+  }
+
+  main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .main-app-area {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0; // Important for flex overflow
+    overflow: hidden;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .widgets-container {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    width: 100%;
+    min-height: 0; // Important for flex overflow
+    overflow-y: auto;
+    align-items: start;
+    align-content: start;
+    flex: 1;
+    height: calc(100vh - 200px); // Increase height, leaving space for control tray
+    
+    // Base mobile layout
+    grid-template-columns: 1fr;
+    
+    // Responsive grid adjustments
+    @media (min-width: 480px) {
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+    
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+    
+    @media (min-width: 1280px) {
+      grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    }
+
+    // Grid area adjustments for maximized widgets
+    &.has-maximized {
+      .widget-wrapper:not(.maximized) {
+        opacity: 0.5;
+        pointer-events: none;
+        transform: scale(0.98);
+      }
+    }
+
+    // Widget container styles
+    .widget-container {
+      background: var(--Neutral-10);
+      border: 1px solid var(--Neutral-20);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      height: fit-content;
+      min-width: 0; // Important for flex overflow
+      transition: var(--transition-all);
+      
+      @media (hover: hover) {
+        &:hover {
+          transform: translateY(-2px);
+          border-color: var(--Blue-500);
+          box-shadow: 0 4px 20px -2px var(--Neutral-00);
+        }
+      }
+    }
+  }
+
+  .media-container {
+    flex-shrink: 0;
+    padding: 1rem;
+    max-height: 200px; // Reduce media container height
+    
+    .stream {
+      width: 100%;
+      max-width: 90%;
+      border-radius: 32px;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+  }
+
+  .function-call {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 50%;
+    overflow-y: auto;
+  }
+}
+
+/* Modern Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--p) / 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  @apply w-1.5;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full hover:bg-primary/40;
+  @apply transition-colors duration-200;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden; /* Prevent scrolling */
+}
+
+.widgets-container {
+  display: grid;
+  gap: var(--radius-lg);
+  padding: var(--radius-lg);
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  align-items: start;
+  
+  // Base mobile layout
+  grid-template-columns: 1fr;
+  
+  // Responsive grid adjustments
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  // Grid area adjustments for maximized widgets
+  &.has-maximized {
+    .widget-wrapper:not(.maximized) {
+      opacity: 0.5;
+      pointer-events: none;
+      transform: scale(0.98);
+    }
+  }
+
+  .widget-wrapper {
+    // Default span full width on mobile
+    grid-column: 1 / -1;
+    
+    @media (min-width: 480px) {
+      grid-column: auto;
+    }
+
+    // Maximized state takes up more columns as screen size increases
+    &.maximized {
+      grid-column: 1 / -1;
+      grid-row: 1 / span 2;
+      height: auto;
+      min-height: 50vh;
+      
+      @media (min-width: 768px) {
+        grid-column: 1 / span 2;
+      }
+      
+      @media (min-width: 1024px) {
+        grid-column: 1 / span 3;
+      }
+      
+      @media (min-width: 1280px) {
+        grid-column: 1 / span 3;
+      }
+
+      .widget-content {
+        max-height: none;
+      }
+    }
+
+    // Minimized state takes less space
+    &.minimized {
+      grid-row: span 1;
+      
+      @media (min-width: 768px) {
+        grid-column: span 1;
+      }
+    }
+  }
+
+  // Empty state styles
+  &:empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: 
+      linear-gradient(45deg, var(--Neutral-10) 25%, transparent 25%) -20px 0,
+      linear-gradient(-45deg, var(--Neutral-10) 25%, transparent 25%) -20px 0,
+      linear-gradient(45deg, transparent 75%, var(--Neutral-10) 75%) -20px 0,
+      linear-gradient(-45deg, transparent 75%, var(--Neutral-10) 75%) -20px 0;
+    background-size: clamp(20px, 2vw, 40px) clamp(20px, 2vw, 40px);
+    background-color: var(--Neutral-5);
+    min-height: 50vh;
+
+    &::before {
+      content: 'Drag widgets here';
+      color: var(--Neutral-60);
+      font-size: clamp(0.875rem, 1.5vw, 1rem);
+      padding: clamp(1rem, 2vw, 2rem);
+      border: 2px dashed var(--Neutral-30);
+      border-radius: var(--radius-lg);
+      background: var(--Neutral-5);
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+
+      @media (hover: hover) {
+        &:hover {
+          border-color: var(--Blue-500);
+          color: var(--Blue-500);
+          transform: scale(1.05);
+        }
+      }
+    }
+  }
+}
+
+// Global dragging styles
+body.is-dragging {
+  cursor: grabbing !important;
+  user-select: none;
+
+  * {
+    cursor: grabbing !important;
+  }
+
+  .widget-wrapper:not(.dragging) {
+    transition: transform 0.2s ease;
+    
+    &:hover {
+      transform: translateY(0);
+    }
+  }
+}
+
+.widget-wrapper {
+  position: relative;
+  transition: transform 0.2s ease;
+  
+  &.dragging {
+    opacity: 0.5;
+    transform: scale(1.02);
+  }
+  
+  .drag-handle {
+    cursor: grab;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}
+
+.widget-wrapper.maximized {
+  position: fixed;
+  inset: 1rem;
+  z-index: var(--z-modal);
+  background: var(--Neutral-5);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--Neutral-20);
+  
+  .widget-content {
+    height: calc(100% - 3rem);
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 640px) {
+    inset: 0;
+    border-radius: 0;
+  }
+}
+
+.drop-target-over {
+  background-color: rgba(0, 0, 0, 0.05);
+}

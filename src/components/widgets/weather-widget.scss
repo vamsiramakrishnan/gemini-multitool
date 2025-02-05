@@ -1,0 +1,237 @@
+/* Add your styles for weather widget here */
+.weather-widget {
+  .card {
+    transition: all 0.3s ease-in-out;
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+  }
+  .weather-main {
+    position: relative;
+    background: linear-gradient(
+      135deg,
+      var(--surface-2) 0%,
+      var(--surface-1) 100%
+    );
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        45deg,
+        var(--primary-500) 0%,
+        transparent 40%
+      );
+      opacity: 0.05;
+      pointer-events: none;
+    }
+
+    .temperature-section {
+      padding: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--radius-lg);
+
+      .weather-icon {
+        position: relative;
+        width: 96px;
+        height: 96px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(
+          135deg,
+          var(--primary-900) 0%,
+          var(--surface-2) 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--primary-800);
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border-radius: inherit;
+          padding: 2px;
+          background: linear-gradient(
+            135deg,
+            var(--primary-400) 0%,
+            transparent 50%
+          );
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite: exclude;
+          -webkit-mask-composite: destination-out;
+        }
+
+        .material-symbols-outlined {
+          font-size: 48px;
+          color: var(--primary-300);
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+      }
+
+      .temperature-info {
+        .weather-temp {
+          font-size: 4rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          line-height: 1;
+          letter-spacing: -0.02em;
+          margin-bottom: var(--radius-sm);
+
+          .unit {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-left: var(--radius-sm);
+          }
+        }
+
+        .weather-condition {
+          font-size: var(--font-size-lg);
+          color: var(--text-secondary);
+          text-transform: capitalize;
+          margin-bottom: var(--radius-sm);
+        }
+
+        .weather-location {
+          display: inline-flex;
+          align-items: center;
+          gap: var(--radius-sm);
+          padding: var(--radius-sm) var(--radius-md);
+          background: var(--surface-2);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--surface-3);
+          color: var(--text-secondary);
+          font-size: var(--font-size-sm);
+
+          .material-symbols-outlined {
+            font-size: 16px;
+            color: var(--primary-400);
+          }
+        }
+      }
+    }
+
+    .weather-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--radius-md);
+      padding: var(--radius-lg);
+      background: var(--surface-2);
+      border-top: 1px solid var(--surface-3);
+
+      .stat-item {
+        padding: var(--radius-md);
+        background: var(--surface-1);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--surface-3);
+        transition: var(--transition-all);
+
+        &:hover {
+          border-color: var(--primary-500);
+          transform: translateY(-2px);
+        }
+
+        .stat-icon {
+          display: flex;
+          align-items: center;
+          gap: var(--radius-sm);
+          margin-bottom: var(--radius-sm);
+          color: var(--text-secondary);
+
+          .material-symbols-outlined {
+            font-size: 20px;
+            color: var(--primary-400);
+          }
+        }
+
+        .stat-value {
+          font-size: var(--font-size-xl);
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 2px;
+        }
+
+        .stat-label {
+          font-size: var(--font-size-xs);
+          color: var(--text-tertiary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+      }
+    }
+  }
+
+  .sun-times {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--radius-md);
+    margin-top: var(--radius-lg);
+
+    .time-card {
+      padding: var(--radius-md);
+      background: linear-gradient(
+        135deg,
+        var(--surface-2) 0%,
+        var(--surface-1) 100%
+      );
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--surface-3);
+      transition: var(--transition-all);
+
+      &:hover {
+        border-color: var(--primary-500);
+        transform: translateY(-2px);
+      }
+
+      &.sunrise {
+        .time-icon {
+          color: var(--warning-500);
+          background: var(--warning-500/10);
+        }
+      }
+
+      &.sunset {
+        .time-icon {
+          color: var(--error-500);
+          background: var(--error-500/10);
+        }
+      }
+
+      .time-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: var(--radius-sm);
+
+        .material-symbols-outlined {
+          font-size: 24px;
+        }
+      }
+
+      .time-value {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+      }
+
+      .time-label {
+        font-size: var(--font-size-xs);
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+    }
+  }
+} 

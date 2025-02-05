@@ -1,0 +1,100 @@
+.widget-card {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  &:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease-out;
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--primary-rgb), 0.2);
+  }
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1rem;
+
+  .widget-content {
+    padding: 1rem;
+    overflow-y: auto;
+    height: calc(100% - 4rem);
+    position: relative;
+    max-width: none;
+    
+    h1, h2, h3, h4, h5, h6 { color: var(--base-content); }
+    p { color: rgba(var(--base-content-rgb), 0.9); }
+    strong { color: var(--base-content); }
+    em { color: rgba(var(--base-content-rgb), 0.8); }
+
+    .widget-refresh {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.5rem;
+      font-size: 0.75rem;
+      &:hover {
+        background-color: rgba(229, 231, 235, 0.5);
+      }
+    }
+  }
+}
+
+.widget-header {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: rgba(229, 231, 235, 0.3);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.2);
+  backdrop-filter: blur(4px);
+  transition: colors 0.2s;
+}
+
+.widget-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* Header controls visibility */
+.widget-card:hover .widget-header-controls {
+  opacity: 1;
+}
+
+.widget-header-control {
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  &:hover {
+    background-color: rgba(229, 231, 235, 0.5);
+  }
+}
+
+/* Loading States */
+.widget-loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.widget-skeleton {
+  background-color: rgba(229, 231, 235, 0.5);
+  border-radius: 0.5rem;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Add this style to hide the widget content */
+.widget-content.hidden {
+  display: none;
+} 

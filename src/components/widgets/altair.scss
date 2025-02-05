@@ -1,0 +1,109 @@
+.vega-embed {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  background: var(--Neutral-5);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  // Style the Vega-Embed container
+  .vega-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+
+    a {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      background: var(--Neutral-10);
+      color: var(--Neutral-90);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: all 0.2s ease-in-out;
+
+      &:hover {
+        background: var(--Neutral-20);
+      }
+    }
+  }
+
+  &:hover .vega-actions {
+    opacity: 1;
+  }
+
+  // Style the chart container
+  #altair-container {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    // Loading state
+    &:empty::before {
+      content: 'Loading visualization...';
+      color: var(--Neutral-60);
+      font-style: italic;
+    }
+  }
+
+  // Style tooltips
+  .vega-tooltip {
+    background: var(--Neutral-10);
+    border: 1px solid var(--Neutral-20);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    color: var(--Neutral-90);
+    font-size: 0.875rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    
+    td {
+      padding: 0.25rem;
+      
+      &.key {
+        color: var(--Neutral-60);
+        padding-right: 1rem;
+      }
+      
+      &.value {
+        font-weight: 500;
+      }
+    }
+  }
+
+  // Error state
+  .error {
+    color: var(--Red-500);
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid var(--Red-500);
+    border-radius: 0.5rem;
+    margin: 1rem;
+  }
+
+  // Canvas styling
+  canvas {
+    border-radius: 0.5rem;
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+    
+    #altair-container {
+      min-height: 300px;
+    }
+  }
+} 
