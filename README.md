@@ -1,6 +1,6 @@
 # Multimodal Live API - Web console
 
-This repository contains a react-based starter app for using the [Multimodal Live API](<[https://ai.google.dev/gemini-api](https://ai.google.dev/api/multimodal-live)>) over a websocket. It provides modules for streaming audio playback, recording user media such as from a microphone, webcam or screen capture as well as a unified log view to aid in development of your application.
+This repository contains a react-based starter app for using the [Multimodal Live API](https://ai.google.dev/api/multimodal-live) over a websocket. It provides modules for streaming audio playback, recording user media such as from a microphone, webcam or screen capture as well as a unified log view to aid in development of your application.
 
 [![Multimodal Live API Demo](readme/thumbnail.png)](https://www.youtube.com/watch?v=J_q7JY1XxFE)
 
@@ -19,6 +19,31 @@ We have provided several example applications on other branches of this reposito
 - [demos/GenExplainer](https://github.com/google-gemini/multimodal-live-api-web-console/tree/demos/genexplainer)
 - [demos/GenWeather](https://github.com/google-gemini/multimodal-live-api-web-console/tree/demos/genweather)
 - [demos/GenList](https://github.com/google-gemini/multimodal-live-api-web-console/tree/demos/genlist)
+
+## Widgets
+
+This application includes a variety of widgets to display different types of data. Here's a list of available widgets:
+
+*   **Weather Widget:** Displays current weather information.
+*   **Stock Widget:** Shows real-time stock prices and related data.
+*   **Map Widget:** Integrates with Google Maps to display locations and directions.
+*   **Places Widget:** Displays information about specific places, including name, address, and ratings.
+*   **Nearby Places Widget:** Finds and displays information about places near a given location.
+*   **Search Widget:** Allows users to search for information and displays grounded search results.
+*   **Chat Widget:** Provides a chat interface for interacting with an AI assistant.
+*   **Altair Widget:** Renders graphs using Vega-Embed based on JSON input.
+*   **Image Widget:** Displays images.
+*   **Document Widget:** Displays documents.
+
+## Example Usage
+
+```typescript
+// Example of using the WeatherWidget
+<WidgetItem item={{ id: 'weather-1', type: 'weather' }} widgetData={{ city: 'London' }} />
+
+// Example of using the MapWidget
+<WidgetItem item={{ id: 'map-1', type: 'map' }} widgetData={{ origin: 'London', destination: 'Paris' }} />
+```
 
 ## Example
 
@@ -123,4 +148,4 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-_This is an experiment showcasing the Multimodal Live API, not an official Google product. We’ll do our best to support and maintain this experiment but your mileage may vary. We encourage open sourcing projects as a way of learning from each other. Please respect our and other creators' rights, including copyright and trademark rights when present, when sharing these works and creating derivative work. If you want more info on Google's policy, you can find that [here](https://developers.google.com/terms/site-policies)._
+_This is an experiment showcasing the Multimodal Live API, not an official Google product. We'll do our best to support and maintain this experiment but your mileage may vary. We encourage open sourcing projects as a way of learning from each other. Please respect our and other creators' rights, including copyright and trademark rights when present, when sharing these works and creating derivative work. If you want more info on Google's policy, you can find that [here](https://developers.google.com/terms/site-policies)._
