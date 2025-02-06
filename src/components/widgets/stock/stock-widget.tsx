@@ -1,4 +1,4 @@
-import { BaseWidget, BaseWidgetData } from './base-widget';
+import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import './stock-widget.scss';
 
 export interface StockData extends BaseWidgetData {

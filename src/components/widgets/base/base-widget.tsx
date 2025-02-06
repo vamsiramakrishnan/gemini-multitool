@@ -18,12 +18,6 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
   async render(data: T = this.data): Promise<string> {
     return `
       <div class="widget-card">
-        <div class="widget-header">
-          <h2 class="widget-title text-xl font-bold">${data.title}</h2>
-          <div class="widget-header-controls">
-            <!-- Add controls here -->
-          </div>
-        </div>
         <div class="widget-content">
           ${this.createLoadingState()}
         </div>

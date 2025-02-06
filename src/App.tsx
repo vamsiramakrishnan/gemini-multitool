@@ -23,9 +23,8 @@ import cn from "classnames";
 import { WidgetManager } from "./lib/widget-manager";
 import { ToolHandler } from "./lib/tool-handler";
 import { loadSystemInstructions, createLiveConfig } from "./lib/config-helper";
-import { Altair } from "./components/widgets/Altair";
 import { GroundingMetadata, ToolCall } from "./multimodal-live-types";
-import { WidgetItem } from './components/widgets/WidgetItem';
+import { WidgetItem } from './components/widgets/item/WidgetItem';
 import { Item, WidgetState } from './types/widget';
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
@@ -73,36 +72,27 @@ function AppContent() {
         const widgetManager = new WidgetManager();
         
         // Set up event listeners before attaching to window
-        const onWidgetCreated = (event: { id: string; type: string; data: any }) => {
+        const onWidgetCreated = async (event: { id: string; type: string; data: any }) => {
           console.log('Widget created event received:', event);
           
           // Add widget to state
           setWidgets(prev => {
-            console.log('Current widgets:', prev);
             const newWidgets = [{ id: event.id, type: event.type }, ...prev];
-            console.log('New widgets state:', newWidgets);
+            console.log('Widget created:', { id: event.id, type: event.type, data: event.data });
             return newWidgets;
           });
           
-          // Add widget data to state
+          // Add widget data to state with proper typing
           setWidgetData(prev => {
-            console.log('Current widget data:', prev);
-            const newData = {
-              ...prev,
-              [event.id]: event.data
-            };
-            console.log('New widget data state:', newData);
+            const newData = { ...prev, [event.id]: event.data };
+            console.log('Widget data updated:', newData);
             return newData;
           });
           
           // Initialize widget state
           setWidgetStates(prev => {
-            console.log('Current widget states:', prev);
-            const newStates = {
-              ...prev,
-              [event.id]: { isMaximized: false, isMinimized: false }
-            };
-            console.log('New widget states:', newStates);
+            const newStates = { ...prev, [event.id]: { isMaximized: false, isMinimized: false }};
+            console.log('Widget states updated:', newStates);
             return newStates;
           });
         };
@@ -245,7 +235,7 @@ function AppContent() {
           <div
             ref={widgetsContainerRef}
             className={cn(
-              "widgets-container custom-scrollbar",
+              "widgets-container",
               { "has-maximized": Object.values(widgetStates).some(state => state.isMaximized) }
             )}
           >
@@ -256,7 +246,7 @@ function AppContent() {
                 index={index}
                 widgetData={widgetData[widget.id]}
                 widgetState={widgetStates[widget.id]}
-                onStateChange={(state) => {
+                onStateChange={(state: WidgetState) => {
                   setWidgetStates(prev => ({
                     ...prev,
                     [widget.id]: state
@@ -267,14 +257,14 @@ function AppContent() {
             ))}
           </div>
           <div className="media-container">
-            <Altair />
             <video
               className={cn("stream", {
-                hidden: !videoRef.current || videoStream,
+                hidden: !videoStream,
               })}
               ref={videoRef}
               autoPlay
               playsInline
+              muted
             />
           </div>
         </div>

@@ -1,5 +1,5 @@
-import { BaseWidget, BaseWidgetData } from './base-widget';
-import { loadGoogleMapsAPI } from '../../lib/tools/google-maps';
+import { BaseWidget, BaseWidgetData } from '../base/base-widget';
+import { loadGoogleMapsAPI } from '../../../lib/tools/google-maps';
 import './map-widget.scss';
 
 declare global {

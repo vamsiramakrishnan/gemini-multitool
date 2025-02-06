@@ -198,7 +198,7 @@ body {
 
 .streaming-console {
   background: var(--Neutral-5);
-  color: var(--gray-300);
+  color: var(--Neutral-90);
   display: flex;
   height: 100vh;
   width: 100vw;
@@ -207,15 +207,18 @@ body {
   a,
   a:visited,
   a:active {
-    color: var(--gray-300);
+    color: var(--Neutral-80);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    
+    &:hover {
+      color: var(--Blue-500);
+    }
   }
 
   .disabled {
+    opacity: 0.5;
     pointer-events: none;
-
-    >* {
-      pointer-events: none;
-    }
   }
 
   main {
@@ -231,38 +234,53 @@ body {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 0; // Important for flex overflow
+    min-height: 0;
     overflow: hidden;
-    padding: 1rem;
-    gap: 1rem;
+    padding: 1.5rem;
+    gap: 1.5rem;
+    background: linear-gradient(
+      to bottom,
+      var(--Neutral-5) 0%,
+      var(--Neutral-10) 100%
+    );
   }
 
   .widgets-container {
     display: grid;
-    gap: 1rem;
+    gap: 1.5rem;
     padding: 1rem;
     width: 100%;
-    min-height: 0; // Important for flex overflow
+    min-height: 0;
     overflow-y: auto;
     align-items: start;
     align-content: start;
     flex: 1;
-    height: calc(100vh - 200px); // Increase height, leaving space for control tray
+    height: calc(100vh - 200px);
     
-    // Base mobile layout
-    grid-template-columns: 1fr;
+    // Responsive grid
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
     
-    // Responsive grid adjustments
-    @media (min-width: 480px) {
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    @media (min-width: 1536px) {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 450px), 1fr));
+    }
+
+    // Scrollbar styling
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
     
-    @media (min-width: 768px) {
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    &::-webkit-scrollbar-track {
+      background: transparent;
     }
     
-    @media (min-width: 1280px) {
-      grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    &::-webkit-scrollbar-thumb {
+      background: var(--Neutral-30);
+      border-radius: 4px;
+      
+      &:hover {
+        background: var(--Neutral-40);
+      }
     }
 
     // Grid area adjustments for maximized widgets
@@ -271,6 +289,8 @@ body {
         opacity: 0.5;
         pointer-events: none;
         transform: scale(0.98);
+        filter: blur(2px);
+        transition: all 0.3s ease;
       }
     }
 
@@ -278,18 +298,18 @@ body {
     .widget-container {
       background: var(--Neutral-10);
       border: 1px solid var(--Neutral-20);
-      border-radius: var(--radius-lg);
+      border-radius: 1rem;
       overflow: hidden;
       height: fit-content;
-      min-width: 0; // Important for flex overflow
-      transition: var(--transition-all);
+      min-width: 0;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                  0 2px 4px -1px rgba(0, 0, 0, 0.06);
       
-      @media (hover: hover) {
-        &:hover {
-          transform: translateY(-2px);
-          border-color: var(--Blue-500);
-          box-shadow: 0 4px 20px -2px var(--Neutral-00);
-        }
+      &:hover {
+        transform: translateY(-2px);
+        border-color: var(--Blue-500);
+        box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.2);
       }
     }
   }
@@ -297,23 +317,155 @@ body {
   .media-container {
     flex-shrink: 0;
     padding: 1rem;
-    max-height: 200px; // Reduce media container height
+    max-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--Neutral-10);
+    border-radius: 1rem;
+    margin: 0 1.5rem;
+    border: 1px solid var(--Neutral-20);
     
     .stream {
       width: 100%;
-      max-width: 90%;
-      border-radius: 32px;
+      max-width: 320px;
+      border-radius: 1rem;
       aspect-ratio: 16/9;
       object-fit: cover;
+      display: block;
+      
+      &.hidden {
+        display: none;
+      }
     }
   }
+}
 
-  .function-call {
-    position: absolute;
-    top: 0;
-    width: 100%;
-    height: 50%;
+// Widget Wrapper Styles
+.widget-wrapper {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.dragging {
+    opacity: 0.7;
+    transform: scale(1.02);
+    cursor: grabbing;
+  }
+  
+  &.maximized {
+    position: fixed;
+    inset: 2rem;
+    z-index: 50;
+    background: var(--Neutral-5);
+    border-radius: 1.5rem;
+    border: 1px solid var(--Neutral-20);
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+    
+    .widget-content {
+      height: calc(100% - 4rem);
+      max-height: none;
+      overflow-y: auto;
+    }
+  }
+  
+  &.minimized {
+    height: auto;
+    
+    .widget-content {
+      display: none;
+    }
+  }
+  
+  .widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--Neutral-15);
+    border-bottom: 1px solid var(--Neutral-20);
+    
+    .title {
+      font-weight: 500;
+      color: var(--Neutral-90);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      .icon {
+        color: var(--Blue-500);
+      }
+    }
+    
+    .controls {
+      display: flex;
+      gap: 0.5rem;
+      
+      button {
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        color: var(--Neutral-60);
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: var(--Neutral-20);
+          color: var(--Neutral-90);
+        }
+      }
+    }
+  }
+  
+  .widget-content {
+    padding: 1rem;
+    max-height: 500px;
     overflow-y: auto;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: var(--Neutral-30);
+      border-radius: 3px;
+      
+      &:hover {
+        background: var(--Neutral-40);
+      }
+    }
+  }
+}
+
+// Empty State Styles
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--Neutral-60);
+  
+  .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--Neutral-30);
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--Neutral-80);
+  }
+  
+  p {
+    color: var(--Neutral-60);
+    max-width: 24rem;
+    margin: 0 auto;
   }
 }
 

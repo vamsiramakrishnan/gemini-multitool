@@ -37,6 +37,7 @@ import {
   ToolCallCancellation,
   ToolResponseMessage,
   type LiveConfig,
+  GroundingSupport,
 } from "../multimodal-live-types";
 import { blobToJSON, base64ToArrayBuffer } from "./utils";
 
@@ -201,23 +202,8 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
       // Handle grounding metadata if present
       const contentWithGrounding = serverContent as ServerContentWithGrounding;
       if (contentWithGrounding.groundingMetadata) {
-        // Add detailed logging here
-        console.log("Full grounding metadata:", {
-          metadata: contentWithGrounding.groundingMetadata,
-          chunks: contentWithGrounding.groundingMetadata.groundingChunks?.length,
-          supports: contentWithGrounding.groundingMetadata.groundingSupports?.length
-        });
-
-        // Ensure we're passing the complete metadata structure
-        const fullGroundingMetadata = {
-          ...contentWithGrounding.groundingMetadata,
-          groundingChunks: contentWithGrounding.groundingMetadata.groundingChunks || [],
-          groundingSupports: contentWithGrounding.groundingMetadata.groundingSupports || [],
-          webSearchQueries: contentWithGrounding.groundingMetadata.webSearchQueries || []
-        };
-
-        this.log("server.grounding", "Received grounding metadata");
-        this.emit("grounding", fullGroundingMetadata);
+        this.handleConcurrentGrounding(contentWithGrounding.groundingMetadata)
+          .catch(console.error);
       }
 
       if (isInterrupted(serverContent)) {
@@ -342,5 +328,57 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
     }
     const str = JSON.stringify(request);
     this.ws.send(str);
+  }
+
+  private async handleConcurrentGrounding(metadata: GroundingMetadata) {
+    try {
+      // Process chunks in parallel with validation
+      const chunkPromises = metadata.groundingChunks?.map(async (chunk) => ({
+        ...chunk,
+        // Add timestamp and validate required fields
+        metadata: {
+          ...chunk.metadata,
+          timestamp: chunk.metadata?.timestamp || new Date().toISOString(),
+          source: chunk.source || 'web'
+        }
+      })) || [];
+
+      const processedChunks = await Promise.all(chunkPromises);
+      
+      // Process supports with error handling
+      const supportPromises = metadata.groundingSupports?.map(async (support) => {
+        try {
+          return {
+            ...support,
+            content: support.content.trim(),
+            segments: support.segments?.map(segment => ({
+              ...segment,
+              startIndex: Math.max(0, segment.startIndex),
+              endIndex: Math.max(segment.startIndex + 1, segment.endIndex)
+            }))
+          };
+        } catch (error) {
+          console.error('Error processing support:', error);
+          return null;
+        }
+      }) || [];
+
+      const processedSupports = (await Promise.all(supportPromises)).filter(Boolean);
+
+      // Emit updated metadata with processed values
+      this.emit("grounding", {
+        ...metadata,
+        groundingChunks: processedChunks,
+        groundingSupports: processedSupports as GroundingSupport[]
+      });
+      
+    } catch (error) {
+      console.error('Error processing grounding data:', error);
+      this.emit("log", {
+        date: new Date(),
+        type: 'grounding.error',
+        message: `Grounding processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    }
   }
 }

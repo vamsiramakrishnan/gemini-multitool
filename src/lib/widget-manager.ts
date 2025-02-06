@@ -1,14 +1,16 @@
-import { BaseWidget, BaseWidgetData } from '../components/widgets/base-widget';
-import { WeatherWidget } from '../components/widgets/weather-widget';
-import { StockWidget } from '../components/widgets/stock-widget';
-import { MapWidget } from '../components/widgets/map-widget';
-import { PlacesWidget } from '../components/widgets/places-widget';
-import { NearbyPlacesWidget } from '../components/widgets/nearby-places-widget';
-import { SearchWidget } from '../components/widgets/search-widget';
-import { ChatWidget } from '../components/widgets/chat-widget';
+import { BaseWidget, BaseWidgetData } from '../components/widgets/base/base-widget';
+import { WeatherWidget } from '../components/widgets/weather/weather-widget';
+import { StockWidget } from '../components/widgets/stock/stock-widget';
+import { MapWidget } from '../components/widgets/map/map-widget';
+import { PlacesWidget } from '../components/widgets/places/places-widget';
+import { NearbyPlacesWidget } from '../components/widgets/nearby-places/nearby-places-widget';
+import { SearchWidget } from '../components/widgets/search/search-widget';
+import { ChatWidget } from '../components/widgets/chat/chat-widget';
 import { EventEmitter } from 'eventemitter3';
+import { AltairWidget } from '../components/widgets/altair/altair-widget';
+import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
 
-type WidgetType =
+export type WidgetType =
   | 'weather'
   | 'stock'
   | 'map'
@@ -16,11 +18,13 @@ type WidgetType =
   | 'nearby_places'
   | 'google_search'
   | 'chat'
+  | 'altair'
   | 'get_directions'
   | 'get_weather'
   | 'get_stock_price'
   | 'search_places'
-  | 'search_nearby';
+  | 'search_nearby'
+  | 'code_execution';
 
 // Define a type that allows both sync and async render methods
 interface WidgetBase<T extends BaseWidgetData = BaseWidgetData> extends BaseWidget {
@@ -38,6 +42,13 @@ export interface WidgetEvent {
   id: string;
   type: string;
   data: any;
+}
+
+// Add type definition for widget entries (if not already present)
+interface WidgetEntry {
+  widget: BaseWidget<any>;
+  container: HTMLElement | null;
+  id: string;
 }
 
 export class WidgetManager extends EventEmitter {
@@ -58,18 +69,19 @@ export class WidgetManager extends EventEmitter {
     nearby_places: NearbyPlacesWidget,
     google_search: SearchWidget,
     chat: ChatWidget,
+    altair: AltairWidget,
     get_directions: MapWidget,
     get_weather: WeatherWidget,
     get_stock_price: StockWidget,
     search_places: PlacesWidget,
-    search_nearby: NearbyPlacesWidget
+    search_nearby: NearbyPlacesWidget,
+    code_execution: CodeExecutionWidget
   } as unknown as Record<WidgetType, WidgetConstructor>;
   
-  private activeWidgets: Map<string, { widget: BaseWidget<any>, container: HTMLElement | null }> = new Map();
+  private activeWidgets: Map<string, WidgetEntry> = new Map();
   private widgetStates: Map<string, { isMaximized: boolean; isMinimized: boolean }> = new Map();
 
   async createWidget<T extends BaseWidgetData>(type: WidgetType, data: T): Promise<string> {
-    console.log('Creating widget:', { type, data });
     
     const WidgetClass = this.widgetRegistry[type];
     if (!WidgetClass) {
@@ -89,7 +101,8 @@ export class WidgetManager extends EventEmitter {
       // Store widget instance and container
       this.activeWidgets.set(widgetId, { 
         widget,
-        container
+        container,
+        id: widgetId
       });
       
       // Set initial widget state
@@ -124,7 +137,7 @@ export class WidgetManager extends EventEmitter {
     }
   }
 
-  async renderWidget<T extends BaseWidgetData>(id: string, container: HTMLElement, data: T) {
+  async renderWidget<T extends BaseWidgetData>(id: string, data: T): Promise<void> {
     console.log('Rendering widget:', { id, data });
     
     const activeWidget = this.activeWidgets.get(id);
@@ -134,6 +147,12 @@ export class WidgetManager extends EventEmitter {
     }
 
     try {
+      // Get the container from the active widget
+      const container = activeWidget.container;
+      if (!container) {
+        throw new Error('Widget container not found');
+      }
+
       // Clear the container
       container.innerHTML = '';
 
@@ -141,24 +160,20 @@ export class WidgetManager extends EventEmitter {
       const content = await activeWidget.widget.render(data);
       container.innerHTML = content;
 
-      // Store the new container reference
-      this.activeWidgets.set(id, {
-        ...activeWidget,
-        container
-      });
-
       // Call postRender to handle any additional setup
       await activeWidget.widget.postRender(container, data);
       
       console.log('Widget rendered successfully:', id);
     } catch (error) {
       console.error(`Error rendering widget ${id}:`, error);
-      container.innerHTML = `
-        <div class="error-state">
-          <span class="material-symbols-outlined">error</span>
-          <div class="error-message">Error rendering widget: ${error instanceof Error ? error.message : 'Unknown error'}</div>
-        </div>
-      `;
+      if (activeWidget.container) {
+        activeWidget.container.innerHTML = `
+          <div class="error-state">
+            <span class="material-symbols-outlined">error</span>
+            <div class="error-message">Error rendering widget: ${error instanceof Error ? error.message : 'Unknown error'}</div>
+          </div>
+        `;
+      }
     }
   }
 
@@ -211,7 +226,7 @@ export class WidgetManager extends EventEmitter {
     this.widgetStates.set(widgetId, newState);
   }
 
-  getWidgets() {
+  getWidgets(): Map<string, WidgetEntry> {
     return this.activeWidgets;
   }
 
@@ -224,11 +239,13 @@ export class WidgetManager extends EventEmitter {
       nearby_places: 'Nearby Places',
       google_search: 'Search Results',
       chat: 'Chat',
+      altair: 'Visualization',
       get_directions: 'Directions',
       get_weather: 'Weather',
       get_stock_price: 'Stock Price',
       search_places: 'Places',
-      search_nearby: 'Nearby Places'
+      search_nearby: 'Nearby Places',
+      code_execution: 'Code Execution'
     };
     return titles[type] || 'Widget';
   }

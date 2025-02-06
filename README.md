@@ -1,4 +1,6 @@
-# Multimodal Live API - Web console
+# Gemini Multi Tool
+
+Author: vamramak@google.com
 
 This repository contains a react-based starter app for using the [Multimodal Live API](https://ai.google.dev/api/multimodal-live) over a websocket. It provides modules for streaming audio playback, recording user media such as from a microphone, webcam or screen capture as well as a unified log view to aid in development of your application.
 

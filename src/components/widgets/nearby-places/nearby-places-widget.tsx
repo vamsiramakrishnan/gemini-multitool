@@ -1,4 +1,4 @@
-import { BaseWidget, BaseWidgetData } from './base-widget';
+import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import './nearby-places-widget.scss';
 
 export interface Place {

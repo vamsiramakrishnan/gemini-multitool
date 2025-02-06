@@ -119,7 +119,6 @@ interface SearchPlacesOptions {
 }
 
 export async function searchPlaces(query: string, options: SearchPlacesOptions = {}): Promise<any> {
-  console.log('searchPlaces called with:', { query, options });
   
   try {
     await loadGoogleMapsAPI();
@@ -186,7 +185,6 @@ interface SearchNearbyOptions {
 }
 
 export async function searchNearby(location: {latitude: number, longitude: number}, options: SearchNearbyOptions = {}): Promise<any> {
-  console.log('searchNearby called with:', { location, options });
   
   try {
     await loadGoogleMapsAPI();

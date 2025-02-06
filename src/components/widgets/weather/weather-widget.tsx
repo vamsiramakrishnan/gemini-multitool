@@ -1,4 +1,4 @@
-import { BaseWidget, BaseWidgetData } from './base-widget';
+import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import './weather-widget.scss';
 
 export interface WeatherData extends BaseWidgetData {

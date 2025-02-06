@@ -1,4 +1,4 @@
-import { withWidget } from './withWidget';
+import { withWidget } from '../withWidget';
 import { NearbyPlacesWidget as NearbyPlacesWidgetClass } from './nearby-places-widget';
 import type { NearbyPlacesData } from './nearby-places-widget';
 

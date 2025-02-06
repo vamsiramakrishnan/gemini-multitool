@@ -1,4 +1,4 @@
-import { withWidget } from './withWidget';
+import { withWidget } from '../withWidget';
 import { SearchWidget as SearchWidgetClass } from './search-widget';
 import type { SearchData } from './search-widget';
 

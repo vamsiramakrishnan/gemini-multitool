@@ -301,3 +301,35 @@ export interface WithGroundingMetadata {
 
 // Use type intersection instead of interface extension
 export type ServerContentWithGrounding = ServerContent & WithGroundingMetadata;
+
+// Strengthen type validation with type predicates
+export function isGroundingMetadata(value: unknown): value is GroundingMetadata {
+  const candidate = value as GroundingMetadata;
+  return (
+    Array.isArray(candidate.groundingChunks) &&
+    candidate.groundingChunks.every(chunk => 
+      typeof chunk.text === 'string' &&
+      (chunk.source === 'web' || chunk.source === 'user' || chunk.source === 'assistant')
+    ) &&
+    (!candidate.groundingSupports || (
+      Array.isArray(candidate.groundingSupports) &&
+      candidate.groundingSupports.every(support =>
+        typeof support.content === 'string' &&
+        (!support.segments || support.segments.every(segment =>
+          typeof segment.startIndex === 'number' &&
+          typeof segment.endIndex === 'number'
+        ))
+      )
+    ))
+  );
+}
+
+// Add validation for tool calls
+export function isValidToolCall(value: unknown): value is ToolCall {
+  if (!isToolCall(value)) return false;
+  return value.functionCalls.every(call => 
+    typeof call.id === 'string' &&
+    typeof call.name === 'string' &&
+    typeof call.args === 'object'
+  );
+}

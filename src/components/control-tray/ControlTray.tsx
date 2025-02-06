@@ -22,6 +22,7 @@ import { UseMediaStreamResult } from "../../hooks/use-media-stream-mux";
 import { useScreenCapture } from "../../hooks/use-screen-capture";
 import { useWebcam } from "../../hooks/use-webcam";
 import { AudioRecorder } from "../../lib/audio-recorder";
+import { ChatWidget } from "../widgets/chat/chat-widget";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
 import { ToolHandler } from "../../lib/tool-handler";
@@ -77,6 +78,8 @@ function ControlTray({
     useLiveAPIContext();
 
   const toolHandlerRef = useRef<ToolHandler | null>(null);
+  const [chatWidgetVisible, setChatWidgetVisible] = useState(false);
+  const chatWidgetRef = useRef<ChatWidget | null>(null);
 
   useEffect(() => {
     if (!connected && connectButtonRef.current) {
@@ -167,75 +170,126 @@ function ControlTray({
     }
   }, [connected]);
 
+  useEffect(() => {
+    if (connected && chatWidgetVisible && !chatWidgetRef.current) {
+      // Initialize chat widget when needed
+      chatWidgetRef.current = new ChatWidget({
+        id: 'control-tray-chat',
+        liveAPIClient: client
+      });
+      const container = document.querySelector('.chat-widget-container');
+      if (container) {
+        chatWidgetRef.current.render().then(html => {
+          container.innerHTML = html;
+        });
+      }
+    }
+  }, [connected, chatWidgetVisible, client]);
+
   //handler for swapping from one video-stream to the next
   const changeStreams = (next?: UseMediaStreamResult) => async () => {
-    if (next) {
-      const mediaStream = await next.start();
-      setActiveVideoStream(mediaStream);
-      onVideoStreamChange(mediaStream);
-    } else {
+    try {
+      // First stop other streams
+      videoStreams.filter((msr) => msr !== next).forEach((msr) => msr.stop());
+      
+      if (next) {
+        const mediaStream = await next.start();
+        setActiveVideoStream(mediaStream);
+        onVideoStreamChange(mediaStream);
+      } else {
+        setActiveVideoStream(null);
+        onVideoStreamChange(null);
+      }
+    } catch (error) {
+      console.error('Failed to change video stream:', error);
+      // Reset state on error
       setActiveVideoStream(null);
       onVideoStreamChange(null);
     }
+  };
 
-    videoStreams.filter((msr) => msr !== next).forEach((msr) => msr.stop());
+  const toggleChat = () => {
+    setChatWidgetVisible(!chatWidgetVisible);
   };
 
   return (
-    <section className="control-tray">
-      <canvas style={{ display: "none" }} ref={renderCanvasRef} />
-      <nav className={cn("actions-nav", { disabled: !connected })}>
-        <button
-          className={cn("action-button mic-button")}
-          onClick={() => setMuted(!muted)}
-        >
-          {!muted ? (
-            <span className="material-symbols-outlined filled">mic</span>
-          ) : (
-            <span className="material-symbols-outlined filled">mic_off</span>
-          )}
-        </button>
-
-        <div className="action-button no-action outlined">
-          <AudioPulse volume={volume} active={connected} hover={false} />
-        </div>
-
-        {supportsVideo && (
-          <>
-            <MediaStreamButton
-              isStreaming={screenCapture.isStreaming}
-              start={changeStreams(screenCapture)}
-              stop={changeStreams()}
-              onIcon="cancel_presentation"
-              offIcon="present_to_all"
-            />
-            <MediaStreamButton
-              isStreaming={webcam.isStreaming}
-              start={changeStreams(webcam)}
-              stop={changeStreams()}
-              onIcon="videocam_off"
-              offIcon="videocam"
-            />
-          </>
-        )}
-        {children}
-      </nav>
-
-      <div className={cn("connection-container", { connected })}>
-        <div className="connection-button-container">
+    <>
+      <section className="control-tray">
+        <canvas style={{ display: "none" }} ref={renderCanvasRef} />
+        <nav className={cn("actions-nav", { disabled: !connected })}>
           <button
-            ref={connectButtonRef}
-            className={cn("action-button connect-toggle", { connected })}
-            onClick={connected ? disconnect : connect}
+            className={cn("action-button mic-button")}
+            onClick={() => setMuted(!muted)}
+          >
+            {!muted ? (
+              <span className="material-symbols-outlined filled">mic</span>
+            ) : (
+              <span className="material-symbols-outlined filled">mic_off</span>
+            )}
+          </button>
+
+          <div className="action-button no-action outlined">
+            <AudioPulse volume={volume} active={connected} hover={false} />
+          </div>
+
+          {supportsVideo && (
+            <>
+              <MediaStreamButton
+                isStreaming={screenCapture.isStreaming}
+                start={changeStreams(screenCapture)}
+                stop={changeStreams()}
+                onIcon="cancel_presentation"
+                offIcon="present_to_all"
+              />
+              <MediaStreamButton
+                isStreaming={webcam.isStreaming}
+                start={changeStreams(webcam)}
+                stop={changeStreams()}
+                onIcon="videocam_off"
+                offIcon="videocam"
+              />
+            </>
+          )}
+
+          <button
+            className={cn("action-button", { active: chatWidgetVisible })}
+            onClick={toggleChat}
           >
             <span className="material-symbols-outlined filled">
-              {connected ? "pause" : "play_arrow"}
+              {chatWidgetVisible ? "close" : "chat"}
             </span>
           </button>
+
+          {children}
+        </nav>
+
+        <div className={cn("connection-container", { connected })}>
+          <div className="connection-button-container">
+            <button
+              ref={connectButtonRef}
+              className={cn("action-button connect-toggle", { connected })}
+              onClick={connected ? disconnect : connect}
+            >
+              <span className="material-symbols-outlined filled">
+                {connected ? "pause" : "play_arrow"}
+              </span>
+            </button>
+          </div>
+          <span className="text-indicator">Streaming</span>
         </div>
-        <span className="text-indicator">Streaming</span>
-      </div>
-    </section>
+      </section>
+
+      {chatWidgetVisible && (
+        <div className="chat-widget-container fixed right-24 bottom-24 w-96 h-[32rem] bg-base-100 rounded-lg shadow-xl overflow-hidden">
+          <div className="chat-widget-header flex justify-between items-center p-4 border-b border-base-200">
+            <h3 className="font-medium">Chat</h3>
+            <button className="btn btn-ghost btn-sm" onClick={toggleChat}>
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

@@ -171,16 +171,21 @@ export const toolDeclarations: FunctionDeclaration[] = [
   },
   {
     name: "render_altair",
-    description: "Displays an altair graph in json format.",
+    description: "Displays an Altair chart in JSON format.",
     parameters: {
       type: SchemaType.OBJECT,
       properties: {
-        json_graph: {
+        altair_json: {
           type: SchemaType.STRING,
-          description: "JSON STRING representation of the graph to render. Must be a string, not a json object",
+          description: "JSON STRING representation of the Altair chart to render. Must be a string, not a json object"
         },
+        theme: {
+          type: SchemaType.STRING,
+          description: "Altair theme. Choose from one of 'dark', 'ggplot2', 'default', 'opaque'.",
+          enum: ["dark", "ggplot2", "default", "opaque"]
+        }
       },
-      required: ["json_graph"],
-    },
+      required: ["altair_json"]
+    }
   }
 ]; 

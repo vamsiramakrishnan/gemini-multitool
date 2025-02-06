@@ -1,4 +1,4 @@
-import { withWidget } from './withWidget';
+import { withWidget } from '../withWidget';
 import { PlacesWidget as PlacesWidgetClass } from './places-widget';
 import type { PlacesData } from './places-widget';
 

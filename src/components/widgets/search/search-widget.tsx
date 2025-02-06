@@ -1,4 +1,4 @@
-import { BaseWidget, BaseWidgetData } from './base-widget';
+import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import './search-widget.scss'; // Import SCSS for styling
 
 export interface SearchSupport {

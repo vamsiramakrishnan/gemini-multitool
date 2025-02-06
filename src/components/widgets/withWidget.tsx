@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { BaseWidget, BaseWidgetData } from './base-widget';
+import { BaseWidget, BaseWidgetData } from './base/base-widget';
 
 export interface WidgetProps extends BaseWidgetData {
   [key: string]: any;
@@ -14,25 +14,36 @@ export function withWidget<P extends WidgetProps, T extends BaseWidget = BaseWid
     const widgetRef = useRef<T | null>(null);
 
     useEffect(() => {
-      if (containerRef.current && !widgetRef.current) {
-        widgetRef.current = new WidgetClass(props);
-      }
+      if (!containerRef.current) return;
+
+      // Initialize widget instance
+      widgetRef.current = new WidgetClass(props);
+      
+      const renderContent = async () => {
+        if (!widgetRef.current || !containerRef.current) return;
+        
+        try {
+          // Render widget content into DOM element
+          const content = await widgetRef.current.render(props);
+          containerRef.current.innerHTML = content;
+          await widgetRef.current.postRender(containerRef.current, props);
+        } catch (error) {
+          console.error(`Error rendering ${displayName}:`, error);
+        }
+      };
+
+      renderContent();
 
       return () => {
+        // Cleanup widget instance
         if (widgetRef.current) {
           widgetRef.current.destroy();
           widgetRef.current = null;
         }
       };
-    }, []);
+    }, [props]);
 
-    return (
-      <div 
-        ref={containerRef} 
-        className={`widget-container ${displayName.toLowerCase()}-container`}
-        style={{ height: '100%', overflow: 'hidden', position: 'relative' }}
-      />
-    );
+    return <div ref={containerRef} className={`widget-content ${displayName.toLowerCase()}-content`} />;
   });
 
   WidgetComponent.displayName = displayName;

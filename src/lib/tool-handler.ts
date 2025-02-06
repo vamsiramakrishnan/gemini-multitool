@@ -3,16 +3,19 @@ import { getStockPrice } from './tools/stock-api';
 import { getDirections } from './tools/google-maps';
 import { searchPlaces, searchNearby } from './tools/places-api';
 import { toolDeclarations } from './tool-declarations';
-import { BaseWidget } from '../components/widgets/base-widget';
+import { BaseWidget } from '../components/widgets/base/base-widget';
 import { WidgetManager } from './widget-manager';
-import { AltairWidget } from '../components/widgets/altair-widget';
+import { AltairWidget } from '../components/widgets/altair/altair-widget';
 import { 
   GroundingMetadata, 
   ToolCall as GeminiToolCall, 
   ToolResponse as GeminiToolResponse,
   LiveFunctionResponse
 } from '../multimodal-live-types';
-import { BaseWidgetData } from '../components/widgets/base-widget';
+import { BaseWidgetData } from '../components/widgets/base/base-widget';
+import type { AltairData } from '../components/widgets/altair/altair-widget';
+import type { WidgetType } from './widget-manager';
+import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
 
 interface SearchWidgetData extends BaseWidgetData {
   groundingMetadata: GroundingMetadata;
@@ -61,7 +64,8 @@ export type ToolName =
   | 'search_places'
   | 'search_nearby'
   | 'google_search'
-  | 'render_altair';
+  | 'render_altair'
+  | 'code_execution';
 
 export class ToolHandler {
   widgetManager: WidgetManager;
@@ -80,6 +84,7 @@ export class ToolHandler {
       search_nearby: this.handleNearbySearch.bind(this),
       google_search: this.handleSearch.bind(this),
       render_altair: this.handleAltair.bind(this),
+      code_execution: this.handleCodeExecution.bind(this),
     };
   }
 
@@ -111,15 +116,11 @@ export class ToolHandler {
   }
 
   async handleToolCall(toolCall: { functionCalls: ToolCall[] }): Promise<ToolResponse[]> {
-    console.log('Handling tool call:', toolCall);
     const functionCalls = toolCall.functionCalls;
-    const functionResponses: ToolResponse[] = [];
-
-    for (const call of functionCalls) {
+    
+    // Process all calls concurrently
+    const functionResponses = await Promise.all(functionCalls.map(async (call) => {
       try {
-        console.log('Processing tool call:', call.name, call.args);
-        
-        // Track active tool call
         this.activeToolCalls.set(call.id, {
           name: call.name,
           startTime: Date.now(),
@@ -129,28 +130,43 @@ export class ToolHandler {
         const handler = this.toolHandlers[call.name];
         if (!handler) {
           console.warn('No handler found for tool', call.name);
-          continue;
+          return this.formatToolError(call.id, call.name, new Error('Tool handler not found'));
         }
 
         const result = await handler(call.args);
-        console.log('Tool execution result:', { 
-          tool: call.name,
-          result 
-        });
-        
-        // Format response according to Gemini API requirements
-        const response = this.formatToolResponse(call.id, call.name, result);
-        functionResponses.push(response);
-        
-        // Clear active tool call
-        this.activeToolCalls.delete(call.id);
+        return this.formatToolResponse(call.id, call.name, result);
       } catch (error: any) {
-        console.error('Error handling tool call:', {
-          tool: call.name,
-          error,
-          args: call.args
-        });
-        functionResponses.push(this.formatToolError(call.id, call.name, error));
+        return this.formatToolError(call.id, call.name, error);
+      } finally {
+        this.activeToolCalls.delete(call.id);
+      }
+    }));
+
+    // Handle code execution widget updates
+    const codeExecCalls = functionCalls.filter(call => call.name === 'code_execution');
+    for (const call of codeExecCalls) {
+      const response = functionResponses.find(r => r.id === call.id);
+      if (response) {
+        const widgetData = {
+          language: call.args.language || 'python',
+          code: call.args.code,
+          output: response.response.error || 
+                 response.response.result?.object_value?.output || 
+                 response.response.result?.object_value?.result || '',
+          outcome: response.response.error ? 'error' : 'success'
+        };
+
+        // Update or create widget
+        const existingWidget = Array.from(this.widgetManager.getWidgets().values())
+          .find((w: { id: string }) => w.id === call.id);
+        if (existingWidget) {
+          this.widgetManager.renderWidget(existingWidget.id, widgetData);
+        } else {
+          this.widgetManager.createWidget('code_execution', {
+            ...widgetData,
+            title: `Code Execution ${call.id.slice(0, 6)}`
+          });
+        }
       }
     }
 
@@ -310,7 +326,6 @@ export class ToolHandler {
       // Only create widget for non-directions tools
       if (toolName !== 'get_directions') {
         const widgetType = this.mapToolToWidgetType(toolName);
-        console.log('Creating widget:', { widgetType, result });
         const widgetId = await this.widgetManager.createWidget(widgetType, result);
         console.log('Widget created:', widgetId);
       }
@@ -324,18 +339,19 @@ export class ToolHandler {
     }
   }
 
-  private mapToolToWidgetType(toolName: ToolName): 'weather' | 'stock' | 'map' | 'places' | 'nearby_places' | 'google_search' | 'chat' {
-    const toolToWidgetMap: Record<ToolName, string> = {
+  private mapToolToWidgetType(toolName: ToolName): WidgetType {
+    const toolToWidgetMap: Record<ToolName, WidgetType> = {
       'get_weather': 'weather',
       'get_stock_price': 'stock',
       'get_directions': 'map',
       'search_places': 'places',
       'search_nearby': 'nearby_places',
       'google_search': 'google_search',
-      'render_altair': 'chat'
+      'render_altair': 'altair',
+      'code_execution': 'code_execution'
     };
     console.log('Mapping tool to widget type:', { toolName, mappedType: toolToWidgetMap[toolName] });
-    return toolToWidgetMap[toolName] as any;
+    return toolToWidgetMap[toolName];
   }
 
   handleToolError(toolName: ToolName, toolCallId: string, error: Error) {
@@ -457,10 +473,69 @@ export class ToolHandler {
   }
 
   private async handleAltair(args: any) {
-    if (!this.altairWidget) {
-      this.altairWidget = new AltairWidget();
+    try {
+      const { altair_json, theme = 'dark', width, height, background, interactive } = args;
+      
+      // Create widget data with proper typing
+      const widgetData: AltairData = {
+        title: 'Data Visualization',
+        spec: altair_json,
+        config: {
+          theme,
+          width,
+          height,
+          background,
+          interactive
+        }
+      };
+
+      // Create widget through widget manager
+      const widgetId = await this.widgetManager.createWidget('altair', widgetData);
+      
+      return { 
+        success: true, 
+        widgetId,
+        message: 'Visualization created successfully'
+      };
+    } catch (error) {
+      console.error('Error handling Altair visualization:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
-    await this.altairWidget.renderGraph(args.json_graph);
-    return { success: true };
+  }
+
+  async handleCodeExecution(args: any) {
+    try {
+      const { language, code } = args;
+      
+      const result = await this.handleWithStatus('code_execution', args,
+        async () => {
+          console.log('Executing code:', { language, code });
+          // This is a placeholder since actual execution is handled by Gemini
+          // and comes through grounding chunks
+          const executionRequest = {
+            language,
+            code,
+            status: 'executing'
+          };
+          console.log('Execution request initialized:', executionRequest);
+          return executionRequest;
+        }
+      );
+
+      return {
+        success: true,
+        result: result.result,
+        message: 'Code execution completed successfully'
+      };
+    } catch (error: any) {
+      console.error('Error in handleCodeExecution:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 } 
