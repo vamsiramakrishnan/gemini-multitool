@@ -1,6 +1,7 @@
 export interface Item {
   id: string;
   type: string;
+  tabId?: string;
 }
 
 export interface DragData {

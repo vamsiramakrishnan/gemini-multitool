@@ -589,20 +589,9 @@
 .chat-message {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
   max-width: 85%;
-  animation: messageSlide 0.3s ease-out;
-  
-  @keyframes messageSlide {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  animation: messageSlide 0.2s ease-out;
   
   &.chat-message-user {
     align-self: flex-end;
@@ -615,7 +604,12 @@
       background: var(--Blue-500);
       color: white;
       margin-left: auto;
-      border-bottom-right-radius: 0.25rem;
+      border-radius: 12px 12px 2px 12px;
+      
+      code {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
     }
   }
   
@@ -626,57 +620,147 @@
       background: var(--Neutral-20);
       color: var(--Neutral-90);
       margin-right: auto;
-      border-bottom-left-radius: 0.25rem;
+      border-radius: 12px 12px 12px 2px;
+      
+      code {
+        background: var(--Neutral-30);
+        color: var(--Blue-500);
+      }
     }
   }
   
   .chat-message-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.75rem;
-    color: var(--Neutral-60);
-    padding: 0 0.5rem;
+    gap: 8px;
+    padding: 0 8px;
     
     .avatar {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       background: var(--Neutral-20);
       
       .material-symbols-outlined {
-        font-size: 1rem;
+        font-size: 14px;
         color: var(--Neutral-90);
       }
     }
     
     .name {
+      font-size: 12px;
       font-weight: 500;
+      color: var(--Neutral-60);
     }
     
     time {
+      font-size: 11px;
       color: var(--Neutral-50);
     }
   }
   
   .chat-bubble {
-    padding: 1rem;
-    border-radius: 1rem;
-    position: relative;
+    padding: 12px 16px;
     line-height: 1.5;
-    font-size: 0.875rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    position: relative;
     
     &.chat-bubble-error {
       background: var(--Red-500);
       color: white;
-      margin-left: auto;
-      border-bottom-right-radius: 0.25rem;
+      border-radius: 12px 12px 2px 12px;
+      
+      &::before {
+        content: '⚠️';
+        margin-right: 8px;
+      }
+    }
+    
+    // Code formatting
+    pre {
+      margin: 8px 0;
+      padding: 12px;
+      background: var(--Neutral-15);
+      border-radius: 6px;
+      border: 1px solid var(--Neutral-30);
+      overflow-x: auto;
+      
+      code {
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        background: none;
+        color: inherit;
+        padding: 0;
+      }
+    }
+    
+    code {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 4px;
     }
   }
+}
+
+// Message animations
+@keyframes messageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Link styling
+a {
+  color: var(--Blue-500);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: var(--Blue-400);
+    text-decoration: underline;
+  }
+}
+
+// Loading indicator
+.chat-loading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  color: var(--Neutral-60);
+  font-size: 13px;
+  
+  .dots {
+    display: flex;
+    gap: 4px;
+    
+    span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: bounce 1.4s infinite ease-in-out;
+      
+      &:nth-child(1) { animation-delay: 0s; }
+      &:nth-child(2) { animation-delay: 0.16s; }
+      &:nth-child(3) { animation-delay: 0.32s; }
+    }
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
 }
 
 // Code formatting
@@ -687,16 +771,6 @@
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
-}
-
-// Link styling
-.link {
-  color: var(--Blue-500);
-  text-decoration: none;
-  
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 // Typing indicator

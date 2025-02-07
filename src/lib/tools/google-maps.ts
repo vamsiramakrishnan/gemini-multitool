@@ -27,23 +27,33 @@ if (typeof GOOGLE_MAPS_API_KEY !== "string") {
   throw new Error("set REACT_APP_GOOGLE_MAPS_API_KEY in .env");
 }
 
+// Create a singleton loader instance
 const loader = new Loader({
   apiKey: GOOGLE_MAPS_API_KEY,
   version: "weekly",
-  libraries: ["places", "geometry", "drawing"]
+  libraries: ["places", "geometry", "drawing", "marker"]
 });
 
+// Cache the loading promise
+let mapsLoadingPromise: Promise<typeof google.maps> | null = null;
+
 export async function loadGoogleMapsAPI(): Promise<typeof google.maps> {
-  try {
-    if (window.google?.maps) {
-      return window.google.maps;
-    }
-    
-    await loader.load();
+  // Return cached maps instance if available
+  if (window.google?.maps) return window.google.maps;
+  
+  // Return existing loading promise if one is in progress
+  if (mapsLoadingPromise) return mapsLoadingPromise;
+  
+  // Create new loading promise
+  mapsLoadingPromise = loader.load().then(() => {
     return window.google.maps;
+  });
+
+  try {
+    return await mapsLoadingPromise;
   } catch (error) {
-    console.error('Error loading Google Maps API:', error);
-    throw new Error('Failed to load Google Maps API');
+    mapsLoadingPromise = null; // Clear failed loading promise
+    throw error;
   }
 }
 
@@ -56,13 +66,18 @@ interface DirectionsOptions {
   transitMode?: google.maps.TransitMode[];
 }
 
-export async function getDirections(
-  origin: string, 
-  destination: string, 
-  options: DirectionsOptions = {}
-): Promise<{
+interface LLMDirectionsResponse {
   origin: string;
   destination: string;
+  routes: {
+    duration: string;
+    distance: string;
+    summary: string;
+    // Removed detailed steps for LLM
+  }[];
+}
+
+interface WidgetDirectionsResponse extends LLMDirectionsResponse {
   routes: {
     duration: string;
     distance: string;
@@ -70,6 +85,15 @@ export async function getDirections(
     steps: google.maps.DirectionsStep[];
   }[];
   _rawResponse?: google.maps.DirectionsResult;
+}
+
+export async function getDirections(
+  origin: string, 
+  destination: string, 
+  options: DirectionsOptions = {}
+): Promise<{
+  llmResponse: LLMDirectionsResponse;
+  widgetData: WidgetDirectionsResponse;
   error?: string;
 }> {
   try {
@@ -134,9 +158,23 @@ export async function getDirections(
       });
     });
 
-    return {
+    const baseResponse = {
       origin: result.routes[0].legs[0].start_address,
       destination: result.routes[0].legs[0].end_address,
+    };
+
+    // Create separate responses for LLM and widget
+    const llmResponse: LLMDirectionsResponse = {
+      ...baseResponse,
+      routes: result.routes.map(route => ({
+        duration: route.legs?.[0]?.duration?.text || 'N/A',
+        distance: route.legs?.[0]?.distance?.text || 'N/A',
+        summary: route.summary || 'Via main roads',
+      }))
+    };
+
+    const widgetData: WidgetDirectionsResponse = {
+      ...baseResponse,
       routes: result.routes.map(route => ({
         duration: route.legs?.[0]?.duration?.text || 'N/A',
         distance: route.legs?.[0]?.distance?.text || 'N/A',
@@ -146,13 +184,26 @@ export async function getDirections(
       _rawResponse: result
     };
 
+    return {
+      llmResponse,
+      widgetData,
+      error: undefined
+    };
+
   } catch (error: any) {
     console.error('Directions error:', error);
     return {
       error: `Error fetching directions: ${error.message}`,
-      origin: '',
-      destination: '',
-      routes: []
+      llmResponse: {
+        origin: '',
+        destination: '',
+        routes: []
+      },
+      widgetData: {
+        origin: '',
+        destination: '',
+        routes: []
+      }
     };
   }
 } 

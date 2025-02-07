@@ -72,6 +72,7 @@ export class ToolHandler {
   activeToolCalls: Map<string, ActiveToolCall>;
   toolHandlers: Record<string, (args: any) => Promise<any>>;
   private altairWidget: AltairWidget | null = null;
+  private activeTabId: string = 'default';
 
   constructor(widgetManager: WidgetManager) {
     this.widgetManager = widgetManager;
@@ -86,6 +87,11 @@ export class ToolHandler {
       render_altair: this.handleAltair.bind(this),
       code_execution: this.handleCodeExecution.bind(this),
     };
+  }
+
+  setActiveTab(tabId: string) {
+    console.log('ToolHandler: Setting active tab to:', tabId);
+    this.activeTabId = tabId;
   }
 
   /**
@@ -116,6 +122,7 @@ export class ToolHandler {
   }
 
   async handleToolCall(toolCall: { functionCalls: ToolCall[] }): Promise<ToolResponse[]> {
+    console.log('ToolHandler: Handling tool call with active tab:', this.activeTabId);
     const functionCalls = toolCall.functionCalls;
     
     // Process all calls concurrently
@@ -133,7 +140,12 @@ export class ToolHandler {
           return this.formatToolError(call.id, call.name, new Error('Tool handler not found'));
         }
 
-        const result = await handler(call.args);
+        // Pass the active tab ID to the handler
+        console.log(`ToolHandler: Calling handler for ${call.name} with tabId:`, this.activeTabId);
+        const result = await handler({ 
+          ...call.args, 
+          _targetTabId: this.activeTabId // Use a distinct property name
+        });
         return this.formatToolResponse(call.id, call.name, result);
       } catch (error: any) {
         return this.formatToolError(call.id, call.name, error);
@@ -156,7 +168,7 @@ export class ToolHandler {
           outcome: response.response.error ? 'error' : 'success'
         };
 
-        // Update or create widget
+        // Create widget with active tab ID
         const existingWidget = Array.from(this.widgetManager.getWidgets().values())
           .find((w: { id: string }) => w.id === call.id);
         if (existingWidget) {
@@ -165,7 +177,7 @@ export class ToolHandler {
           this.widgetManager.createWidget('code_execution', {
             ...widgetData,
             title: `Code Execution ${call.id.slice(0, 6)}`
-          });
+          }, this.activeTabId);
         }
       }
     }
@@ -304,10 +316,9 @@ export class ToolHandler {
   }
 
   async handleWithStatus(toolName: ToolName, args: any, apiCall: () => Promise<any>) {
-    console.log('Handling tool with status:', { toolName, args });
+    console.log('Handling tool with status:', { toolName, args, activeTabId: this.activeTabId });
     const toolCallId = `${toolName}-${Date.now()}`;
     try {
-      // Track tool call start
       this.activeToolCalls.set(toolCallId, {
         name: toolName,
         startTime: Date.now(),
@@ -317,17 +328,21 @@ export class ToolHandler {
       const result = await apiCall();
       console.log('API call result:', result);
       
-      // Check if call was cancelled during execution
       const activeCall = this.activeToolCalls.get(toolCallId);
       if (activeCall?.status === 'cancelled') {
         throw new Error('Tool call was cancelled');
       }
 
-      // Only create widget for non-directions tools
+      // Create widget with active tab ID
       if (toolName !== 'get_directions') {
         const widgetType = this.mapToolToWidgetType(toolName);
-        const widgetId = await this.widgetManager.createWidget(widgetType, result);
-        console.log('Widget created:', widgetId);
+        console.log('Creating widget in tab:', this.activeTabId);
+        const widgetId = await this.widgetManager.createWidget(
+          widgetType, 
+          { ...result, _targetTabId: args._targetTabId }, 
+          args._targetTabId || this.activeTabId
+        );
+        console.log('Widget created:', { widgetId, tabId: args._targetTabId || this.activeTabId });
       }
 
       return result;
@@ -402,49 +417,15 @@ export class ToolHandler {
         return this.handleToolError('get_directions', args.toolCallId, new Error(response.error));
       }
 
-      const { routes } = response;
-      console.log('Routes from response:', routes);
-      
-      if (!routes || routes.length === 0) {
-        return this.handleToolError('get_directions', args.toolCallId, new Error('No routes found'));
-      }
-
-      const widgetData: MapWidgetData = {
+      // Create widget with full data
+      await this.widgetManager.createWidget('map', {
         title: 'Navigation',
-        origin: args.origin,
-        destination: args.destination,
-        mode: args.mode,
-        routes: routes.map(route => ({
-          duration: route.duration,
-          distance: route.distance,
-          summary: route.summary,
-          steps: route.steps.map(step => ({
-            instructions: step.instructions,
-            distance: step.distance?.text || 'Unknown distance',
-            duration: step.duration?.text || 'Unknown duration'
-          }))
-        })),
-        _rawResponse: response._rawResponse || response  // Use the raw Google Maps response directly
-      };
-
-      console.log('Creating widget with data:', widgetData);
-      await this.widgetManager.createWidget('map', widgetData);
+        ...response.widgetData,
+        mode: args.mode
+      });
 
       // Return simplified response for Gemini
-      const geminiResponse = {
-        routes: routes.map(route => ({
-          duration: route.duration,
-          distance: route.distance,
-          summary: route.summary,
-          steps: route.steps.map(step => ({
-            instructions: step.instructions,
-            distance: step.distance?.text || 'Unknown distance',
-            duration: step.duration?.text || 'Unknown duration'
-          }))
-        }))
-      };
-
-      return geminiResponse;
+      return response.llmResponse;
 
     } catch (error: any) {
       return this.handleToolError('get_directions', args.toolCallId, error);
@@ -453,11 +434,26 @@ export class ToolHandler {
 
   async handlePlacesSearch(args: any) {
     return this.handleWithStatus('search_places', args,
-      () => searchPlaces(args.query, {
-        location: args.location,
-        radius: args.radius,
-        pageToken: args.pageToken
-      })
+      async () => {
+        const response = await searchPlaces(args.query, {
+          location: args.location,
+          radius: args.radius,
+          pageToken: args.pageToken
+        });
+
+        if (response.error) {
+          throw new Error(response.error);
+        }
+
+        // Create widget with full data
+        await this.widgetManager.createWidget('places', {
+          title: 'Search Results',
+          ...response.widgetData
+        });
+
+        // Return simplified response for Gemini
+        return response.llmResponse;
+      }
     );
   }
 

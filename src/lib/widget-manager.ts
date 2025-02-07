@@ -49,6 +49,7 @@ interface WidgetEntry {
   widget: BaseWidget<any>;
   container: HTMLElement | null;
   id: string;
+  tabId: string;
 }
 
 export class WidgetManager extends EventEmitter {
@@ -80,9 +81,9 @@ export class WidgetManager extends EventEmitter {
   
   private activeWidgets: Map<string, WidgetEntry> = new Map();
   private widgetStates: Map<string, { isMaximized: boolean; isMinimized: boolean }> = new Map();
+  private defaultTabId: string = 'default';
 
-  async createWidget<T extends BaseWidgetData>(type: WidgetType, data: T): Promise<string> {
-    
+  async createWidget<T extends BaseWidgetData>(type: WidgetType, data: T, tabId: string = this.defaultTabId): Promise<string> {
     const WidgetClass = this.widgetRegistry[type];
     if (!WidgetClass) {
       console.error(`Widget type "${type}" not found.`);
@@ -90,38 +91,34 @@ export class WidgetManager extends EventEmitter {
     }
 
     try {
-      // Create widget instance with data
       const widget = new WidgetClass(data) as BaseWidget<T>;
       const widgetId = `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       
-      // Create initial container
       const container = document.createElement('div');
       container.classList.add('widget-container');
       
-      // Store widget instance and container
       this.activeWidgets.set(widgetId, { 
         widget,
         container,
-        id: widgetId
+        id: widgetId,
+        tabId
       });
       
-      // Set initial widget state
       this.widgetStates.set(widgetId, { 
         isMaximized: false, 
         isMinimized: false 
       });
 
-      // Normalize the type for display
       const normalizedType = type.replace(/^(get_|search_)/, '');
       
-      // Create event data
       const eventData = {
         id: widgetId,
         type: normalizedType,
         data: {
           ...data,
           title: this.getWidgetTitle(type)
-        }
+        },
+        tabId
       };
 
       console.log('Emitting widgetCreated event:', eventData);
@@ -129,7 +126,7 @@ export class WidgetManager extends EventEmitter {
       const emitted = this.emit('widgetCreated', eventData);
       console.log('Event emission result:', emitted);
 
-      console.log('Widget created successfully:', { widgetId, type: normalizedType });
+      console.log('Widget created successfully:', { widgetId, type: normalizedType, tabId });
       return widgetId;
     } catch (error) {
       console.error(`Error creating widget of type ${type}:`, error);
@@ -181,10 +178,8 @@ export class WidgetManager extends EventEmitter {
     const activeWidget = this.activeWidgets.get(widgetId);
     if (!activeWidget) return;
 
-    // Destroy widget instance
     activeWidget.widget.destroy();
     
-    // Remove container if it exists
     if (activeWidget.container) {
       activeWidget.container.remove();
     }
@@ -192,9 +187,9 @@ export class WidgetManager extends EventEmitter {
     this.activeWidgets.delete(widgetId);
     this.widgetStates.delete(widgetId);
 
-    // Emit widget destroyed event
     this.emit('widgetDestroyed', {
-      id: widgetId
+      id: widgetId,
+      tabId: activeWidget.tabId
     });
   }
 
@@ -228,6 +223,37 @@ export class WidgetManager extends EventEmitter {
 
   getWidgets(): Map<string, WidgetEntry> {
     return this.activeWidgets;
+  }
+
+  getWidgetsByTab(tabId: string): Map<string, WidgetEntry> {
+    const tabWidgets = new Map();
+    this.activeWidgets.forEach((entry, id) => {
+      if (entry.tabId === tabId) {
+        tabWidgets.set(id, entry);
+      }
+    });
+    return tabWidgets;
+  }
+
+  moveWidgetToTab(widgetId: string, newTabId: string) {
+    const widget = this.activeWidgets.get(widgetId);
+    if (widget) {
+      widget.tabId = newTabId;
+      this.activeWidgets.set(widgetId, widget);
+      
+      this.emit('widgetMoved', {
+        id: widgetId,
+        tabId: newTabId
+      });
+    }
+  }
+
+  destroyTabWidgets(tabId: string) {
+    this.activeWidgets.forEach((entry, id) => {
+      if (entry.tabId === tabId) {
+        this.destroyWidget(id);
+      }
+    });
   }
 
   private getWidgetTitle(type: WidgetType): string {

@@ -6,7 +6,7 @@ import { StockWidget } from '../stock/StockWidget';
 import { MapWidget } from '../map/MapWidget';
 import { PlacesWidget } from '../places/PlacesWidget';
 import { SearchWidget } from '../search/SearchWidget';
-import { ChatWidget } from '../chat/ChatWidget';
+import { ChatWidget as ChatWidgetClass } from '../chat/ChatWidget';
 import { AltairWidget } from '../altair/Altair';
 import { CodeExecutionWidget } from '../code-execution/CodeExecutionWidget';
 
@@ -19,13 +19,41 @@ interface WidgetItemProps {
   setWidgets: React.Dispatch<React.SetStateAction<Item[]>>;
 }
 
+// Create a React component wrapper for ChatWidget
+const ChatWidgetComponent: React.FC<any> = (props) => {
+  const chatWidgetRef = React.useRef<ChatWidgetClass | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (containerRef.current) {
+      // Initialize ChatWidget instance
+      chatWidgetRef.current = new ChatWidgetClass(props);
+      // Render the widget
+      chatWidgetRef.current.render(props).then(html => {
+        if (containerRef.current) {
+          containerRef.current.innerHTML = html;
+        }
+      });
+    }
+
+    // Cleanup
+    return () => {
+      if (chatWidgetRef.current) {
+        // Add any cleanup if needed
+      }
+    };
+  }, [props]);
+
+  return <div ref={containerRef} className="chat-widget-container" />;
+};
+
 const WidgetComponents: Record<string, React.ComponentType<any>> = {
   weather: WeatherWidget,
   stock: StockWidget,
   map: MapWidget,
   places: PlacesWidget,
   google_search: SearchWidget,
-  chat: ChatWidget,
+  chat: ChatWidgetComponent,
   altair: AltairWidget,
   code_execution: CodeExecutionWidget
 };

@@ -1,6 +1,8 @@
 import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import { loadGoogleMapsAPI } from '../../../lib/tools/google-maps';
+import { darkMapStyle } from './map-styles';
 import './map-widget.scss';
+import debounce from 'lodash/debounce';
 
 declare global {
   interface Window {
@@ -20,7 +22,16 @@ export class MapWidget extends BaseWidget<MapData> {
   private map: google.maps.Map | null = null;
   private directionsRenderer: google.maps.DirectionsRenderer | null = null;
   private loading: boolean = true;
-  private currentStepMarker: google.maps.Marker | null = null;
+  private currentStepMarker: google.maps.marker.AdvancedMarkerElement | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private stepEventListeners: { element: Element; listener: () => void }[] = [];
+  private debouncedResize: (() => void) | null = null;
+  private mapContainer: HTMLElement | null = null;
+  private mapsInstance: typeof google.maps | null = null;
+
+  // Cache for expensive computations
+  private static readonly iconCache: Record<string, string> = {};
+  private static readonly formattedAddressCache: Record<string, string> = {};
 
   constructor(data?: MapData) {
     super('Map');
@@ -33,72 +44,78 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   async render(data: MapData): Promise<string> {    
+    // Pre-format addresses for better performance
+    if (!MapWidget.formattedAddressCache[data.origin]) {
+      MapWidget.formattedAddressCache[data.origin] = this.formatAddress(data.origin);
+    }
+    if (!MapWidget.formattedAddressCache[data.destination]) {
+      MapWidget.formattedAddressCache[data.destination] = this.formatAddress(data.destination);
+    }
+
     return `
       <div class="map-widget">
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body p-4 gap-4">
-            ${this.loading ? this.createLoadingState() : ''}
-            
-            <div class="mockup-browser border bg-base-300">
-              <div class="mockup-browser-toolbar">
-                <div class="flex items-center gap-2 px-2">
-                  <span class="material-symbols-outlined text-primary">route</span>
-                  <div class="input input-bordered input-sm w-full font-mono">
-                    ${data.origin} → ${data.destination}
-                  </div>
-                </div>
-              </div>
-              <div id="map-container"></div>
+        <div class="map-main">
+          <div class="route-header">
+            <div class="route-icon">
+              <span class="material-symbols-outlined">route</span>
             </div>
-            
-            <div class="stats stats-vertical lg:stats-horizontal shadow">
-              <div class="stat">
-                <div class="stat-figure text-primary">
-                  <span class="material-symbols-outlined text-3xl">location_on</span>
-                </div>
-                <div class="stat-title">Starting Point</div>
-                <div class="stat-value text-sm font-mono">${data.origin}</div>
-              </div>
-              
-              <div class="stat">
-                <div class="stat-figure text-secondary">
-                  <span class="material-symbols-outlined text-3xl">flag</span>
-                </div>
-                <div class="stat-title">Destination</div>
-                <div class="stat-value text-sm font-mono">${data.destination}</div>
-              </div>
-            </div>
-
-            <div class="collapse collapse-plus bg-base-200">
-              <input type="checkbox" /> 
-              <div class="collapse-title text-xl font-medium">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined">route</span>
-                  Route Overview
-                </div>
-              </div>
-              <div class="collapse-content">
-                <div id="route-details" class="stats stats-vertical shadow w-full">
-                  <!-- Will be filled by postRender -->
-                </div>
-              </div>
-            </div>
-            
-            <div class="collapse collapse-plus bg-base-200">
-              <input type="checkbox" checked /> 
-              <div class="collapse-title text-xl font-medium">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined">list_alt</span>
-                  Navigation Steps
-                </div>
-              </div>
-              <div class="collapse-content">
-                <div class="steps steps-vertical" id="navigation-steps">
-                  <!-- Will be filled by postRender -->
-                </div>
+            <div class="route-info">
+              <div class="route-title">Navigation Route</div>
+              <div class="route-path">
+                ${data.origin} 
+                <span class="separator">→</span> 
+                ${data.destination}
               </div>
             </div>
           </div>
+
+          ${this.loading ? this.createLoadingState() : ''}
+          <div id="map-container"></div>
+          
+          <div class="map-controls">
+            <button class="zoom-in" title="Zoom in">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+            <button class="zoom-out" title="Zoom out">
+              <span class="material-symbols-outlined">remove</span>
+            </button>
+            <button class="fullscreen" title="Toggle fullscreen">
+              <span class="material-symbols-outlined">fullscreen</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="route-details">
+          <div class="detail-item">
+            <div class="detail-icon">
+              <span class="material-symbols-outlined">location_on</span>
+              Starting Point
+            </div>
+            <div class="detail-value">${MapWidget.formattedAddressCache[data.origin]}</div>
+            <div class="detail-label">Origin</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-icon">
+              <span class="material-symbols-outlined">flag</span>
+              Destination
+            </div>
+            <div class="detail-value">${MapWidget.formattedAddressCache[data.destination]}</div>
+            <div class="detail-label">End Point</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <span class="material-symbols-outlined">schedule</span>
+              Duration
+            </div>
+            <div class="detail-value">${this.getRouteDuration(data)}</div>
+            <div class="detail-label">Estimated Time</div>
+          </div>
+        </div>
+
+        <div class="navigation-steps">
+          ${this.renderNavigationSteps(data)}
         </div>
       </div>
     `;
@@ -106,222 +123,173 @@ export class MapWidget extends BaseWidget<MapData> {
 
   async postRender(container: HTMLElement, data: MapData): Promise<void> {
     try {
-      const mapContainer = container.querySelector('#map-container');
-      if (!mapContainer) {
-        throw new Error('Map container not found');
+      // Store container reference for cleanup
+      this.mapContainer = container.querySelector('#map-container');
+      if (!this.mapContainer) throw new Error('Map container not found');
+
+      // Load maps API only once and cache the instance
+      if (!this.mapsInstance) {
+        this.mapsInstance = await loadGoogleMapsAPI();
       }
+      const maps = this.mapsInstance;
 
-      console.log('Received map data:', data);
-      const { _rawResponse } = data;
-      if (!_rawResponse) {
-        throw new Error('No response data received from Google Maps API');
-      }
+      // Create map instance if it doesn't exist
+      if (!this.map) {
+        this.map = new maps.Map(this.mapContainer, {
+          zoom: 13,
+          center: { lat: -37.8136, lng: 144.9631 },
+          mapTypeId: maps.MapTypeId.ROADMAP,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControl: false,
+          styles: darkMapStyle
+        });
 
-      const directionsResult = _rawResponse;
-      console.log('Directions result:', directionsResult);
-
-      if (!directionsResult.routes || directionsResult.routes.length === 0) {
-        throw new Error('No routes found for the given origin and destination');
-      }
-
-      const route = directionsResult.routes[0];
-      if (!route.legs || route.legs.length === 0) {
-        throw new Error('Invalid route data: no route legs found');
-      }
-
-      await loadGoogleMapsAPI();
-      
-      this.map = new google.maps.Map(mapContainer as HTMLElement, {
-        zoom: 12,
-        center: { lat: -37.8136, lng: 144.9631 },
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true,
-        zoomControl: true,
-        styles: [
-          {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          },
-          {
-            featureType: 'transit',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          }
-        ]
-      });
-
-      const directionsRenderer = new google.maps.DirectionsRenderer({
-        map: this.map,
-        suppressMarkers: false,
-        polylineOptions: {
-          strokeColor: '#570DF8',
-          strokeWeight: 5,
-          strokeOpacity: 0.8
-        },
-        markerOptions: {
-          animation: google.maps.Animation.DROP
-        }
-      });
-      
-      directionsRenderer.setDirections(directionsResult);
-
-      const routeDetails = container.querySelector('#route-details');
-      if (routeDetails && route.legs[0]) {
-        const leg = route.legs[0];
-        routeDetails.innerHTML = `
-          <div class="stat bg-primary text-primary-content">
-            <div class="stat-figure">
-              <span class="material-symbols-outlined text-3xl">distance</span>
-            </div>
-            <div class="stat-title text-primary-content/80">Total Distance</div>
-            <div class="stat-value">${leg.distance?.text || 'N/A'}</div>
-          </div>
-          
-          <div class="stat bg-secondary text-secondary-content">
-            <div class="stat-figure">
-              <span class="material-symbols-outlined text-3xl">schedule</span>
-            </div>
-            <div class="stat-title text-secondary-content/80">Estimated Time</div>
-            <div class="stat-value">${leg.duration?.text || 'N/A'}</div>
-          </div>
-        `;
-      }
-
-      const stepsContainer = container.querySelector('#navigation-steps');
-      if (stepsContainer && route.legs[0].steps) {
-        const steps = route.legs[0].steps;
-        const stepsHtml = steps.map((step: google.maps.DirectionsStep, index: number) => {
-          const maneuverIcon = this.getManeuverIcon(step.maneuver);
-          const travelMode = step.travel_mode?.toLowerCase() || 'driving';
-          const modeIcon = this.getModeIcon(travelMode);
-          
-          return `
-            <div class="step step-primary cursor-pointer" data-step-index="${index}">
-              <div class="step-content">
-                <div class="badge">
-                  <span class="material-symbols-outlined">${maneuverIcon}</span>
-                  Step ${index + 1}
-                </div>
-                <div class="step-instruction">
-                  ${step.instructions?.replace(/<[^>]*>/g, '') || 'No instructions available'}
-                </div>
-                <div class="step-metrics">
-                  <div class="metric">
-                    <span class="material-symbols-outlined">${modeIcon}</span>
-                    ${this.formatTravelMode(travelMode)}
-                  </div>
-                  <div class="metric">
-                    <span class="material-symbols-outlined">straight</span>
-                    ${step.distance?.text || '0'}
-                  </div>
-                  <div class="metric">
-                    <span class="material-symbols-outlined">schedule</span>
-                    ${step.duration?.text || '0'}
-                  </div>
-                </div>
-                <div class="step-details">
-                  ${this.createDetailItems(step)}
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-        
-        stepsContainer.innerHTML = stepsHtml;
-
-        stepsContainer.querySelectorAll('.step').forEach((stepEl, index) => {
-          stepEl.addEventListener('click', () => {
-            const step = steps[index];
-            
-            if (this.map) {
-              this.map.panTo(step.start_location);
-              this.map.setZoom(16);
-              
-              stepsContainer.querySelectorAll('.step').forEach(s => {
-                s.classList.remove('step-accent');
-                if (s === stepEl) {
-                  s.classList.add('step-accent');
-                }
-              });
-
-              this.updateStepMarker(this.map, step);
-            }
-          });
+        // Disable unnecessary features for better performance
+        this.map.setOptions({
+          clickableIcons: false,
+          disableDoubleClickZoom: true
         });
       }
 
-      this.directionsRenderer = directionsRenderer;
-      this.loading = false;
+      // Setup custom controls with cleanup
+      this.setupMapControls(container);
 
-      const resizeObserver = new ResizeObserver(() => {
-        if (this.map) {
-          google.maps.event.trigger(this.map as any, 'resize');
+      // Setup directions renderer if not already set
+      if (!this.directionsRenderer) {
+        this.directionsRenderer = new maps.DirectionsRenderer({
+          map: this.map,
+          suppressMarkers: false,
+          polylineOptions: {
+            strokeColor: '#4287f5',
+            strokeWeight: 4,
+            strokeOpacity: 0.8
+          },
+          markerOptions: {
+            icon: {
+              path: maps.SymbolPath.CIRCLE,
+              scale: 7,
+              fillColor: '#4287f5',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2
+            }
+          }
+        });
+      }
+
+      if (data._rawResponse) {
+        this.directionsRenderer.setDirections(data._rawResponse);
+        this.loading = false;
+
+        // Setup step interactions with cleanup tracking
+        this.setupStepInteractions(container, data);
+
+        // Fit bounds with padding for better view
+        if (data._rawResponse.routes?.[0]?.bounds) {
+          const bounds = data._rawResponse.routes[0].bounds;
+          this.map.fitBounds(bounds);
+          
+          // Adjust zoom level slightly to add padding effect
+          this.map.setZoom(this.map.getZoom()! - 1);
         }
-      });
-      resizeObserver.observe(mapContainer);
+      }
+
+      // Handle map container resizing with debounce
+      if (!this.debouncedResize) {
+        this.debouncedResize = debounce(() => {
+          if (this.map) {
+            maps.event.trigger(this.map, 'resize');
+            if (data._rawResponse?.routes?.[0]?.bounds) {
+              const bounds = data._rawResponse.routes[0].bounds;
+              this.map.fitBounds(bounds);
+              // Add visual padding by zooming out one level
+              const currentZoom = this.map.getZoom();
+              if (currentZoom) {
+                this.map.setZoom(currentZoom - 1);
+              }
+            }
+          }
+        }, 250);
+      }
+
+      if (!this.resizeObserver) {
+        this.resizeObserver = new ResizeObserver(this.debouncedResize);
+        this.resizeObserver.observe(this.mapContainer);
+      }
 
     } catch (error) {
-      console.error('Error initializing map:', error);
-      if (container instanceof HTMLElement) {
-        container.innerHTML = this.createErrorState((error as Error).message);
-      }
+      console.error('Error in map postRender:', error);
+      this.loading = false;
     }
   }
 
-  createErrorState(message: string): string {
-    return `
-      <div class="alert alert-error shadow-lg">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined">error</span>
-          <div>
-            <h3 class="font-bold">Navigation Error</h3>
-            <div class="text-sm opacity-80">${message}</div>
-          </div>
-        </div>
-        <button class="btn btn-sm btn-ghost" onclick="location.reload()">
-          <span class="material-symbols-outlined">refresh</span>
-          Retry
-        </button>
-      </div>
-    `;
-  }
+  private setupMapControls(container: HTMLElement): void {
+    const zoomInBtn = container.querySelector('.zoom-in');
+    const zoomOutBtn = container.querySelector('.zoom-out');
+    const fullscreenBtn = container.querySelector('.fullscreen');
 
-  createLoadingState(): string {
-    return `
-      <div class="loading-container">
-        <div class="loading loading-spinner loading-lg"></div>
-        <div class="loading-text">
-          <span class="material-symbols-outlined">map</span>
-          Preparing your route...
-        </div>
-      </div>
-    `;
-  }
-
-  destroy(): void {
-    if (this.map) {
-      if (this.directionsRenderer) {
-        this.directionsRenderer.setMap(null);
-      }
-      this.map = null;
-      this.directionsRenderer = null;
-    }
-  }
-
-  getModeIcon(mode: string): string {
-    const icons: Record<string, string> = {
-      walking: 'directions_walk',
-      bicycling: 'directions_bike',
-      transit: 'directions_transit',
-      driving: 'directions_car'
+    const zoomInHandler = () => {
+      if (this.map) this.map.setZoom((this.map.getZoom() || 0) + 1);
     };
-    return icons[mode] || 'directions';
+    const zoomOutHandler = () => {
+      if (this.map) this.map.setZoom((this.map.getZoom() || 0) - 1);
+    };
+    const fullscreenHandler = () => {
+      const mapMain = container.querySelector('.map-main');
+      if (mapMain?.requestFullscreen) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          mapMain.requestFullscreen();
+        }
+      }
+    };
+
+    zoomInBtn?.addEventListener('click', zoomInHandler);
+    zoomOutBtn?.addEventListener('click', zoomOutHandler);
+    fullscreenBtn?.addEventListener('click', fullscreenHandler);
+
+    // Store listeners for cleanup
+    this.stepEventListeners.push(
+      { element: zoomInBtn!, listener: zoomInHandler },
+      { element: zoomOutBtn!, listener: zoomOutHandler },
+      { element: fullscreenBtn!, listener: fullscreenHandler }
+    );
+  }
+
+  private setupStepInteractions(container: HTMLElement, data: MapData): void {
+    const steps = container.querySelectorAll('.step');
+    steps.forEach((step, index) => {
+      const clickHandler = () => {
+        const routeStep = data._rawResponse?.routes?.[0]?.legs?.[0]?.steps?.[index];
+        if (routeStep && this.map) {
+          steps.forEach(s => s.classList.remove('active'));
+          step.classList.add('active');
+          
+          // Use smooth pan animation for better UX
+          this.map.panTo(routeStep.start_location);
+          this.map.setZoom(16);
+          
+          // Debounce marker updates to prevent excessive redraws
+          debounce(() => this.updateStepMarker(this.map, routeStep), 100)();
+        }
+      };
+      
+      step.addEventListener('click', clickHandler);
+      this.stepEventListeners.push({ element: step, listener: clickHandler });
+    });
   }
 
   private getManeuverIcon(maneuver?: string): string {
+    if (!maneuver) return 'navigation';
+    
+    // Use cached icon if available
+    if (MapWidget.iconCache[maneuver]) {
+      return MapWidget.iconCache[maneuver];
+    }
+
     const icons: Record<string, string> = {
       'turn-right': 'turn_right',
       'turn-left': 'turn_left',
@@ -345,70 +313,120 @@ export class MapWidget extends BaseWidget<MapData> {
       'ferry-train': 'train',
       'roundabout': 'roundabout_right'
     };
-    return icons[maneuver || ''] || 'navigation';
+
+    // Cache the result
+    MapWidget.iconCache[maneuver] = icons[maneuver] || 'navigation';
+    return MapWidget.iconCache[maneuver];
   }
 
-  private formatTravelMode(mode: string): string {
-    const modes: Record<string, string> = {
-      'walking': 'Walking',
-      'bicycling': 'Cycling',
-      'transit': 'Transit',
-      'driving': 'Driving'
-    };
-    return modes[mode] || 'Driving';
+  private formatAddress(address: string): string {
+    return address.split(',')[0]; // Returns first part of address
   }
 
-  private createDetailItems(step: google.maps.DirectionsStep): string {
-    const details: string[] = [];
+  private getRouteDuration(data: MapData): string {
+    return data._rawResponse?.routes?.[0]?.legs?.[0]?.duration?.text || 'Calculating...';
+  }
 
-    if (step.transit) {
-      const transit = step.transit;
-      details.push(`
-        <div class="detail-item">
-          <span class="material-symbols-outlined">directions_transit</span>
-          Take ${transit.line?.name || 'transit'} from ${transit.departure_stop?.name || 'stop'}
-        </div>
-      `);
+  private renderNavigationSteps(data: MapData): string {
+    if (!data._rawResponse?.routes?.[0]?.legs?.[0]?.steps) {
+      return '';
     }
 
-    if (step.maneuver) {
-      details.push(`
-        <div class="detail-item">
+    const steps = data._rawResponse.routes[0].legs[0].steps;
+    return steps.map((step: google.maps.DirectionsStep, index: number) => `
+      <div class="step" data-step-index="${index}">
+        <div class="step-marker">
           <span class="material-symbols-outlined">${this.getManeuverIcon(step.maneuver)}</span>
-          ${this.formatManeuver(step.maneuver)}
         </div>
-      `);
-    }
-
-    return details.join('');
+        <div class="step-content">
+          <div class="step-title">
+            ${step.instructions?.replace(/<[^>]*>/g, '') || 'No instructions available'}
+          </div>
+          <div class="step-distance">
+            ${step.distance?.text || ''} • ${step.duration?.text || ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
   }
 
-  private formatManeuver(maneuver: string): string {
-    return maneuver
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
-
-  private updateStepMarker(map: google.maps.Map | null, step: google.maps.DirectionsStep): void {
+  private async updateStepMarker(map: google.maps.Map | null, step: google.maps.DirectionsStep): Promise<void> {
     if (!map) return;
 
     if (this.currentStepMarker) {
-      this.currentStepMarker.setMap(null);
+      this.currentStepMarker.map = null;
     }
 
-    this.currentStepMarker = new google.maps.Marker({
+    // Create marker element
+    const markerDiv = document.createElement('div');
+    markerDiv.className = 'custom-marker';
+    markerDiv.innerHTML = `
+      <div class="marker-inner">
+        <span class="material-symbols-outlined">${this.getManeuverIcon(step.maneuver)}</span>
+      </div>
+    `;
+
+    // Create new advanced marker
+    this.currentStepMarker = new google.maps.marker.AdvancedMarkerElement({
+      map,
       position: step.start_location,
-      map: map,
-      animation: google.maps.Animation.DROP,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 8,
-        fillColor: '#570DF8',
-        fillOpacity: 1,
-        strokeColor: '#FFFFFF',
-        strokeWeight: 2
-      }
+      content: markerDiv,
+      title: step.instructions?.replace(/<[^>]*>/g, '') || 'Step location'
     });
+  }
+
+  public createLoadingState(): string {
+    return `
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">
+          <span class="material-symbols-outlined">map</span>
+          Preparing your route...
+        </div>
+      </div>
+    `;
+  }
+
+  destroy(): void {
+    // Clean up resize observer
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+
+    // Clean up debounced resize handler
+    if (this.debouncedResize) {
+      (this.debouncedResize as any).cancel?.();
+      this.debouncedResize = null;
+    }
+
+    // Clean up event listeners
+    this.stepEventListeners.forEach(({ element, listener }) => {
+      element.removeEventListener('click', listener);
+    });
+    this.stepEventListeners = [];
+
+    // Clean up markers
+    if (this.currentStepMarker) {
+      this.currentStepMarker.map = null;
+      this.currentStepMarker = null;
+    }
+
+    // Clean up directions renderer
+    if (this.directionsRenderer) {
+      this.directionsRenderer.setMap(null);
+      this.directionsRenderer = null;
+    }
+
+    // Clean up map instance
+    if (this.map) {
+      this.map = null;
+    }
+
+    // Clear instance references
+    this.mapsInstance = null;
+    this.mapContainer = null;
+
+    super.destroy();
   }
 } 

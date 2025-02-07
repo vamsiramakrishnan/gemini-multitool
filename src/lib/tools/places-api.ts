@@ -118,8 +118,34 @@ interface SearchPlacesOptions {
   pageToken?: string;
 }
 
-export async function searchPlaces(query: string, options: SearchPlacesOptions = {}): Promise<any> {
-  
+interface LLMPlaceResponse {
+  id: string;
+  name: string;
+  rating: number;
+  priceLevel: number;
+  type: string;
+  isOpen: boolean;
+}
+
+interface WidgetPlaceResponse extends LLMPlaceResponse {
+  address: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  userRatings: number;
+  photos: string[];
+  businessStatus: string;
+  types: string[];
+  icon: string;
+  vicinity?: string;
+}
+
+export async function searchPlaces(query: string, options: SearchPlacesOptions = {}): Promise<{
+  llmResponse: { places: LLMPlaceResponse[]; totalResults?: number };
+  widgetData: { places: WidgetPlaceResponse[]; nextPageToken?: string };
+  error?: string;
+}> {
   try {
     await loadGoogleMapsAPI();
     const service = new google.maps.places.PlacesService(document.createElement('div'));
@@ -137,36 +163,50 @@ export async function searchPlaces(query: string, options: SearchPlacesOptions =
     return new Promise((resolve, reject) => {
       service.textSearch(request, (results, status, pagination) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          const mappedResults = {
-            places: results.slice(0, options.maxResults || DEFAULT_PAGE_SIZE).map(place => ({
-              id: place.place_id,
-              name: place.name,
-              address: place.formatted_address,
+          const places = results.slice(0, options.maxResults || DEFAULT_PAGE_SIZE);
+          
+          // Create separate responses for LLM and widget
+          const llmResponse = {
+            places: places.map(place => ({
+              id: place.place_id || '',
+              name: place.name || '',
+              rating: place.rating || 0,
+              priceLevel: place.price_level || 0,
+              type: place.types?.[0] || 'place',
+              isOpen: place.opening_hours?.isOpen() || false
+            })),
+            totalResults: results.length
+          };
+
+          const widgetData = {
+            places: places.map(place => ({
+              ...llmResponse.places[0],
+              address: place.formatted_address || '',
               location: {
-                latitude: place.geometry?.location?.lat(),
-                longitude: place.geometry?.location?.lng()
+                latitude: place.geometry?.location?.lat() || 0,
+                longitude: place.geometry?.location?.lng() || 0
               },
-              rating: place.rating,
-              userRatings: place.user_ratings_total,
-              priceLevel: place.price_level,
+              userRatings: place.user_ratings_total || 0,
               photos: place.photos?.map(photo => photo.getUrl({ maxWidth: 800 })) || [],
-              businessStatus: place.business_status,
-              types: place.types,
-              icon: place.icon,
-              openNow: place.opening_hours?.isOpen()
+              businessStatus: place.business_status || '',
+              types: place.types || [],
+              icon: place.icon || ''
             })),
             nextPageToken: pagination?.hasNextPage ? 'has_more' : undefined
           };
 
-          resolve(mappedResults);
+          resolve({ llmResponse, widgetData });
         } else {
           reject(new Error(`Places API error: ${status}`));
         }
       });
     });
   } catch (error: any) {
-    console.error('Error in searchPlaces:', error);
-    return { error: error.message };
+    return { 
+      error: error.message,
+      llmResponse: { places: [] },
+      widgetData: { places: [] }
+    };
   }
 }
 
@@ -184,7 +224,14 @@ interface SearchNearbyOptions {
   name?: string;
 }
 
-export async function searchNearby(location: {latitude: number, longitude: number}, options: SearchNearbyOptions = {}): Promise<any> {
+export async function searchNearby(
+  location: {latitude: number, longitude: number}, 
+  options: SearchNearbyOptions = {}
+): Promise<{
+  llmResponse: { places: LLMPlaceResponse[]; totalResults?: number };
+  widgetData: { places: WidgetPlaceResponse[]; nextPageToken?: string };
+  error?: string;
+}> {
   
   try {
     await loadGoogleMapsAPI();
@@ -212,36 +259,50 @@ export async function searchNearby(location: {latitude: number, longitude: numbe
     return new Promise((resolve, reject) => {
       service.nearbySearch(request, (results, status, pagination) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          const mappedResults = {
-            places: results.slice(0, options.maxResults || DEFAULT_PAGE_SIZE).map(place => ({
-              id: place.place_id,
-              name: place.name,
-              address: place.vicinity,
+          const places = results.slice(0, options.maxResults || DEFAULT_PAGE_SIZE);
+          
+          // Create separate responses for LLM and widget
+          const llmResponse = {
+            places: places.map(place => ({
+              id: place.place_id || '',
+              name: place.name || '',
+              rating: place.rating || 0,
+              priceLevel: place.price_level || 0,
+              type: place.types?.[0] || 'place',
+              isOpen: place.opening_hours?.isOpen() || false
+            })),
+            totalResults: results.length
+          };
+
+          const widgetData = {
+            places: places.map(place => ({
+              ...llmResponse.places[0],
+              address: place.vicinity || '',
               location: {
-                latitude: place.geometry?.location?.lat(),
-                longitude: place.geometry?.location?.lng()
+                latitude: place.geometry?.location?.lat() || 0,
+                longitude: place.geometry?.location?.lng() || 0
               },
-              rating: place.rating,
-              userRatings: place.user_ratings_total,
-              priceLevel: place.price_level,
+              userRatings: place.user_ratings_total || 0,
               photos: place.photos?.map(photo => photo.getUrl({ maxWidth: 800 })) || [],
-              businessStatus: place.business_status,
-              types: place.types,
-              icon: place.icon,
-              openNow: place.opening_hours?.isOpen(),
-              vicinity: place.vicinity
+              businessStatus: place.business_status || '',
+              types: place.types || [],
+              icon: place.icon || '',
+              vicinity: place.vicinity || ''
             })),
             nextPageToken: pagination?.hasNextPage ? 'has_more' : undefined
           };
 
-          resolve(mappedResults);
+          resolve({ llmResponse, widgetData });
         } else {
           reject(new Error(`Places API error: ${status}`));
         }
       });
     });
   } catch (error: any) {
-    console.error('Error in searchNearby:', error);
-    return { error: error.message };
+    return { 
+      error: error.message,
+      llmResponse: { places: [] },
+      widgetData: { places: [] }
+    };
   }
 } 

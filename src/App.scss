@@ -1,5 +1,5 @@
 :root {
-  /* Core Colors */
+  /* Core Colors - Enhanced with more vibrant options */
   --primary-50: #eef2ff;
   --primary-100: #e0e7ff;
   --primary-200: #c7d2fe;
@@ -37,6 +37,57 @@
   --warning-500: #f59e0b;
   --warning-700: #b45309;
 
+  /* New Accent Colors */
+  --accent-cyan: #22d3ee;
+  --accent-purple: #a855f7;
+  --accent-rose: #f43f5e;
+  
+  /* Modern Gradient Patterns */
+  --gradient-primary: linear-gradient(135deg, var(--primary-500), var(--accent-purple));
+  --gradient-dark: linear-gradient(135deg, var(--neutral-900), var(--neutral-800));
+  --gradient-glow: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+  
+  /* Blur Effects */
+  --blur-sm: blur(4px);
+  --blur-md: blur(8px);
+  --blur-lg: blur(12px);
+  --blur-xl: blur(16px);
+  
+  /* Modern Shadow System */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.15);
+  
+  /* Glass Effect Backgrounds */
+  --glass-50: rgba(255, 255, 255, 0.05);
+  --glass-100: rgba(255, 255, 255, 0.1);
+  --glass-200: rgba(255, 255, 255, 0.15);
+  --glass-300: rgba(255, 255, 255, 0.2);
+  
+  /* Surface Colors with Glass Effects */
+  --surface-0: rgba(9, 9, 11, 0.8);
+  --surface-1: rgba(24, 24, 27, 0.8);
+  --surface-2: rgba(39, 39, 42, 0.8);
+  --surface-3: rgba(63, 63, 70, 0.8);
+  
+  /* Enhanced Text Colors */
+  --text-primary: rgba(250, 250, 250, 0.95);
+  --text-secondary: rgba(161, 161, 170, 0.9);
+  --text-tertiary: rgba(113, 113, 122, 0.8);
+  --text-brand: var(--primary-400);
+  
+  /* Animation Timing */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Border Styles */
+  --border-light: 1px solid rgba(255, 255, 255, 0.1);
+  --border-medium: 1px solid rgba(255, 255, 255, 0.15);
+  --border-heavy: 2px solid rgba(255, 255, 255, 0.2);
+  
   /* Surface Colors */
   --surface-0: var(--neutral-950);
   --surface-1: var(--neutral-900);
@@ -674,4 +725,44 @@ body.is-dragging {
 
 .drop-target-over {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Global Styles */
+body {
+  background: var(--neutral-950);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-0);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 4px;
+  
+  &:hover {
+    background: var(--surface-2);
+  }
+}
+
+/* Glass Effect Base Classes */
+.glass {
+  background: var(--glass-100);
+  backdrop-filter: var(--blur-md);
+  border: var(--border-light);
+}
+
+.glass-heavy {
+  background: var(--glass-200);
+  backdrop-filter: var(--blur-lg);
+  border: var(--border-medium);
 }

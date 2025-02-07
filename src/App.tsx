@@ -30,6 +30,7 @@ import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
+import { TabsContainer } from './components/tabs/TabsContainer';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
@@ -38,6 +39,16 @@ if (typeof API_KEY !== "string") {
 
 const host = "generativelanguage.googleapis.com";
 const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
+
+// Add a global initialization flag
+const isInitialized = Symbol('app_initialized');
+
+declare global {
+  interface Window {
+    [isInitialized]?: boolean;
+    app?: any;
+  }
+}
 
 function AppContent() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -54,6 +65,9 @@ function AppContent() {
   
   const widgetsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Add state for active tab
+  const [activeTabId, setActiveTabId] = useState('default');
+
   // Handle widget manager events
   useEffect(() => {
     if (!widgetManagerRef.current) {
@@ -67,29 +81,35 @@ function AppContent() {
   // Initialize app with widget manager and tool handler
   useEffect(() => {
     async function initializeApp() {
+      // Check if already initialized
+      if (window[isInitialized]) {
+        console.log('App already initialized, skipping...');
+        return;
+      }
+
       try {
         console.log('Initializing app...');
         const widgetManager = new WidgetManager();
         
         // Set up event listeners before attaching to window
-        const onWidgetCreated = async (event: { id: string; type: string; data: any }) => {
+        const onWidgetCreated = async (event: { id: string; type: string; data: any; tabId: string }) => {
           console.log('Widget created event received:', event);
           
-          // Add widget to state
           setWidgets(prev => {
-            const newWidgets = [{ id: event.id, type: event.type }, ...prev];
-            console.log('Widget created:', { id: event.id, type: event.type, data: event.data });
-            return newWidgets;
+            const newWidget = { 
+              id: event.id, 
+              type: event.type,
+              tabId: event.tabId || activeTabId
+            };
+            return [newWidget, ...prev];
           });
           
-          // Add widget data to state with proper typing
           setWidgetData(prev => {
             const newData = { ...prev, [event.id]: event.data };
             console.log('Widget data updated:', newData);
             return newData;
           });
           
-          // Initialize widget state
           setWidgetStates(prev => {
             const newStates = { ...prev, [event.id]: { isMaximized: false, isMinimized: false }};
             console.log('Widget states updated:', newStates);
@@ -97,7 +117,7 @@ function AppContent() {
           });
         };
 
-        const onWidgetDestroyed = (event: { id: string }) => {
+        const onWidgetDestroyed = (event: { id: string; tabId: string }) => {
           console.log('Widget destroyed event received:', event);
           
           setWidgets(prev => prev.filter(widget => widget.id !== event.id));
@@ -113,9 +133,20 @@ function AppContent() {
           });
         };
 
+        const onWidgetMoved = (event: { id: string; tabId: string }) => {
+          console.log('Widget moved event received:', event);
+          
+          setWidgets(prev => prev.map(widget => 
+            widget.id === event.id 
+              ? { ...widget, tabId: event.tabId }
+              : widget
+          ));
+        };
+
         console.log('Setting up widget event listeners');
         widgetManager.on('widgetCreated', onWidgetCreated);
         widgetManager.on('widgetDestroyed', onWidgetDestroyed);
+        widgetManager.on('widgetMoved', onWidgetMoved);
 
         // Attach widget manager to window.app
         (window as any).app = {
@@ -130,6 +161,8 @@ function AppContent() {
         const config = createLiveConfig(systemInstructions);
         setConfig(config);
         
+        // Mark as initialized
+        window[isInitialized] = true;
         console.log('App initialized successfully');
       } catch (error) {
         console.error('Failed to initialize app:', error);
@@ -141,14 +174,39 @@ function AppContent() {
 
     // Cleanup
     return () => {
-      console.log('Cleaning up app...');
-      if (widgetManagerRef.current) {
-        widgetManagerRef.current.destroyAllWidgets();
+      if (window[isInitialized]) {
+        console.log('Cleaning up app...');
+        if (widgetManagerRef.current) {
+          widgetManagerRef.current.destroyAllWidgets();
+        }
+        // Clean up window.app and initialization flag
+        delete window.app;
+        delete window[isInitialized];
       }
-      // Clean up window.app
-      delete (window as any).app;
     };
-  }, [setConfig]);
+  }, []);
+
+  // Add separate effect for handling widget tab assignment
+  useEffect(() => {
+    if (!widgetManagerRef.current || !toolHandlerRef.current) return;
+
+    console.log('App: Updating active tab to:', activeTabId);
+    
+    // Update tool handler's active tab
+    toolHandlerRef.current.setActiveTab(activeTabId);
+
+    // Update any new widgets without a tabId to the current active tab
+    setWidgets(prev => {
+      const updated = prev.map(widget => {
+        if (!widget.tabId) {
+          console.log('Assigning widget to tab:', { widgetId: widget.id, tabId: activeTabId });
+          return { ...widget, tabId: activeTabId };
+        }
+        return widget;
+      });
+      return updated;
+    });
+  }, [activeTabId]);
 
   // Handle tool calls and grounding
   useEffect(() => {
@@ -232,30 +290,20 @@ function AppContent() {
       <SidePanel />
       <main>
         <div className="main-app-area">
-          <div
-            ref={widgetsContainerRef}
-            className={cn(
-              "widgets-container",
-              { "has-maximized": Object.values(widgetStates).some(state => state.isMaximized) }
-            )}
-          >
-            {widgets.map((widget, index) => (
-              <WidgetItem
-                key={widget.id}
-                item={widget}
-                index={index}
-                widgetData={widgetData[widget.id]}
-                widgetState={widgetStates[widget.id]}
-                onStateChange={(state: WidgetState) => {
-                  setWidgetStates(prev => ({
-                    ...prev,
-                    [widget.id]: state
-                  }));
-                }}
-                setWidgets={setWidgets}
-              />
-            ))}
-          </div>
+          <TabsContainer
+            widgets={widgets}
+            widgetData={widgetData}
+            widgetStates={widgetStates}
+            onWidgetStateChange={(widgetId, state) => {
+              setWidgetStates(prev => ({
+                ...prev,
+                [widgetId]: state
+              }));
+            }}
+            setWidgets={setWidgets}
+            activeTabId={activeTabId}
+            onTabChange={setActiveTabId}
+          />
           <div className="media-container">
             <video
               className={cn("stream", {
