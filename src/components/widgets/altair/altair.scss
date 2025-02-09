@@ -53,16 +53,18 @@
 
     // Loading state
     &:empty::before {
-      content: 'Loading visualization...';
-      color: var(--Neutral-60);
-      font-style: italic;
+      background: rgba(var(--surface-2), 0.8);
+      backdrop-filter: blur(8px);
+      padding: 1rem 2rem;
+      border-radius: var(--radius-lg);
     }
   }
 
   // Style tooltips
   .vega-tooltip {
-    background: var(--Neutral-10);
-    border: 1px solid var(--Neutral-20);
+    background: rgba(var(--surface-2), 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(var(--primary-400), 0.1);
     border-radius: 0.5rem;
     padding: 0.5rem;
     color: var(--Neutral-90);
@@ -120,6 +122,12 @@
     width: 100%;
     height: 100%;
     position: relative;
+    background: linear-gradient(
+      145deg,
+      var(--surface-1) 0%,
+      var(--surface-0) 100%
+    );
+    border-radius: var(--radius-xl);
     
     .vega-embed {
       width: 100%;
@@ -130,9 +138,10 @@
 
       // Loading state
       &:empty::before {
-        content: 'Loading visualization...';
-        color: var(--Neutral-60);
-        font-style: italic;
+        background: rgba(var(--surface-2), 0.8);
+        backdrop-filter: blur(8px);
+        padding: 1rem 2rem;
+        border-radius: var(--radius-lg);
       }
 
       // Vega controls styling
@@ -194,8 +203,9 @@
 
   // Tooltip styling
   :global(.vega-tooltip) {
-    background: var(--Neutral-10);
-    border: 1px solid var(--Neutral-20);
+    background: rgba(var(--surface-2), 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(var(--primary-400), 0.1);
     border-radius: var(--radius-md);
     padding: 0.5rem;
     color: var(--Neutral-90);

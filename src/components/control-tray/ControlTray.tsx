@@ -15,8 +15,7 @@
  */
 
 import cn from "classnames";
-
-import { memo, ReactNode, RefObject, useEffect, useRef, useState } from "react";
+import { memo, ReactNode, RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
 import { UseMediaStreamResult } from "../../hooks/use-media-stream-mux";
 import { useScreenCapture } from "../../hooks/use-screen-capture";
@@ -26,6 +25,9 @@ import { ChatWidget } from "../widgets/chat/chat-widget";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
 import { ToolHandler } from "../../lib/tool-handler";
+import { useLayout } from "../../contexts/LayoutContext";
+import { ChatWidgetComponent } from "../widgets/chat/ChatWidgetComponent";
+import { useVideoStream } from '../../hooks/use-video-stream';
 
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
@@ -40,22 +42,51 @@ type MediaStreamButtonProps = {
   offIcon: string;
   start: () => Promise<any>;
   stop: () => any;
+  disabled?: boolean;
+  error?: Error | null;
 };
 
 /**
  * button used for triggering webcam or screen-capture
  */
 const MediaStreamButton = memo(
-  ({ isStreaming, onIcon, offIcon, start, stop }: MediaStreamButtonProps) =>
-    isStreaming ? (
-      <button className="action-button" onClick={stop}>
+  ({ isStreaming, onIcon, offIcon, start, stop, disabled, error }: MediaStreamButtonProps) => {
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const handleStart = async () => {
+      if (disabled || isLoading) return;
+      setIsLoading(true);
+      try {
+        await start();
+      } catch (error) {
+        console.error('Failed to start stream:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const handleStop = () => {
+      if (disabled) return;
+      stop();
+    };
+
+    const buttonClass = cn("action-button", {
+      disabled,
+      error: !!error,
+      loading: isLoading
+    });
+
+    return isStreaming ? (
+      <button className={buttonClass} onClick={handleStop} title={error?.message}>
         <span className="material-symbols-outlined">{onIcon}</span>
       </button>
     ) : (
-      <button className="action-button" onClick={start}>
+      <button className={buttonClass} onClick={handleStart} title={error?.message}>
         <span className="material-symbols-outlined">{offIcon}</span>
+        {isLoading && <span className="loading-indicator" />}
       </button>
-    ),
+    )
+  }
 );
 
 function ControlTray({
@@ -64,28 +95,89 @@ function ControlTray({
   onVideoStreamChange = () => {},
   supportsVideo,
 }: ControlTrayProps) {
-  const videoStreams = [useWebcam(), useScreenCapture()];
-  const [activeVideoStream, setActiveVideoStream] =
-    useState<MediaStream | null>(null);
-  const [webcam, screenCapture] = videoStreams;
+  const webcamStream = useWebcam();
+  const screenCaptureStream = useScreenCapture();
+  const [activeVideoStream, setActiveVideoStream] = useState<MediaStream | null>(null);
+  const [streamError, setStreamError] = useState<Error | null>(null);
   const [inVolume, setInVolume] = useState(0);
   const [audioRecorder] = useState(() => new AudioRecorder());
   const [muted, setMuted] = useState(false);
-  const renderCanvasRef = useRef<HTMLCanvasElement>(null);
+  const { renderCanvasRef, error: videoProcessingError } = useVideoStream({ 
+    videoRef, 
+    activeVideoStream 
+  });
   const connectButtonRef = useRef<HTMLButtonElement>(null);
 
-  const { client, connected, connect, disconnect, volume } =
-    useLiveAPIContext();
-
+  const { client, connected, connect, disconnect, volume } = useLiveAPIContext();
   const toolHandlerRef = useRef<ToolHandler | null>(null);
   const [chatWidgetVisible, setChatWidgetVisible] = useState(false);
   const chatWidgetRef = useRef<ChatWidget | null>(null);
+  const { mode, setMode } = useLayout();
 
+  // Handle stream changes
+  const changeStreams = useCallback(async (nextStream?: UseMediaStreamResult) => {
+    try {
+      console.debug('[ControlTray] Changing streams:', {
+        next: nextStream?.type,
+        currentStream: activeVideoStream ? 'active' : 'none'
+      });
+
+      // Stop all streams
+      [webcamStream, screenCaptureStream].forEach(msr => {
+        if (msr.isStreaming) {
+          console.debug('[ControlTray] Stopping stream:', msr.type);
+          msr.stop();
+        }
+      });
+
+      if (nextStream) {
+        console.debug('[ControlTray] Starting new stream:', nextStream.type);
+        try {
+          const mediaStream = await nextStream.start();
+          console.debug('[ControlTray] Stream started:', {
+            tracks: mediaStream.getTracks().map(t => t.kind)
+          });
+          
+          setActiveVideoStream(mediaStream);
+          onVideoStreamChange(mediaStream);
+          setStreamError(null);
+
+          // Handle track ended events
+          mediaStream.getTracks().forEach(track => {
+            track.onended = () => {
+              console.debug('[ControlTray] Track ended:', track.kind);
+              setActiveVideoStream(null);
+              onVideoStreamChange(null);
+              setStreamError(new Error(`${track.kind} stream ended`));
+            };
+          });
+        } catch (error) {
+          console.error('[ControlTray] Failed to start stream:', error);
+          setStreamError(error instanceof Error ? error : new Error('Failed to start stream'));
+          throw error;
+        }
+      } else {
+        console.debug('[ControlTray] Clearing stream');
+        setActiveVideoStream(null);
+        onVideoStreamChange(null);
+        setStreamError(null);
+      }
+    } catch (error) {
+      console.error('[ControlTray] Failed to change video stream:', error);
+      setActiveVideoStream(null);
+      onVideoStreamChange(null);
+      setStreamError(error instanceof Error ? error : new Error('Failed to change stream'));
+    }
+  }, [webcamStream, screenCaptureStream, activeVideoStream, onVideoStreamChange]);
+
+  // Handle connection changes
   useEffect(() => {
     if (!connected && connectButtonRef.current) {
       connectButtonRef.current.focus();
     }
   }, [connected]);
+
+  // Handle volume visualization
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--volume",
@@ -93,6 +185,7 @@ function ControlTray({
     );
   }, [inVolume]);
 
+  // Handle audio recording
   useEffect(() => {
     const onData = (base64: string) => {
       client.sendRealtimeInput([
@@ -112,45 +205,9 @@ function ControlTray({
     };
   }, [connected, client, muted, audioRecorder]);
 
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = activeVideoStream;
-    }
-
-    let timeoutId = -1;
-
-    function sendVideoFrame() {
-      const video = videoRef.current;
-      const canvas = renderCanvasRef.current;
-
-      if (!video || !canvas) {
-        return;
-      }
-
-      const ctx = canvas.getContext("2d")!;
-      canvas.width = video.videoWidth * 0.25;
-      canvas.height = video.videoHeight * 0.25;
-      if (canvas.width + canvas.height > 0) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const base64 = canvas.toDataURL("image/jpeg", 1.0);
-        const data = base64.slice(base64.indexOf(",") + 1, Infinity);
-        client.sendRealtimeInput([{ mimeType: "image/jpeg", data }]);
-      }
-      if (connected) {
-        timeoutId = window.setTimeout(sendVideoFrame, 1000 / 0.5);
-      }
-    }
-    if (connected && activeVideoStream !== null) {
-      requestAnimationFrame(sendVideoFrame);
-    }
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [connected, activeVideoStream, client, videoRef]);
-
+  // Handle tool initialization
   useEffect(() => {
     if (connected) {
-      // Initialize tools and widgets when connected
       if (toolHandlerRef.current) {
         try {
           toolHandlerRef.current.initializeWidgets();
@@ -159,7 +216,6 @@ function ControlTray({
         }
       }
     } else {
-      // Cleanup when disconnected
       if (toolHandlerRef.current) {
         try {
           toolHandlerRef.current.destroyWidgets();
@@ -170,9 +226,9 @@ function ControlTray({
     }
   }, [connected]);
 
+  // Handle chat widget
   useEffect(() => {
     if (connected && chatWidgetVisible && !chatWidgetRef.current) {
-      // Initialize chat widget when needed
       chatWidgetRef.current = new ChatWidget({
         id: 'control-tray-chat',
         liveAPIClient: client
@@ -186,28 +242,6 @@ function ControlTray({
     }
   }, [connected, chatWidgetVisible, client]);
 
-  //handler for swapping from one video-stream to the next
-  const changeStreams = (next?: UseMediaStreamResult) => async () => {
-    try {
-      // First stop other streams
-      videoStreams.filter((msr) => msr !== next).forEach((msr) => msr.stop());
-      
-      if (next) {
-        const mediaStream = await next.start();
-        setActiveVideoStream(mediaStream);
-        onVideoStreamChange(mediaStream);
-      } else {
-        setActiveVideoStream(null);
-        onVideoStreamChange(null);
-      }
-    } catch (error) {
-      console.error('Failed to change video stream:', error);
-      // Reset state on error
-      setActiveVideoStream(null);
-      onVideoStreamChange(null);
-    }
-  };
-
   const toggleChat = () => {
     setChatWidgetVisible(!chatWidgetVisible);
   };
@@ -218,8 +252,9 @@ function ControlTray({
         <canvas style={{ display: "none" }} ref={renderCanvasRef} />
         <nav className={cn("actions-nav", { disabled: !connected })}>
           <button
-            className={cn("action-button mic-button")}
+            className={cn("action-button mic-button", { muted })}
             onClick={() => setMuted(!muted)}
+            title={muted ? "Unmute microphone" : "Mute microphone"}
           >
             {!muted ? (
               <span className="material-symbols-outlined filled">mic</span>
@@ -235,18 +270,22 @@ function ControlTray({
           {supportsVideo && (
             <>
               <MediaStreamButton
-                isStreaming={screenCapture.isStreaming}
-                start={changeStreams(screenCapture)}
-                stop={changeStreams()}
+                isStreaming={screenCaptureStream.isStreaming}
+                start={() => changeStreams(screenCaptureStream)}
+                stop={() => changeStreams()}
                 onIcon="cancel_presentation"
                 offIcon="present_to_all"
+                disabled={!connected}
+                error={streamError}
               />
               <MediaStreamButton
-                isStreaming={webcam.isStreaming}
-                start={changeStreams(webcam)}
-                stop={changeStreams()}
+                isStreaming={webcamStream.isStreaming}
+                start={() => changeStreams(webcamStream)}
+                stop={() => changeStreams()}
                 onIcon="videocam_off"
                 offIcon="videocam"
+                disabled={!connected}
+                error={streamError || videoProcessingError}
               />
             </>
           )}
@@ -254,11 +293,24 @@ function ControlTray({
           <button
             className={cn("action-button", { active: chatWidgetVisible })}
             onClick={toggleChat}
+            title={chatWidgetVisible ? "Close chat" : "Open chat"}
           >
             <span className="material-symbols-outlined filled">
               {chatWidgetVisible ? "close" : "chat"}
             </span>
           </button>
+
+          <div className="layout-controls">
+            <button onClick={() => setMode('compact')} title="Compact view">
+              <span className="material-symbols-outlined">view_compact</span>
+            </button>
+            <button onClick={() => setMode('spacious')} title="Spacious view">
+              <span className="material-symbols-outlined">space_dashboard</span>
+            </button>
+            <button onClick={() => setMode('auto')} title="Auto layout">
+              <span className="material-symbols-outlined">auto_awesome</span>
+            </button>
+          </div>
 
           {children}
         </nav>
@@ -269,24 +321,22 @@ function ControlTray({
               ref={connectButtonRef}
               className={cn("action-button connect-toggle", { connected })}
               onClick={connected ? disconnect : connect}
+              title={connected ? "Disconnect" : "Connect"}
             >
               <span className="material-symbols-outlined filled">
                 {connected ? "pause" : "play_arrow"}
               </span>
             </button>
           </div>
-          <span className="text-indicator">Streaming</span>
+          <span className="text-indicator">
+            {connected ? "Connected" : "Disconnected"}
+          </span>
         </div>
       </section>
 
       {chatWidgetVisible && (
-        <div className="chat-widget-container fixed right-24 bottom-24 w-96 h-[32rem] bg-base-100 rounded-lg shadow-xl overflow-hidden">
-          <div className="chat-widget-header flex justify-between items-center p-4 border-b border-base-200">
-            <h3 className="font-medium">Chat</h3>
-            <button className="btn btn-ghost btn-sm" onClick={toggleChat}>
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
+        <div className="chat-widget-container">
+          <ChatWidgetComponent />
         </div>
       )}
     </>

@@ -1,3 +1,5 @@
+@import '../../../styles/shared/mixins';
+
 .widget-wrapper {
   position: relative;
   display: flex;
@@ -220,51 +222,122 @@
   }
 }
 
-.widgets-container {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  align-items: start;
-  padding: 1rem;
+.widget-item {
+  @include card-base;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  break-inside: avoid;
+  height: fit-content;
 
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
   }
 
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
+  .widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(var(--surface-2), 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 48px;
+
+    .widget-title {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .widget-controls {
+      display: flex;
+      gap: var(--space-xs);
+      margin-left: auto;
+
+      button {
+        @include button-base;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          background: rgba(var(--primary-400), 0.1);
+          color: var(--primary-400);
+        }
+
+        .material-symbols-outlined {
+          font-size: 20px;
+        }
+      }
+    }
   }
 
-  @media (min-width: 1280px) {
-    grid-template-columns: repeat(4, 1fr);
+  .widget-content {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: var(--space-md);
+    position: relative;
+    @include custom-scrollbar;
+
+    // Default state
+    height: auto;
+    max-height: 600px;
+    transition: all 0.3s ease;
   }
 
-  &.has-maximized {
-    grid-template-columns: 1fr;
-    
-    .widget-item:not(.maximized) {
-      display: none;
+  &.maximized {
+    position: fixed;
+    inset: 1rem;
+    z-index: var(--z-modal);
+    background: var(--Neutral-5);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 2rem);
+
+    .widget-content {
+      flex: 1;
+      height: auto;
+      max-height: none;
+      min-height: 0;
+
+      .widget-container,
+      .widget-content-container,
+      .widget-content-wrapper {
+        height: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      inset: 0;
+      height: 100vh;
+      border-radius: 0;
+    }
+  }
+
+  // Minimized state styles
+  &.minimized:not(.maximized) {
+    .widget-content {
+      max-height: 0;
+      overflow: hidden;
     }
   }
 }
 
-.widget-item {
-  transition: all 0.3s ease;
-  min-width: 0; // Fixes flexbox overflow issues
-  
-  &.maximized {
-    position: fixed;
-    inset: 1rem;
-    z-index: 1000;
-    height: calc(100vh - 2rem);
-    width: calc(100vw - 2rem);
-  }
-
-  &.minimized {
-    .widget-content {
-      max-height: 0;
-      overflow: hidden;
-      padding: 0;
-    }
+@container (width < 400px) {
+  .widget-content {
+    flex-direction: column;
   }
 } 

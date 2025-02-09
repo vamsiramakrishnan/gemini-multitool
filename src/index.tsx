@@ -19,13 +19,27 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { LayoutProvider } from './contexts/LayoutContext';
+import { RootProvider } from './contexts/RootContext';
+import { WidgetManager } from './lib/widget-manager';
+
+const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
+if (!API_KEY) throw new Error("REACT_APP_GEMINI_API_KEY not set");
+
+const host = "generativelanguage.googleapis.com";
+const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
+const widgetManager = new WidgetManager();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <RootProvider url={uri} apiKey={API_KEY} widgetManager={widgetManager}>
+      <LayoutProvider>
+        <App />
+      </LayoutProvider>
+    </RootProvider>
   </React.StrictMode>
 );
 

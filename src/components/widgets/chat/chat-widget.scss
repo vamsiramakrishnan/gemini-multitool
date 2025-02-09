@@ -144,6 +144,12 @@
     position: relative;
     line-height: 1.5;
     font-size: 0.875rem;
+    background: linear-gradient(
+      to bottom right,
+      var(--surface-2) 0%,
+      var(--surface-1) 100%
+    );
+    border: 1px solid rgba(var(--primary-400), 0.1);
     
     &.chat-bubble-primary {
       background: var(--Blue-500);
@@ -217,10 +223,10 @@
 // Chat Widget Container Styles
 .chat-widget-container {
   position: fixed;
-  right: 2rem;
-  bottom: 2rem;
-  width: 24rem;
-  height: 32rem;
+  right: 1rem;
+  bottom: 80px; // Above control tray
+  width: min(90vw, 400px);
+  height: min(50vh, 600px);
   background: var(--Neutral-10);
   border-radius: 1rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
@@ -230,7 +236,8 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   &.minimized {
-    height: 4rem !important;
+    height: 40px !important;
+    bottom: 60px;
     .chat-messages, .chat-input {
       display: none;
     }
@@ -329,6 +336,12 @@
     line-height: 1.5;
     font-size: 0.9375rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(
+      to bottom right,
+      var(--surface-2) 0%,
+      var(--surface-1) 100%
+    );
+    border: 1px solid rgba(var(--primary-400), 0.1);
     
     &.chat-bubble-primary {
       background: var(--Blue-500);
@@ -563,6 +576,12 @@
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
     word-wrap: break-word;
+    background: linear-gradient(
+      to bottom right,
+      var(--surface-2) 0%,
+      var(--surface-1) 100%
+    );
+    border: 1px solid rgba(var(--primary-400), 0.1);
 
     &.chat-bubble-primary {
       background-color: var(--primary);
@@ -683,9 +702,13 @@
     pre {
       margin: 8px 0;
       padding: 12px;
-      background: var(--Neutral-15);
-      border-radius: 6px;
-      border: 1px solid var(--Neutral-30);
+      background: linear-gradient(
+        to bottom right,
+        var(--Neutral-10) 0%,
+        var(--Neutral-15) 100%
+      );
+      border-radius: 0.75rem;
+      border: 1px solid rgba(var(--primary-400), 0.1);
       overflow-x: auto;
       
       code {
@@ -933,5 +956,43 @@ a {
     color: var(--Neutral-60);
     max-width: 24rem;
     margin: 0 auto;
+  }
+}
+
+// Update message bubbles
+.chat-bubble {
+  &.user-message {
+    background: linear-gradient(
+      to bottom left,
+      var(--primary-700) 0%,
+      var(--primary-500) 100%
+    );
+  }
+}
+
+// Improve code blocks
+pre {
+  background: linear-gradient(
+    to bottom right,
+    var(--Neutral-10) 0%,
+    var(--Neutral-15) 100%
+  );
+  border: 1px solid rgba(var(--primary-400), 0.1);
+  border-radius: 0.75rem;
+}
+
+// Enhance typing indicator
+.dots span {
+  background: var(--primary-400);
+  box-shadow: 0 0 8px rgba(var(--primary-400), 0.3);
+}
+
+@media (max-width: 768px) {
+  .chat-widget-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    right: auto;
+    bottom: auto;
   }
 } 

@@ -1,0 +1,36 @@
+// Responsive Design
+
+// Fluid Typography (using CSS clamp())
+:root {
+  --fluid-min-width: 320;   // Minimum viewport width
+  --fluid-max-width: 1440;  // Maximum viewport width
+  --fluid-min-size: 14;    // Minimum font size (px)
+  --fluid-max-size: 18;    // Maximum font size (px)
+
+  // Calculate fluid font size
+  --fluid-size: calc(
+    var(--fluid-min-size) * 1px +
+    (var(--fluid-max-size) - var(--fluid-min-size)) *
+    (100vw - var(--fluid-min-width) * 1px) /
+    (var(--fluid-max-width) - var(--fluid-min-width))
+  );
+}
+
+// Apply fluid font size to body (can be applied to other elements as needed)
+body {
+  font-size: var(--fluid-size);
+}
+
+// Container Queries (for component-level responsiveness)
+.adaptive-container {
+  container-type: inline-size;
+
+  @container (min-width: 400px) {
+    .content {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr); // Example: 2 columns at 400px+
+    }
+  }
+
+  // Add more container queries as needed for different breakpoints
+} 

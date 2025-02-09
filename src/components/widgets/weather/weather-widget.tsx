@@ -39,11 +39,14 @@ export class WeatherWidget extends BaseWidget<WeatherData> {
   }
 
   async render(data: WeatherData = this.data): Promise<string> {
-    if (!data || data.error) {
-      return this.createErrorState(data?.error || 'No weather data available');
+    // Update internal data
+    this.data = { ...this.data, ...data };
+    
+    if (!this.data || this.data.error) {
+      return this.createErrorState(this.data?.error || 'No weather data available');
     }
 
-    const { temperature, condition, description, humidity, windSpeed, city, country, feelsLike, pressure, sunrise, sunset } = data;
+    const { temperature, condition, description, humidity, windSpeed, city, country, feelsLike, pressure, sunrise, sunset } = this.data;
     
     return `
       <div class="weather-widget">

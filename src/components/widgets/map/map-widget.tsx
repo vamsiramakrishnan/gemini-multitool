@@ -1,6 +1,5 @@
 import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import { loadGoogleMapsAPI } from '../../../lib/tools/google-maps';
-import { darkMapStyle } from './map-styles';
 import './map-widget.scss';
 import debounce from 'lodash/debounce';
 
@@ -17,6 +16,51 @@ export interface MapData extends BaseWidgetData {
   error?: string;
 }
 
+const darkMapStyle = [
+  {
+    "elementType": "geometry",
+    "stylers": [{"color": "#0c1115"}]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [{"color": "#00fff9"}]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [{"color": "#0a0b0c"}]
+  },
+  {
+    "featureType": "administrative.locality",
+    "elementType": "labels.text.fill",
+    "stylers": [{"color": "#00ff9d"}]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [{"color": "#131820"}]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry.stroke",
+    "stylers": [{"color": "#1a1f28"}]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [{"color": "#00fff9"}]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [{"color": "#bd00ff"}]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [{"color": "#0a0b0c"}]
+  }
+]; 
+
 export class MapWidget extends BaseWidget<MapData> {
   protected data: MapData;
   private map: google.maps.Map | null = null;
@@ -28,10 +72,11 @@ export class MapWidget extends BaseWidget<MapData> {
   private debouncedResize: (() => void) | null = null;
   private mapContainer: HTMLElement | null = null;
   private mapsInstance: typeof google.maps | null = null;
+  private animationFrameId: number | null = null;
 
   // Cache for expensive computations
-  private static readonly iconCache: Record<string, string> = {};
-  private static readonly formattedAddressCache: Record<string, string> = {};
+  private static iconCache: Record<string, string> = {};
+  private static formattedAddressCache: Record<string, string> = {};
 
   constructor(data?: MapData) {
     super('Map');
@@ -43,13 +88,16 @@ export class MapWidget extends BaseWidget<MapData> {
     };
   }
 
-  async render(data: MapData): Promise<string> {    
+  async render(data: MapData = this.data): Promise<string> {
+    // Update internal data
+    this.data = { ...this.data, ...data };
+    
     // Pre-format addresses for better performance
-    if (!MapWidget.formattedAddressCache[data.origin]) {
-      MapWidget.formattedAddressCache[data.origin] = this.formatAddress(data.origin);
+    if (!MapWidget.formattedAddressCache[this.data.origin]) {
+      MapWidget.formattedAddressCache[this.data.origin] = this.formatAddress(this.data.origin);
     }
-    if (!MapWidget.formattedAddressCache[data.destination]) {
-      MapWidget.formattedAddressCache[data.destination] = this.formatAddress(data.destination);
+    if (!MapWidget.formattedAddressCache[this.data.destination]) {
+      MapWidget.formattedAddressCache[this.data.destination] = this.formatAddress(this.data.destination);
     }
 
     return `
@@ -62,9 +110,9 @@ export class MapWidget extends BaseWidget<MapData> {
             <div class="route-info">
               <div class="route-title">Navigation Route</div>
               <div class="route-path">
-                ${data.origin} 
+                ${this.data.origin} 
                 <span class="separator">→</span> 
-                ${data.destination}
+                ${this.data.destination}
               </div>
             </div>
           </div>
@@ -91,7 +139,7 @@ export class MapWidget extends BaseWidget<MapData> {
               <span class="material-symbols-outlined">location_on</span>
               Starting Point
             </div>
-            <div class="detail-value">${MapWidget.formattedAddressCache[data.origin]}</div>
+            <div class="detail-value">${MapWidget.formattedAddressCache[this.data.origin]}</div>
             <div class="detail-label">Origin</div>
           </div>
           
@@ -100,7 +148,7 @@ export class MapWidget extends BaseWidget<MapData> {
               <span class="material-symbols-outlined">flag</span>
               Destination
             </div>
-            <div class="detail-value">${MapWidget.formattedAddressCache[data.destination]}</div>
+            <div class="detail-value">${MapWidget.formattedAddressCache[this.data.destination]}</div>
             <div class="detail-label">End Point</div>
           </div>
 
@@ -109,13 +157,13 @@ export class MapWidget extends BaseWidget<MapData> {
               <span class="material-symbols-outlined">schedule</span>
               Duration
             </div>
-            <div class="detail-value">${this.getRouteDuration(data)}</div>
+            <div class="detail-value">${this.getRouteDuration(this.data)}</div>
             <div class="detail-label">Estimated Time</div>
           </div>
         </div>
 
         <div class="navigation-steps">
-          ${this.renderNavigationSteps(data)}
+          ${this.renderNavigationSteps(this.data)}
         </div>
       </div>
     `;
@@ -123,10 +171,12 @@ export class MapWidget extends BaseWidget<MapData> {
 
   async postRender(container: HTMLElement, data: MapData): Promise<void> {
     try {
-      // Store container reference for cleanup
       this.mapContainer = container.querySelector('#map-container');
       if (!this.mapContainer) throw new Error('Map container not found');
-
+      
+      // Add compositing optimizations
+      this.setupMapContainer();
+      
       // Load maps API only once and cache the instance
       if (!this.mapsInstance) {
         this.mapsInstance = await loadGoogleMapsAPI();
@@ -151,6 +201,13 @@ export class MapWidget extends BaseWidget<MapData> {
           clickableIcons: false,
           disableDoubleClickZoom: true
         });
+
+        // Add initial resize trigger
+        setTimeout(() => {
+          if (this.map) {
+            maps.event.trigger(this.map, 'resize');
+          }
+        }, 100);
       }
 
       // Setup custom controls with cleanup
@@ -180,20 +237,18 @@ export class MapWidget extends BaseWidget<MapData> {
       }
 
       if (data._rawResponse) {
-        this.directionsRenderer.setDirections(data._rawResponse);
-        this.loading = false;
-
-        // Setup step interactions with cleanup tracking
-        this.setupStepInteractions(container, data);
-
-        // Fit bounds with padding for better view
-        if (data._rawResponse.routes?.[0]?.bounds) {
-          const bounds = data._rawResponse.routes[0].bounds;
-          this.map.fitBounds(bounds);
-          
-          // Adjust zoom level slightly to add padding effect
-          this.map.setZoom(this.map.getZoom()! - 1);
-        }
+        this.directionsRenderer?.setOptions({
+          suppressMarkers: true,
+          preserveViewport: true,
+          polylineOptions: {
+            strokeColor: '#4287f5',
+            strokeWeight: 3,
+            strokeOpacity: 0.7
+          }
+        });
+        
+        // Debounce bounds calculation
+        this.debouncedFitBounds(data._rawResponse);
       }
 
       // Handle map container resizing with debounce
@@ -222,6 +277,17 @@ export class MapWidget extends BaseWidget<MapData> {
     } catch (error) {
       console.error('Error in map postRender:', error);
       this.loading = false;
+      
+      // Add error state cleanup
+      const loadingContainer = container.querySelector('.loading-container');
+      if (loadingContainer) {
+        loadingContainer.innerHTML = `
+          <div class="error-state">
+            <span class="material-symbols-outlined">error</span>
+            Failed to load directions
+          </div>
+        `;
+      }
     }
   }
 
@@ -257,7 +323,21 @@ export class MapWidget extends BaseWidget<MapData> {
       { element: zoomOutBtn!, listener: zoomOutHandler },
       { element: fullscreenBtn!, listener: fullscreenHandler }
     );
+
+    // Add passive flag for wheel events
+    container.addEventListener('wheel', this.handleWheelZoom, { 
+      passive: true,
+      capture: true
+    });
   }
+
+  private handleWheelZoom = (e: WheelEvent) => {
+    e.preventDefault();
+    if (this.map) {
+      const delta = e.deltaY > 0 ? -1 : 1;
+      this.map.setZoom(this.map.getZoom()! + delta);
+    }
+  };
 
   private setupStepInteractions(container: HTMLElement, data: MapData): void {
     const steps = container.querySelectorAll('.step');
@@ -328,26 +408,30 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   private renderNavigationSteps(data: MapData): string {
-    if (!data._rawResponse?.routes?.[0]?.legs?.[0]?.steps) {
-      return '';
-    }
+    if (!data._rawResponse?.routes?.[0]?.legs?.[0]?.steps) return '';
 
-    const steps = data._rawResponse.routes[0].legs[0].steps;
-    return steps.map((step: google.maps.DirectionsStep, index: number) => `
+    return `
+      <div class="navigation-steps">
+        <div class="steps-scroll-container" style="height: 300px; overflow-y: auto;">
+          ${data._rawResponse.routes[0].legs[0].steps
+            .slice(0, 50) // Initial render limit
+            .map((step, index) => this.renderStep(step, index))
+            .join('')}
+        </div>
+      </div>`;
+  }
+
+  private renderStep(step: google.maps.DirectionsStep, index: number): string {
+    return `
       <div class="step" data-step-index="${index}">
-        <div class="step-marker">
-          <span class="material-symbols-outlined">${this.getManeuverIcon(step.maneuver)}</span>
-        </div>
         <div class="step-content">
-          <div class="step-title">
-            ${step.instructions?.replace(/<[^>]*>/g, '') || 'No instructions available'}
-          </div>
-          <div class="step-distance">
-            ${step.distance?.text || ''} • ${step.duration?.text || ''}
+          <div class="step-marker">${index + 1}</div>
+          <div class="step-info">
+            <div class="step-title">${step.instructions}</div>
+            <div class="step-distance">${step.distance?.text}</div>
           </div>
         </div>
-      </div>
-    `).join('');
+      </div>`;
   }
 
   private async updateStepMarker(map: google.maps.Map | null, step: google.maps.DirectionsStep): Promise<void> {
@@ -388,6 +472,20 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   destroy(): void {
+    // Cancel any pending animations
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+    
+    // Clear caches through reassignment instead of mutation
+    MapWidget.iconCache = {};
+    MapWidget.formattedAddressCache = {};
+
+    // Clean up additional listeners
+    if (this.mapContainer) {
+      this.mapContainer.removeEventListener('wheel', this.handleWheelZoom);
+    }
+
     // Clean up resize observer
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
@@ -429,4 +527,46 @@ export class MapWidget extends BaseWidget<MapData> {
 
     super.destroy();
   }
+
+  private debouncedFitBounds = debounce((response: google.maps.DirectionsResult) => {
+    if (this.map && response.routes?.[0]?.bounds) {
+      requestAnimationFrame(() => {
+        this.map!.fitBounds(response.routes[0].bounds!);
+        this.map!.setZoom(Math.min(this.map!.getZoom()!, 14));
+      });
+    }
+  }, 500);
+
+  // Add GPU acceleration and compositing hints
+  private setupMapContainer(): void {
+    if (this.mapContainer) {
+      // Force GPU layer
+      this.mapContainer.style.transform = 'translateZ(0)';
+      this.mapContainer.style.backfaceVisibility = 'hidden';
+      // Hint to browser about compositing
+      this.mapContainer.style.willChange = 'transform';
+    }
+  }
+
+  private debouncedMapUpdate = debounce((response: google.maps.DirectionsResult) => {
+    if (!this.map || !response.routes?.[0]) return;
+    
+    // Batch map updates
+    requestAnimationFrame(() => {
+      // Update directions
+      this.directionsRenderer?.setDirections(response);
+      
+      // Update bounds
+      if (response.routes[0].bounds) {
+        this.map!.fitBounds(response.routes[0].bounds);
+        this.map!.setZoom(Math.min(this.map!.getZoom()!, 14));
+      }
+      
+      // Update step marker for first step
+      const firstStep = response.routes[0].legs?.[0]?.steps?.[0];
+      if (firstStep) {
+        this.updateStepMarker(this.map, firstStep);
+      }
+    });
+  }, 100);
 } 

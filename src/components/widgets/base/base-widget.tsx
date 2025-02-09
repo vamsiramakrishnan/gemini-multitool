@@ -15,7 +15,14 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
     this.data = { title } as T;
   }
 
+  // Public method to access widget data
+  getData(): T {
+    return { ...this.data };
+  }
+
   async render(data: T = this.data): Promise<string> {
+    // Update internal data when rendering
+    this.data = { ...this.data, ...data };
     return `
       <div class="widget-card">
         <div class="widget-content">
@@ -79,14 +86,17 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
 
   async postRender(element: HTMLElement, data: T): Promise<void> {
     this.element = element;
-    // Implement any post-render logic here
+    // Update internal data during post-render
+    this.data = { ...this.data, ...data };
   }
 
   destroy(): void {
-    // Implement any cleanup logic here
     if (this.element) {
       this.element.innerHTML = '';
+      this.element = null;
     }
+    // Clear internal data on destroy
+    this.data = { title: 'Widget' } as T;
   }
 
   protected createResponsiveColumns(columns: string[]): string {
@@ -252,23 +262,6 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
           </div>
         `).join('')}
       </div>
-      <script>
-        const tabContent = document.querySelector('.tab-content-${tabId}');
-        const tabPanes = tabContent.querySelectorAll('.tab-pane');
-        
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'data-active-tab') {
-              const activeTab = tabContent.dataset.activeTab;
-              tabPanes.forEach(pane => {
-                pane.classList.toggle('hidden', pane.dataset.tab !== activeTab);
-              });
-            }
-          });
-        });
-        
-        observer.observe(tabContent, { attributes: true });
-      </script>
     `;
   }
 

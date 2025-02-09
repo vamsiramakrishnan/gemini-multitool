@@ -1,0 +1,272 @@
+// Retro color palette
+$retro-black: #0a0a0f !default;
+$retro-blue: #00f3ff !default;
+$retro-pink: #ff00ff !default;
+$retro-green: #00ff9d !default;
+$retro-purple: #bd00ff !default;
+$crt-glow: rgba(0, 243, 255, 0.15);
+
+// Typography
+$font-display: 'Space Mono', monospace;
+$font-ui: 'IBM Plex Mono', monospace;
+$font-body: 'VT323', monospace;
+
+// Effects
+$scanlines: repeating-linear-gradient(
+  0deg,
+  rgba(0, 0, 0, 0.15) 0px,
+  rgba(0, 0, 0, 0.15) 1px,
+  transparent 1px,
+  transparent 2px
+);
+$crt-overlay: linear-gradient(
+  rgba(18, 16, 16, 0.2),
+  rgba(0, 0, 0, 0.2) 3px,
+  transparent 3px,
+  transparent 6px
+);
+
+@mixin crt-glow {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: 0 0 40px 2px rgba($retro-blue, 0.2);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+// Add to design system
+body {
+  font-family: $font-body;
+  color: $retro-green;
+  
+  h1, h2, h3, h4 {
+    font-family: $font-display;
+    letter-spacing: -0.03em;
+  }
+  
+  code, pre {
+    font-family: $font-ui;
+    background: rgba($retro-black, 0.9);
+    border: 1px solid $retro-blue;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+// Add to main App.scss
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: $scanlines;
+  pointer-events: none;
+  z-index: 999;
+  mix-blend-mode: overlay;
+}
+
+.global-glow {
+  @include crt-glow;
+}
+
+:root {
+  --retro-black: #0a0a0f;
+  --retro-blue: #00f3ff;
+  --retro-pink: #ff00ff;
+  --retro-green: #00ff9d;
+  --retro-purple: #bd00ff;
+  --crt-glow: rgba(0, 243, 255, 0.15);
+
+  // Neutral Palette (for light and dark themes)
+  --Neutral-5: #f8f9fa;
+  --Neutral-10: #f1f3f5;
+  --Neutral-15: #e9ecef;
+  --Neutral-20: #dee2e6;
+  --Neutral-30: #ced4da;
+  --Neutral-40: #adb5bd;
+  --Neutral-50: #868e96;
+  --Neutral-60: #495057;
+  --Neutral-70: #343a40;
+  --Neutral-80: #212529;
+  --Neutral-90: #121212;
+
+    // Blues
+  --Blue-50: #e3f2fd;
+  --Blue-100: #bbdefb;
+  --Blue-200: #90caf9;
+  --Blue-300: #64b5f6;
+  --Blue-400: #42a5f5;
+  --Blue-500: #2196f3;
+  --Blue-600: #1e88e5;
+  --Blue-700: #1976d2;
+  --Blue-800: #1565c0;
+  --Blue-900: #0d47a1;
+
+  // Reds
+  --Red-50: #ffebee;
+  --Red-100: #ffcdd2;
+  --Red-200: #ef9a9a;
+  --Red-300: #e57373;
+  --Red-400: #ef5350;
+  --Red-500: #f44336;
+  --Red-600: #e53935;
+  --Red-700: #d32f2f;
+  --Red-800: #c62828;
+  --Red-900: #b71c1c;
+
+  // Default Surfaces and Text
+  --surface-0: var(--Neutral-90);  // Darkest
+  --surface-1: var(--Neutral-80);
+  --surface-2: var(--Neutral-70);
+  --surface-3: var(--Neutral-60);
+  --text-primary: var(--Neutral-5); // Lightest
+  --text-secondary: var(--Neutral-30);
+  --text-tertiary: var(--Neutral-50);
+
+  // Typography
+  --font-display: 'Space Mono', monospace;
+  --font-ui: 'IBM Plex Mono', monospace;
+  --font-body: 'VT323', monospace;
+
+  --font-size-base: 1rem;
+  --font-size-sm: 0.875rem;
+  --font-size-xs: 0.75rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+
+  // Spacing
+  --space-unit: 1rem;
+  --space-xxs: calc(0.25 * var(--space-unit));
+  --space-xs: calc(0.5 * var(--space-unit));
+  --space-sm: calc(0.75 * var(--space-unit));
+  --space-md: calc(1.25 * var(--space-unit));
+  --space-lg: calc(2 * var(--space-unit));
+  --space-xl: calc(3.25 * var(--space-unit));
+
+  // Border Radius
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  // Effects
+  --scanlines: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15) 0px,
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  --crt-overlay: linear-gradient(
+    rgba(18, 16, 16, 0.2),
+    rgba(0, 0, 0, 0.2) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  --blur-sm: 4px;
+  --blur-md: 8px;
+  --blur-lg: 16px;
+    --terminal-line: 1px solid var(--retro-blue);
+    --terminal-glow: 0 0 15px rgba(0, 255, 249, 0.3);
+    --terminal-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 1px 1px rgba(255,255,255,0.05);
+    --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --hover-transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+    --active-scale: 0.98;
+    --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  // Z-Index
+  --z-base: 1;
+  --z-map: 100;
+  --z-controls: 200;
+  --z-sidepanel: 300;
+  --z-modal: 400;
+}
+
+// Dark Theme (optional, but good practice)
+[data-theme="dark"] {
+  // Override variables for dark theme
+  --surface-0: var(--Neutral-5);
+  --surface-1: var(--Neutral-10);
+  --surface-2: var(--Neutral-15);
+  --surface-3: var(--Neutral-20);
+  --text-primary: var(--Neutral-90);
+  --text-secondary: var(--Neutral-60);
+  --text-tertiary: var(--Neutral-40);
+}
+
+// Base Styles
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background-color: var(--surface-0);
+  line-height: 1.6;
+  margin: 0; // Remove default margin
+  padding: 0; // Remove default padding
+  overflow: hidden; // Prevent horizontal scrollbars
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+  color: var(--text-primary); // Consistent heading color
+}
+
+code, pre {
+  font-family: var(--font-ui);
+  background: rgba(var(--retro-black), 0.9);
+  border: 1px solid var(--retro-blue);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--retro-green); // Consistent code color
+}
+
+// Global Scanlines (applied to body::before in App.scss)
+@mixin scanlines {
+  background: var(--scanlines);
+}
+
+// CRT Overlay (applied where needed)
+@mixin crt-overlay {
+  background: var(--crt-overlay);
+}
+
+// CRT Glow (mixin for reusability)
+@mixin crt-glow {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: 0 0 40px 2px var(--crt-glow);
+    pointer-events: none;
+    z-index: -1; // Ensure it's behind the content
+    border-radius: inherit; // Inherit border-radius from parent
+  }
+}
+
+// Responsive Font Sizing (using clamp for fluid typography)
+body {
+  font-size: clamp(14px, 4vw, 18px); // Example fluid sizing
+}
+
+// Update component z-indices
+.map-widget {
+  z-index: var(--z-map);
+}
+
+.control-tray {
+  z-index: var(--z-controls);
+}
+
+.side-panel {
+  z-index: var(--z-sidepanel);
+}

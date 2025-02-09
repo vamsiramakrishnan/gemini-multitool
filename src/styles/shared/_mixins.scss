@@ -1,0 +1,212 @@
+@import './design-system';
+
+// Glass Effect Mixins
+@mixin glass-morphism($opacity: 0.7, $blur: 12px) {
+  background: rgba(var(--surface-1), $opacity);
+  backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.3);
+}
+
+@mixin glass-morphism-heavy($opacity: 0.8, $blur: 16px) {
+  background: rgba(var(--surface-2), $opacity);
+  backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+// Interactive States
+@mixin hover-lift {
+  transition: var(--hover-transition);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+// Card Styles
+@mixin card-base {
+  background: linear-gradient(
+    145deg,
+    var(--surface-1) 0%,
+    var(--surface-0) 100%
+  );
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+// Button Styles
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: var(--transition-all);
+  gap: 0.5rem;
+  cursor: pointer; // Ensure buttons have a pointer cursor
+  border: none; // Remove default border
+  font-family: var(--font-ui); // Consistent font
+  text-transform: uppercase; // Retro style
+  letter-spacing: 0.05em;
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: linear-gradient(
+    135deg,
+    var(--retro-blue) 0%,  // Use retro colors
+    var(--retro-pink) 100%
+  );
+  color: var(--retro-black); // High contrast text
+  text-shadow: 0 0 8px rgba(var(--retro-blue), 0.6); // Add glow
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px -8px rgba(var(--retro-blue), 0.4);
+  }
+
+  &:active {
+      transform: scale(var(--active-scale));
+  }
+}
+
+// Icon Styles
+@mixin icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--retro-blue) 0%,
+    var(--retro-pink) 100%
+  );
+
+  .material-symbols-outlined {
+    font-size: 24px;
+    color: var(--retro-black); // High contrast icon
+  }
+}
+
+// Loading States
+@mixin loading-spinner {
+  &::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(var(--retro-blue), 0.1); // Use retro color
+    border-top-color: var(--retro-blue);
+    border-radius: 50%;
+    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+// Empty States
+@mixin empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--radius-xl);
+  text-align: center;
+  min-height: 240px;
+  @include glass-morphism;
+
+  .empty-icon {
+    font-size: var(--font-size-4xl);
+    color: var(--retro-blue); // Use retro color
+    margin-bottom: var(--radius-lg);
+    opacity: 0.5;
+  }
+    h3 {
+        color: var(--text-primary)
+    }
+    p {
+        color: var(--text-secondary);
+    }
+}
+
+// Animations (defined in _animations.scss, but referenced here)
+// @keyframes spin, @keyframes pulse, @keyframes fadeIn are defined in _animations.scss
+
+// Depth Levels (for shadows and borders)
+@mixin depth-1 {
+  box-shadow: 0 2px 8px -2px rgba(0,0,0,0.1);
+}
+
+@mixin depth-2 {
+  box-shadow: 0 4px 16px -4px rgba(0,0,0,0.15);
+}
+
+@mixin depth-3 {
+  box-shadow: 0 8px 32px -8px rgba(0,0,0,0.2);
+}
+
+@mixin depth-border {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+}
+
+@mixin retro-button {
+  @include button-base;
+  border: 1px solid var(--retro-blue);
+  background: rgba(var(--retro-black), 0.8);
+  color: var(--retro-blue);
+  text-shadow: 0 0 8px rgba(var(--retro-blue), 0.6);
+
+  &:hover {
+    background: rgba(var(--retro-blue), 0.1);
+    box-shadow: 0 0 12px rgba(var(--retro-blue), 0.3);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+    &:focus-visible {
+        @include focus-styling;
+    }
+}
+
+// Scrollbar Styling
+@mixin custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-3) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--surface-3);
+    border-radius: var(--radius-full);
+
+    &:hover {
+      background: var(--surface-2);
+    }
+  }
+}
+
+@mixin focus-styling {
+    outline: none;
+    box-shadow:
+      0 0 0 2px rgb(var(--surface-0)),
+      0 0 0 4px var(--retro-blue);
+} 

@@ -14,8 +14,6 @@ export interface StockData extends BaseWidgetData {
 }
 
 export class StockWidget extends BaseWidget<StockData> {
-  protected data: StockData;
-
   constructor(data?: StockData) {
     super('Stock');
     this.data = {
@@ -33,11 +31,14 @@ export class StockWidget extends BaseWidget<StockData> {
   }
 
   async render(data: StockData = this.data): Promise<string> {
-    if (data.error) {
-      return this.createErrorState(data.error);
+    // Update internal data
+    this.data = { ...this.data, ...data };
+    
+    if (this.data.error) {
+      return this.createErrorState(this.data.error);
     }
 
-    const { symbol, currentPrice, change, percentChange, highPrice, lowPrice, openPrice, previousClose } = data;
+    const { symbol, currentPrice, change, percentChange, highPrice, lowPrice, openPrice, previousClose } = this.data;
     const isPositive = change >= 0;
     const pricePosition = ((currentPrice - lowPrice) / (highPrice - lowPrice)) * 100;
     

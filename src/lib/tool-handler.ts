@@ -219,7 +219,6 @@ export class ToolHandler {
   }
 
   handleInterruption() {
-    console.log('Handling tool interruption');
     // Clean up all active tool calls
     for (const [id, call] of this.activeToolCalls) {
       this.handleToolCancellation(id);
@@ -316,57 +315,65 @@ export class ToolHandler {
   }
 
   async handleWithStatus(toolName: ToolName, args: any, apiCall: () => Promise<any>) {
-    console.log('Handling tool with status:', { toolName, args, activeTabId: this.activeTabId });
-    const toolCallId = `${toolName}-${Date.now()}`;
+    console.log(`Handling ${toolName} with args:`, args);
     try {
-      this.activeToolCalls.set(toolCallId, {
-        name: toolName,
-        startTime: Date.now(),
-        status: 'running'
-      });
-
       const result = await apiCall();
-      console.log('API call result:', result);
-      
-      const activeCall = this.activeToolCalls.get(toolCallId);
-      if (activeCall?.status === 'cancelled') {
-        throw new Error('Tool call was cancelled');
-      }
+      console.log(`${toolName} result:`, result);
 
-      // Create widget with active tab ID
-      if (toolName !== 'get_directions') {
-        const widgetType = this.mapToolToWidgetType(toolName);
-        console.log('Creating widget in tab:', this.activeTabId);
-        const widgetId = await this.widgetManager.createWidget(
-          widgetType, 
-          { ...result, _targetTabId: args._targetTabId }, 
-          args._targetTabId || this.activeTabId
-        );
-        console.log('Widget created:', { widgetId, tabId: args._targetTabId || this.activeTabId });
-      }
+      // Create widget with the current active tab ID
+      const widgetType = this.mapToolToWidgetType(toolName);
+      const widgetId = await this.widgetManager.createWidget(
+        widgetType,
+        {
+          ...result,
+          title: this.getWidgetTitle(toolName, result)
+        },
+        this.activeTabId // Explicitly pass the active tab ID
+      );
 
+      console.log(`Created widget ${widgetId} in tab ${this.activeTabId}`);
       return result;
     } catch (error: any) {
-      console.error('Error in handleWithStatus:', error);
-      return this.handleToolError(toolName, toolCallId, error);
-    } finally {
-      this.activeToolCalls.delete(toolCallId);
+      console.error(`Error in ${toolName}:`, error);
+      throw error;
     }
   }
 
   private mapToolToWidgetType(toolName: ToolName): WidgetType {
-    const toolToWidgetMap: Record<ToolName, WidgetType> = {
-      'get_weather': 'weather',
-      'get_stock_price': 'stock',
-      'get_directions': 'map',
-      'search_places': 'places',
-      'search_nearby': 'nearby_places',
-      'google_search': 'google_search',
-      'render_altair': 'altair',
-      'code_execution': 'code_execution'
+    const mapping: Record<ToolName, WidgetType> = {
+      get_weather: 'weather',
+      get_stock_price: 'stock',
+      get_directions: 'map',
+      search_places: 'places',
+      search_nearby: 'nearby_places',
+      google_search: 'google_search',
+      render_altair: 'altair',
+      code_execution: 'code_execution'
     };
-    console.log('Mapping tool to widget type:', { toolName, mappedType: toolToWidgetMap[toolName] });
-    return toolToWidgetMap[toolName];
+    return mapping[toolName];
+  }
+
+  private getWidgetTitle(toolName: ToolName, result: any): string {
+    switch (toolName) {
+      case 'get_weather':
+        return `Weather - ${result.city}`;
+      case 'get_stock_price':
+        return `Stock - ${result.symbol}`;
+      case 'get_directions':
+        return 'Directions';
+      case 'search_places':
+        return 'Places Search';
+      case 'search_nearby':
+        return 'Nearby Places';
+      case 'google_search':
+        return 'Search Results';
+      case 'render_altair':
+        return 'Visualization';
+      case 'code_execution':
+        return 'Code Execution';
+      default:
+        return 'Widget';
+    }
   }
 
   handleToolError(toolName: ToolName, toolCallId: string, error: Error) {

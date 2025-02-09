@@ -34,19 +34,22 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     };
   }
 
-  async render(data: PlacesData): Promise<string> {
-    if (!data || data.error) {
-      return this.createErrorState(data?.error || 'No data available');
+  async render(data: PlacesData = this.data): Promise<string> {
+    // Update internal data
+    this.data = { ...this.data, ...data };
+    
+    if (!this.data || this.data.error) {
+      return this.createErrorState(this.data?.error || 'No data available');
     }
 
-    if (!data.places || data.places.length === 0) {
+    if (!this.data.places || this.data.places.length === 0) {
       return this.renderEmptyState();
     }
 
     return `
       <div class="places-widget container mx-auto p-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          ${data.places.map(place => this.renderPlaceCard(place)).join('')}
+          ${this.data.places.map(place => this.renderPlaceCard(place)).join('')}
         </div>
       </div>
     `;

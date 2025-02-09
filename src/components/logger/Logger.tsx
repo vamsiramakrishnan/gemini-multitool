@@ -18,7 +18,7 @@ import "./logger.scss";
 
 import { Part } from "@google/generative-ai";
 import cn from "classnames";
-import { ReactNode } from "react";
+import { ReactNode, useRef, useState, useEffect, memo } from "react";
 import { useLoggerStore } from "../../lib/store-logger";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 as dark } from "react-syntax-highlighter/dist/esm/styles/hljs";
@@ -254,20 +254,46 @@ const component = (log: StreamingLog) => {
   return AnyMessage;
 };
 
-export default function Logger({ filter = "none" }: LoggerProps) {
+const Logger = memo(({ filter = "none" }: LoggerProps) => {
   const { logs } = useLoggerStore();
-
-  const filterFn = filters[filter];
+  const listRef = useRef<HTMLUListElement>(null);
+  
+  // Virtualize log entries
+  const [visibleLogs, setVisibleLogs] = useState<StreamingLog[]>([]);
+  
+  useEffect(() => {
+    if (!listRef.current) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // Load more logs when scrolling
+            const currentLength = visibleLogs.length;
+            setVisibleLogs(logs.slice(0, currentLength + 20));
+          }
+        });
+      },
+      { rootMargin: '100px' }
+    );
+    
+    observer.observe(listRef.current);
+    return () => observer.disconnect();
+  }, [logs, visibleLogs]);
 
   return (
     <div className="logger">
-      <ul className="logger-list">
-        {logs.filter(filterFn).map((log, key) => {
-          return (
-            <LogEntry MessageComponent={component(log)} log={log} key={key} />
-          );
-        })}
+      <ul className="logger-list" ref={listRef}>
+        {visibleLogs.filter(filters[filter]).map((log, key) => (
+          <LogEntry 
+            MessageComponent={component(log)} 
+            log={log} 
+            key={key} 
+          />
+        ))}
       </ul>
     </div>
   );
-}
+});
+
+export default Logger;

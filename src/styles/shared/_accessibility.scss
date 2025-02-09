@@ -1,0 +1,27 @@
+// Accessibility Enhancements
+
+// Focus Management (clear visual indication for keyboard users)
+:focus-visible {
+  outline: 2px solid var(--retro-blue); // Use retro color
+  outline-offset: 2px;
+  border-radius: 4px; // Match border-radius
+}
+
+// Reduced Motion (respect user preference for reduced motion)
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// High Contrast Mode (Windows High Contrast Mode)
+@media (forced-colors: active) {
+  .interactive-element {
+    border: 1px solid ButtonText; // Use system color
+  }
+} 

@@ -22,6 +22,7 @@ import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
 import { useLoggerStore } from "../../lib/store-logger";
 import Logger, { LoggerFilterType } from "../logger/Logger";
 import "./side-panel.scss";
+import { useLayout } from "../../contexts/LayoutContext";
 
 const filterOptions = [
   { value: "conversations", label: "Conversations" },
@@ -31,7 +32,7 @@ const filterOptions = [
 
 export default function SidePanel() {
   const { connected, client } = useLiveAPIContext();
-  const [open, setOpen] = useState(true);
+  const { panelOpen, setPanelOpen } = useLayout();
   const loggerRef = useRef<HTMLDivElement>(null);
   const loggerLastHeightRef = useRef<number>(-1);
   const { log, logs } = useLoggerStore();
@@ -43,19 +44,16 @@ export default function SidePanel() {
   } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  //scroll the log to the bottom when new logs come in
   useEffect(() => {
-    if (loggerRef.current) {
+    if (loggerRef.current && panelOpen) {
       const el = loggerRef.current;
-      const scrollHeight = el.scrollHeight;
-      if (scrollHeight !== loggerLastHeightRef.current) {
-        el.scrollTop = scrollHeight;
-        loggerLastHeightRef.current = scrollHeight;
-      }
+      el.scrollTo({
+        top: el.scrollHeight,
+        behavior: 'smooth'
+      });
     }
-  }, [logs]);
+  }, [logs, panelOpen]);
 
-  // listen for log events and store them
   useEffect(() => {
     client.on("log", log);
     return () => {
@@ -73,89 +71,102 @@ export default function SidePanel() {
   };
 
   return (
-    <div className={`side-panel ${open ? "open" : ""}`}>
-      <header className="top">
-        <h2>Console</h2>
-        {open ? (
-          <button className="opener" onClick={() => setOpen(false)}>
-            <RiSidebarFoldLine color="#b4b8bb" />
-          </button>
-        ) : (
-          <button className="opener" onClick={() => setOpen(true)}>
-            <RiSidebarUnfoldLine color="#b4b8bb" />
-          </button>
-        )}
-      </header>
-      <section className="indicators">
-        <Select
-          className="react-select"
-          classNamePrefix="react-select"
-          styles={{
-            control: (baseStyles) => ({
-              ...baseStyles,
-              background: "var(--Neutral-15)",
-              color: "var(--Neutral-90)",
-              minHeight: "33px",
-              maxHeight: "33px",
-              border: 0,
-            }),
-            option: (styles, { isFocused, isSelected }) => ({
-              ...styles,
-              backgroundColor: isFocused
-                ? "var(--Neutral-30)"
-                : isSelected
-                  ? "var(--Neutral-20)"
-                  : undefined,
-            }),
-          }}
-          defaultValue={selectedOption}
-          options={filterOptions}
-          onChange={(e) => {
-            setSelectedOption(e);
-          }}
-        />
-        <div className={cn("streaming-indicator", { connected })}>
-          {connected
-            ? `🔵${open ? " Streaming" : ""}`
-            : `⏸️${open ? " Paused" : ""}`}
-        </div>
-      </section>
-      <div className="side-panel-container" ref={loggerRef}>
-        <Logger
-          filter={(selectedOption?.value as LoggerFilterType) || "none"}
-        />
-      </div>
-      <div className={cn("input-container", { disabled: !connected })}>
-        <div className="input-content">
-          <textarea
-            className="input-area"
-            ref={inputRef}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                handleSubmit();
-              }
+    <>
+      <div className={cn("side-panel", { open: panelOpen })}>
+        <header className="top">
+          <h2>Console</h2>
+        </header>
+        <section className="indicators">
+          <Select
+            className="react-select"
+            classNamePrefix="react-select"
+            styles={{
+              control: (baseStyles) => ({
+                ...baseStyles,
+                backgroundColor: "var(--Neutral-20)",
+                border: "1px solid var(--Neutral-30)",
+                color: "var(--Neutral-90)",
+                height: "30px",
+                minHeight: "unset",
+              }),
+              singleValue: (styles) => ({
+                ...styles,
+                color: "var(--Neutral-90)",
+              }),
+              menu: (styles) => ({
+                ...styles,
+                backgroundColor: "var(--Neutral-20)",
+                color: "var(--Neutral-90)",
+              }),
+              option: (styles, { isFocused, isSelected }) => ({
+                ...styles,
+                backgroundColor: isFocused
+                  ? "var(--Neutral-30)"
+                  : isSelected
+                    ? "var(--Neutral-20)"
+                    : undefined,
+              }),
             }}
-            onChange={(e) => setTextInput(e.target.value)}
-            value={textInput}
-          ></textarea>
-          <span
-            className={cn("input-content-placeholder", {
-              hidden: textInput.length,
-            })}
-          >
-            Type&nbsp;something...
-          </span>
+            defaultValue={selectedOption}
+            options={filterOptions}
+            onChange={(e) => {
+              setSelectedOption(e);
+            }}
+          />
+          <div className={cn("streaming-indicator", { connected })}>
+            {connected
+              ? `🔵${panelOpen ? " Streaming" : ""}`
+              : `⏸️${panelOpen ? " Paused" : ""}`}
+          </div>
+        </section>
+        <div className="side-panel-container" ref={loggerRef}>
+          <Logger
+            filter={(selectedOption?.value as LoggerFilterType) || "none"}
+          />
+        </div>
+        <div className={cn("input-container", { disabled: !connected })}>
+          <div className="input-content">
+            <textarea
+              className="input-area"
+              ref={inputRef}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSubmit();
+                }
+              }}
+              onChange={(e) => setTextInput(e.target.value)}
+              value={textInput}
+            ></textarea>
+            <span
+              className={cn("input-content-placeholder", {
+                hidden: textInput.length,
+              })}
+            >
+              Type&nbsp;something...
+            </span>
 
-          <button
-            className="send-button material-symbols-outlined filled"
-            onClick={handleSubmit}
-          >
-            send
-          </button>
+            <button
+              className="send-button material-symbols-outlined filled"
+              onClick={handleSubmit}
+            >
+              send
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <button
+        className={`panel-toggle ${panelOpen ? "open" : ""}`}
+        onClick={() => setPanelOpen(!panelOpen)}
+      >
+        {panelOpen ? (
+          <RiSidebarFoldLine color="var(--retro-blue)" />
+        ) : (
+          <RiSidebarUnfoldLine color="var(--retro-blue)" />
+        )}
+      </button>
+    </>
   );
 }

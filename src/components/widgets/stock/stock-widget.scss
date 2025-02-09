@@ -152,9 +152,14 @@
         flex: 1;
 
         .current-price {
-          font-size: 4rem;
-          font-weight: 700;
-          color: var(--text-primary);
+          font-size: var(--font-size-3xl);
+          background: linear-gradient(
+            135deg,
+            var(--text-primary) 0%,
+            var(--text-secondary) 100%
+          );
+          -webkit-background-clip: text;
+          color: transparent;
           line-height: 1;
           letter-spacing: -0.02em;
           margin-bottom: var(--radius-sm);
@@ -247,10 +252,11 @@
             background: linear-gradient(
               to right,
               var(--error-500),
-              var(--primary-500),
+              var(--primary-500) 50%,
               var(--success-500)
             );
             border-radius: inherit;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
           }
 
           .current-marker {
@@ -262,7 +268,7 @@
             border: 2px solid var(--surface-1);
             top: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 0 12px rgba(var(--primary-400), 0.3);
           }
         }
       }

@@ -1,56 +1,40 @@
+@import '../../styles/shared/mixins';
+
 .action-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-lg);
-  background: var(--surface-2);
-  border: 1px solid var(--surface-3);
+  @include button-base;
+  background: rgba(var(--surface-2), 0.6);
+  border: var(--terminal-line);
   color: var(--text-secondary);
   font-size: var(--font-size-xl);
-  transition: var(--transition-all);
   cursor: pointer;
   position: relative;
   overflow: hidden;
-
-  &:after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(45deg, var(--primary-500), transparent);
-    opacity: 0;
-    transition: var(--transition-all);
-  }
+  backdrop-filter: var(--blur-sm);
 
   &:hover {
-    border-color: var(--primary-500);
-    color: var(--text-primary);
-    transform: translateY(-1px);
-    
-    &:after {
-      opacity: 0.1;
-    }
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+    box-shadow: var(--terminal-glow);
+    transform: translateY(-2px);
   }
 
   &:active {
-    transform: translateY(1px);
+    transform: translateY(0);
   }
 
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--surface-0),
-                0 0 0 4px var(--primary-500);
+  &:focus-visible {
+    @include focus-styling;
   }
 
   &.connected {
-    background: var(--primary-900);
-    color: var(--primary-400);
-    border-color: var(--primary-700);
+    background: rgba(var(--surface-2), 0.8);
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
 
     &:hover {
-      border-color: var(--primary-500);
-      color: var(--primary-300);
+      color: var(--neon-green);
+      box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
     }
   }
 
@@ -60,13 +44,14 @@
   }
 
   &.disabled {
-    background: var(--surface-1);
-    border-color: var(--surface-2);
+    background: rgba(var(--surface-1), 0.4);
+    border-color: rgba(var(--surface-3), 0.4);
     color: var(--text-tertiary);
     cursor: not-allowed;
     
     &:hover {
       transform: none;
+      box-shadow: none;
     }
   }
 }
@@ -85,25 +70,25 @@
 }
 
 .mic-button {
-  background: var(--error-500);
-  color: var(--error-50);
+  background: var(--neon-pink);
+  color: var(--retro-black);
   border: none;
   position: relative;
 
-  &:before {
+  &::before {
     content: '';
     position: absolute;
     inset: -4px;
-    background: var(--error-500);
+    background: var(--neon-pink);
     opacity: 0;
     border-radius: inherit;
     transition: var(--transition-all);
   }
 
   &:hover {
-    background: var(--error-400);
+    background: var(--neon-pink);
     
-    &:before {
+    &::before {
       opacity: 0.2;
       inset: -8px;
     }
@@ -112,10 +97,17 @@
   &.active {
     animation: pulse 2s infinite;
   }
+
+  &.disabled {
+    background: rgba(var(--surface-2), 0.4);
+    &::before {
+      display: none;
+    }
+  }
 }
 
 .connect-toggle {
-  &:focus {
+  &:focus-visible {
     border: 2px solid var(--Neutral-20);
     outline: 2px solid var(--Neutral-80);
   }
@@ -128,88 +120,214 @@
 
 .control-tray {
   position: fixed;
-  bottom: var(--radius-xl);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  padding: 1rem;
   display: flex;
-  gap: var(--radius-md);
-  padding: var(--radius-md);
-  background: var(--surface-1);
-  border: 1px solid var(--surface-3);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  z-index: 100;
+  border-top: 1px solid var(--border);
 
-  .disabled .action-button,
-  .action-button.disabled {
-    background: rgba(0, 0, 0, 0);
-    border: 1px solid var(--Neutral-30, #404547);
-    color: var(--Neutral-30);
-  }
-
-  .connection-container {
+  .actions-nav {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: var(--radius-sm);
+    gap: 0.5rem;
 
-    .connection-button-container {
-      border-radius: 27px;
-      border: 1px solid var(--Neutral-30);
-      background: var(--Neutral-5);
-      padding: 10px;
+    &.disabled {
+      opacity: 0.5;
+      pointer-events: none;
     }
 
-    .text-indicator {
-      font-size: var(--font-size-xs);
-      font-weight: 500;
-      color: var(--primary-400);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .action-button {
+      position: relative;
+      background: none;
+      border: none;
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(.disabled) {
+        background: var(--hover);
+      }
+
+      &.active {
+        background: var(--primary);
+        color: white;
+      }
+
+      &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &.error {
+        color: var(--error);
+        animation: shake 0.5s ease;
+      }
+
+      &.loading {
+        pointer-events: none;
+        
+        .loading-indicator {
+          position: absolute;
+          inset: 4px;
+          border: 2px solid var(--text-secondary);
+          border-top-color: var(--primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+      }
+
+      &.mic-button {
+        &.muted {
+          color: var(--error);
+        }
+      }
+
+      &.no-action {
+        pointer-events: none;
+      }
+
+      &.outlined {
+        border: 1px solid var(--border);
+      }
+
+      .material-symbols-outlined {
+        font-size: 24px;
+
+        &.filled {
+          font-variation-settings: 'FILL' 1;
+        }
+      }
     }
 
-    &:not(.connected) {
-      .text-indicator {
-        opacity: 0;
+    .layout-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-left: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 1px solid var(--border);
+
+      button {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: var(--hover);
+          color: var(--text);
+        }
       }
     }
   }
 
-  .actions-nav {
-    display: flex;
-    gap: var(--radius-md);
-    padding: var(--radius-sm);
-  }
-}
-
-.actions-nav {
-  background: var(--Neutral-5);
-  border: 1px solid var(--Neutral-30);
-  border-radius: 27px;
-  display: inline-flex;
-  gap: 12px;
-  align-items: center;
-  overflow: clip;
-  padding: 10px;
-
-  transition: all 0.6s ease-in;
-
-  &>* {
+  .connection-container {
     display: flex;
     align-items: center;
-    flex-direction: column;
     gap: 1rem;
+
+    .connection-button-container {
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border: 2px solid var(--primary);
+        border-radius: 10px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .connect-toggle {
+        background: var(--primary);
+        color: white;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+
+        &.connected {
+          background: var(--error);
+        }
+      }
+
+      &:focus-within::before {
+        opacity: 1;
+      }
+    }
+
+    .text-indicator {
+      color: var(--text-secondary);
+      font-size: 14px;
+      min-width: 80px;
+    }
+
+    &.connected .text-indicator {
+      color: var(--primary);
+    }
   }
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 var(--error-500);
+    box-shadow: 0 0 0 0 rgba(255, 0, 170, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 10px transparent;
+    box-shadow: 0 0 0 10px rgba(255, 0, 170, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 transparent;
+    box-shadow: 0 0 0 0 rgba(255, 0, 170, 0);
+  }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.action-button:not(.disabled):hover {
+  animation: subtle-pulse 1.5s infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
   }
 }

@@ -44,7 +44,7 @@ export interface WidgetEvent {
   data: any;
 }
 
-// Add type definition for widget entries (if not already present)
+// Add type definition for widget entries
 interface WidgetEntry {
   widget: BaseWidget<any>;
   container: HTMLElement | null;
@@ -53,15 +53,6 @@ interface WidgetEntry {
 }
 
 export class WidgetManager extends EventEmitter {
-  constructor() {
-    super();
-    // Add listeners count logging
-    this.on('newListener', (event) => {
-      console.log('New listener added for event:', event);
-      console.log('Current listeners:', this.listeners(event).length);
-    });
-  }
-
   private widgetRegistry: Record<WidgetType, WidgetConstructor> = {
     weather: WeatherWidget,
     stock: StockWidget,
@@ -82,56 +73,85 @@ export class WidgetManager extends EventEmitter {
   private activeWidgets: Map<string, WidgetEntry> = new Map();
   private widgetStates: Map<string, { isMaximized: boolean; isMinimized: boolean }> = new Map();
   private defaultTabId: string = 'default';
+  private currentTabId: string = 'default';
+  private widgetCache: Map<string, {
+    content: string;
+    timestamp: number;
+  }> = new Map();
 
-  async createWidget<T extends BaseWidgetData>(type: WidgetType, data: T, tabId: string = this.defaultTabId): Promise<string> {
+  constructor() {
+    super();
+    this.on('newListener', (event) => {
+      console.log('New listener added for event:', event);
+      console.log('Current listeners:', this.listeners(event).length);
+    });
+  }
+
+  setCurrentTab(tabId: string) {
+    console.log('Setting current tab:', tabId);
+    this.currentTabId = tabId;
+  }
+
+  getCurrentTab(): string {
+    return this.currentTabId;
+  }
+
+  async createWidget<T extends BaseWidgetData>(
+    type: WidgetType, 
+    data: T, 
+    tabId?: string
+  ): Promise<string> {
+    // Use provided tabId, current tab, or default tab in that order
+    const targetTabId = tabId || this.currentTabId || this.defaultTabId;
+    console.log('Creating widget:', { type, data, targetTabId });
+    
     const WidgetClass = this.widgetRegistry[type];
     if (!WidgetClass) {
-      console.error(`Widget type "${type}" not found.`);
-      return '';
+      throw new Error(`No widget registered for type: ${type}`);
     }
 
-    try {
-      const widget = new WidgetClass(data) as BaseWidget<T>;
-      const widgetId = `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      
-      const container = document.createElement('div');
-      container.classList.add('widget-container');
-      
-      this.activeWidgets.set(widgetId, { 
-        widget,
-        container,
-        id: widgetId,
-        tabId
-      });
-      
-      this.widgetStates.set(widgetId, { 
-        isMaximized: false, 
-        isMinimized: false 
-      });
+    const widget = new WidgetClass(data);
+    const id = `${type}-${Date.now()}`;
 
-      const normalizedType = type.replace(/^(get_|search_)/, '');
-      
-      const eventData = {
-        id: widgetId,
-        type: normalizedType,
-        data: {
-          ...data,
-          title: this.getWidgetTitle(type)
-        },
-        tabId
-      };
+    // Ensure widget has the correct tabId
+    const widgetEntry: WidgetEntry = {
+      widget,
+      container: null,
+      id,
+      tabId: targetTabId
+    };
 
-      console.log('Emitting widgetCreated event:', eventData);
-      console.log('Current listeners for widgetCreated:', this.listeners('widgetCreated').length);
-      const emitted = this.emit('widgetCreated', eventData);
-      console.log('Event emission result:', emitted);
+    this.activeWidgets.set(id, widgetEntry);
+    console.log('Widget created:', { id, tabId: targetTabId });
 
-      console.log('Widget created successfully:', { widgetId, type: normalizedType, tabId });
-      return widgetId;
-    } catch (error) {
-      console.error(`Error creating widget of type ${type}:`, error);
-      return '';
-    }
+    // Cache the initial widget content
+    const content = await widget.render(data);
+    this.cacheWidgetContent(id, content);
+
+    // Emit widget created event with tabId and data
+    this.emit('widgetCreated', {
+      id,
+      type,
+      data,
+      tabId: targetTabId
+    });
+
+    return id;
+  }
+
+  getWidgetData(): Record<string, any> {
+    const data: Record<string, any> = {};
+    this.activeWidgets.forEach((entry, id) => {
+      data[id] = entry.widget.getData();
+    });
+    return data;
+  }
+
+  private cacheWidgetContent(widgetId: string, content: string) {
+    this.widgetCache.set(widgetId, {
+      content,
+      timestamp: Date.now()
+    });
   }
 
   async renderWidget<T extends BaseWidgetData>(id: string, data: T): Promise<void> {
@@ -144,20 +164,14 @@ export class WidgetManager extends EventEmitter {
     }
 
     try {
-      // Get the container from the active widget
       const container = activeWidget.container;
       if (!container) {
         throw new Error('Widget container not found');
       }
 
-      // Clear the container
       container.innerHTML = '';
-
-      // Render the widget content
       const content = await activeWidget.widget.render(data);
       container.innerHTML = content;
-
-      // Call postRender to handle any additional setup
       await activeWidget.widget.postRender(container, data);
       
       console.log('Widget rendered successfully:', id);
@@ -195,18 +209,11 @@ export class WidgetManager extends EventEmitter {
 
   destroyAllWidgets() {
     this.activeWidgets.forEach(({ widget, container }, id) => {
-      // Destroy widget instance
       widget.destroy();
-      
-      // Remove container if it exists
       if (container) {
         container.remove();
       }
-      
-      // Emit widget destroyed event for each widget
-      this.emit('widgetDestroyed', {
-        id
-      });
+      this.emit('widgetDestroyed', { id });
     });
     
     this.activeWidgets.clear();
@@ -226,16 +233,19 @@ export class WidgetManager extends EventEmitter {
   }
 
   getWidgetsByTab(tabId: string): Map<string, WidgetEntry> {
+    console.log('Getting widgets for tab:', tabId);
     const tabWidgets = new Map();
     this.activeWidgets.forEach((entry, id) => {
       if (entry.tabId === tabId) {
         tabWidgets.set(id, entry);
       }
     });
+    console.log('Found widgets:', Array.from(tabWidgets.keys()));
     return tabWidgets;
   }
 
   moveWidgetToTab(widgetId: string, newTabId: string) {
+    console.log('Moving widget to tab:', { widgetId, newTabId });
     const widget = this.activeWidgets.get(widgetId);
     if (widget) {
       widget.tabId = newTabId;

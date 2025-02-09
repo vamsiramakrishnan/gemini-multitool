@@ -50,12 +50,15 @@ export class SearchWidget extends BaseWidget<SearchData> {
     };
   }
 
-  async render(data: SearchData): Promise<string> {
-    if (!data || data.error) {
-      return this.createErrorState(data?.error || 'No search results available');
+  async render(data: SearchData = this.data): Promise<string> {
+    // Update internal data
+    this.data = { ...this.data, ...data };
+    
+    if (!this.data || this.data.error) {
+      return this.createErrorState(this.data?.error || 'No search results available');
     }
 
-    const { groundingMetadata } = data;
+    const { groundingMetadata } = this.data;
     if (!groundingMetadata || !groundingMetadata.groundingChunks ||
       groundingMetadata.groundingChunks.length === 0) {
       return this.renderEmptyState();

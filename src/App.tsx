@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import "./App.scss";
-import { LiveAPIProvider, useLiveAPIContext } from "./contexts/LiveAPIContext";
+import { RootProvider, useLiveAPIContext, useWidget, useTab, useActiveTab, useTabWidgets, useTabWidgetStates } from "./contexts/RootContext";
 import SidePanel from "./components/side-panel/SidePanel";
 import ControlTray from "./components/control-tray/ControlTray";
 import cn from "classnames";
@@ -25,12 +25,17 @@ import { ToolHandler } from "./lib/tool-handler";
 import { loadSystemInstructions, createLiveConfig } from "./lib/config-helper";
 import { GroundingMetadata, ToolCall } from "./multimodal-live-types";
 import { WidgetItem } from './components/widgets/item/WidgetItem';
-import { Item, WidgetState } from './types/widget';
+import { TabsContainer } from './components/tabs/TabsContainer';
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
-import { TabsContainer } from './components/tabs/TabsContainer';
+import { Item, WidgetState } from './types/widget';
+import { Onboarding } from './components/onboarding/Onboarding';
+import { ChatWidgetComponent } from './components/widgets/chat/ChatWidgetComponent';
+import { useLayout } from './contexts/LayoutContext';
+import VideoStream from "./components/video-stream/VideoStream";
+import { LayoutProvider } from './contexts/LayoutContext';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
@@ -54,34 +59,22 @@ function AppContent() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const { client, config, setConfig } = useLiveAPIContext();
-  const widgetManagerRef = useRef<WidgetManager | null>(null);
-  const toolHandlerRef = useRef<ToolHandler | null>(null);
+  const { dispatch: widgetDispatch, widgetManager } = useWidget();
+  const { activeTabId, setActiveTab } = useTab();
   const [configError, setConfigError] = useState<string | null>(null);
-  
-  // Update widgets state to be dynamic
-  const [widgets, setWidgets] = useState<Item[]>([]);
-  const [widgetData, setWidgetData] = useState<Record<string, any>>({});
-  const [widgetStates, setWidgetStates] = useState<Record<string, WidgetState>>({});
-  
+  const toolHandlerRef = useRef<ToolHandler | null>(null);
   const widgetsContainerRef = useRef<HTMLDivElement>(null);
+  const { panelOpen, setPanelOpen, mode, setMode } = useLayout();
+  const [chatWidgetVisible, setChatWidgetVisible] = useState(false);
 
-  // Add state for active tab
-  const [activeTabId, setActiveTabId] = useState('default');
-
-  // Handle widget manager events
-  useEffect(() => {
-    if (!widgetManagerRef.current) {
-      console.log('Widget manager not initialized yet');
-      return;
-    }
-
-    console.log('Widget manager initialized:', widgetManagerRef.current);
-  }, []);
+  // Get current tab's widgets and states
+  const activeTab = useActiveTab();
+  const [tabWidgets, updateTabWidgets] = useTabWidgets(activeTabId);
+  const [tabWidgetStates, updateTabWidgetStates] = useTabWidgetStates(activeTabId);
 
   // Initialize app with widget manager and tool handler
   useEffect(() => {
     async function initializeApp() {
-      // Check if already initialized
       if (window[isInitialized]) {
         console.log('App already initialized, skipping...');
         return;
@@ -89,72 +82,8 @@ function AppContent() {
 
       try {
         console.log('Initializing app...');
-        const widgetManager = new WidgetManager();
         
-        // Set up event listeners before attaching to window
-        const onWidgetCreated = async (event: { id: string; type: string; data: any; tabId: string }) => {
-          console.log('Widget created event received:', event);
-          
-          setWidgets(prev => {
-            const newWidget = { 
-              id: event.id, 
-              type: event.type,
-              tabId: event.tabId || activeTabId
-            };
-            return [newWidget, ...prev];
-          });
-          
-          setWidgetData(prev => {
-            const newData = { ...prev, [event.id]: event.data };
-            console.log('Widget data updated:', newData);
-            return newData;
-          });
-          
-          setWidgetStates(prev => {
-            const newStates = { ...prev, [event.id]: { isMaximized: false, isMinimized: false }};
-            console.log('Widget states updated:', newStates);
-            return newStates;
-          });
-        };
-
-        const onWidgetDestroyed = (event: { id: string; tabId: string }) => {
-          console.log('Widget destroyed event received:', event);
-          
-          setWidgets(prev => prev.filter(widget => widget.id !== event.id));
-          setWidgetData(prev => {
-            const newData = { ...prev };
-            delete newData[event.id];
-            return newData;
-          });
-          setWidgetStates(prev => {
-            const newStates = { ...prev };
-            delete newStates[event.id];
-            return newStates;
-          });
-        };
-
-        const onWidgetMoved = (event: { id: string; tabId: string }) => {
-          console.log('Widget moved event received:', event);
-          
-          setWidgets(prev => prev.map(widget => 
-            widget.id === event.id 
-              ? { ...widget, tabId: event.tabId }
-              : widget
-          ));
-        };
-
-        console.log('Setting up widget event listeners');
-        widgetManager.on('widgetCreated', onWidgetCreated);
-        widgetManager.on('widgetDestroyed', onWidgetDestroyed);
-        widgetManager.on('widgetMoved', onWidgetMoved);
-
-        // Attach widget manager to window.app
-        (window as any).app = {
-          ...(window as any).app,
-          widgetManager
-        };
-        
-        widgetManagerRef.current = widgetManager;
+        // Initialize tool handler
         toolHandlerRef.current = new ToolHandler(widgetManager);
 
         const systemInstructions = await loadSystemInstructions();
@@ -172,40 +101,20 @@ function AppContent() {
 
     initializeApp();
 
-    // Cleanup
     return () => {
       if (window[isInitialized]) {
         console.log('Cleaning up app...');
-        if (widgetManagerRef.current) {
-          widgetManagerRef.current.destroyAllWidgets();
-        }
-        // Clean up window.app and initialization flag
         delete window.app;
         delete window[isInitialized];
       }
     };
   }, []);
 
-  // Add separate effect for handling widget tab assignment
+  // Update tool handler when active tab changes
   useEffect(() => {
-    if (!widgetManagerRef.current || !toolHandlerRef.current) return;
-
-    console.log('App: Updating active tab to:', activeTabId);
-    
-    // Update tool handler's active tab
-    toolHandlerRef.current.setActiveTab(activeTabId);
-
-    // Update any new widgets without a tabId to the current active tab
-    setWidgets(prev => {
-      const updated = prev.map(widget => {
-        if (!widget.tabId) {
-          console.log('Assigning widget to tab:', { widgetId: widget.id, tabId: activeTabId });
-          return { ...widget, tabId: activeTabId };
-        }
-        return widget;
-      });
-      return updated;
-    });
+    if (toolHandlerRef.current) {
+      toolHandlerRef.current.setActiveTab(activeTabId);
+    }
   }, [activeTabId]);
 
   // Handle tool calls and grounding
@@ -237,9 +146,6 @@ function AppContent() {
     return () => {
       client.off("toolcall", onToolCall);
       client.off("grounding", onGrounding);
-      if (widgetManagerRef.current) {
-        widgetManagerRef.current.destroyAllWidgets();
-      }
     };
   }, [client]);
 
@@ -261,13 +167,21 @@ function AppContent() {
           
           if (sourceData.index === targetData.index) return;
           
-          setWidgets(widgets => 
-            reorder({
-              list: widgets,
-              startIndex: sourceData.index,
-              finishIndex: targetData.index
-            })
-          );
+          const widgetEntries = Array.from(widgetManager.getWidgets().values());
+          const reorderedWidgets = reorder({
+            list: widgetEntries.map(entry => ({
+              id: entry.id,
+              type: entry.widget.constructor.name.toLowerCase(),
+              tabId: entry.tabId
+            })),
+            startIndex: sourceData.index,
+            finishIndex: targetData.index
+          });
+
+          widgetDispatch({
+            type: 'REORDER_WIDGETS',
+            payload: { widgets: reorderedWidgets }
+          });
         },
       }),
       autoScrollForElements({
@@ -275,7 +189,22 @@ function AppContent() {
         canScroll: () => true
       })
     );
-  }, []);
+  }, [widgetDispatch, widgetManager]);
+
+  const handleWidgetStateChange = useCallback((widgetId: string, state: WidgetState) => {
+    updateTabWidgetStates({
+      ...tabWidgetStates,
+      [widgetId]: state
+    });
+  }, [tabWidgetStates, updateTabWidgetStates]);
+
+  // Add debug effect
+  useEffect(() => {
+    console.debug('[App] Video stream changed:', {
+      hasStream: !!videoStream,
+      videoElement: !!videoRef.current
+    });
+  }, [videoStream]);
 
   if (configError) {
     return (
@@ -286,54 +215,69 @@ function AppContent() {
   }
 
   return (
-    <div className="streaming-console">
+    <div className={cn("app-layout", { "panel-open": panelOpen, "chat-open": chatWidgetVisible })}>
       <SidePanel />
-      <main>
-        <div className="main-app-area">
-          <TabsContainer
-            widgets={widgets}
-            widgetData={widgetData}
-            widgetStates={widgetStates}
-            onWidgetStateChange={(widgetId, state) => {
-              setWidgetStates(prev => ({
-                ...prev,
-                [widgetId]: state
-              }));
-            }}
-            setWidgets={setWidgets}
-            activeTabId={activeTabId}
-            onTabChange={setActiveTabId}
-          />
-          <div className="media-container">
-            <video
-              className={cn("stream", {
-                hidden: !videoStream,
-              })}
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-            />
-          </div>
-        </div>
-
-        <ControlTray
-          videoRef={videoRef}
-          supportsVideo={true}
-          onVideoStreamChange={setVideoStream}
+      
+      <div className="main-content">
+        <TabsContainer
+          activeTabId={activeTabId}
+          onTabChange={setActiveTab}
         />
-      </main>
+      </div>
+
+      {/* Video Stream */}
+      <div className="video-stream-container">
+        <VideoStream stream={videoStream} />
+      </div>
+
+      {/* Chat Widget */}
+      {chatWidgetVisible && (
+        <div className="chat-widget-container">
+          <ChatWidgetComponent />
+        </div>
+      )}
+
+      <ControlTray
+        videoRef={videoRef}
+        supportsVideo={true}
+        onVideoStreamChange={setVideoStream}
+      />
     </div>
   );
 }
 
 function App() {
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  
+  // Check if user has seen onboarding
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    if (hasSeenOnboarding) {
+      setShowOnboarding(false);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
+  };
+
+  const widgetManager = new WidgetManager();
+
   return (
-    <div className="App">
-      <LiveAPIProvider url={uri} apiKey={API_KEY}>
-        <AppContent />
-      </LiveAPIProvider>
-    </div>
+    <>
+      {showOnboarding ? (
+        <Onboarding onComplete={handleOnboardingComplete} />
+      ) : (
+        <div className="App">
+          <LayoutProvider>
+            <RootProvider url={uri} apiKey={API_KEY} widgetManager={widgetManager}>
+              <AppContent />
+            </RootProvider>
+          </LayoutProvider>
+        </div>
+      )}
+    </>
   );
 }
 

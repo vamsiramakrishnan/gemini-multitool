@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import { GenerativeContentBlob } from '@google/generative-ai';
 import './chat-widget.scss';
+import { ChatWidget as ChatWidgetClass } from './chat-widget';
 
 interface MessagePart {
   text?: string;
