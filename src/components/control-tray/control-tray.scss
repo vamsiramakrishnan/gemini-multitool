@@ -1,58 +1,58 @@
 @import '../../styles/shared/mixins';
+@import '../../styles/shared/design-system';
 
 .action-button {
   @include button-base;
-  background: rgba(var(--surface-2), 0.6);
-  border: var(--terminal-line);
-  color: var(--text-secondary);
-  font-size: var(--font-size-xl);
+  background: rgba($retro-black, 0.6);
+  border: 1px solid $retro-blue;
+  color: $retro-blue;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-lg);
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  backdrop-filter: var(--blur-sm);
+  backdrop-filter: blur(var(--blur-sm));
+  transition: var(--hover-transition);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
 
   &:hover {
-    border-color: var(--neon-blue);
-    color: var(--neon-blue);
-    box-shadow: var(--terminal-glow);
     transform: translateY(-2px);
+    box-shadow: var(--terminal-glow);
+    border-color: $retro-pink;
+    color: $retro-pink;
   }
 
   &:active {
-    transform: translateY(0);
-  }
-
-  &:focus-visible {
-    @include focus-styling;
+    transform: scale(var(--active-scale));
   }
 
   &.connected {
-    background: rgba(var(--surface-2), 0.8);
-    color: var(--neon-green);
-    border-color: var(--neon-green);
-    box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
+    background: rgba($retro-black, 0.8);
+    color: $retro-green;
+    border-color: $retro-green;
+    box-shadow: 0 0 15px rgba($retro-green, 0.3);
 
     &:hover {
-      color: var(--neon-green);
-      box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
+      box-shadow: 0 0 20px rgba($retro-green, 0.4);
     }
   }
 
-  .material-symbols-outlined {
-    font-size: 24px;
-    transition: var(--transition-all);
-  }
-
   &.disabled {
-    background: rgba(var(--surface-1), 0.4);
-    border-color: rgba(var(--surface-3), 0.4);
-    color: var(--text-tertiary);
+    background: rgba($retro-black, 0.4);
+    border-color: rgba($retro-blue, 0.2);
+    color: rgba($retro-blue, 0.4);
     cursor: not-allowed;
     
     &:hover {
       transform: none;
       box-shadow: none;
     }
+  }
+
+  .material-symbols-outlined {
+    font-size: 24px;
+    transition: var(--transition-all);
   }
 }
 
@@ -70,8 +70,8 @@
 }
 
 .mic-button {
-  background: var(--neon-pink);
-  color: var(--retro-black);
+  background: $retro-pink;
+  color: $retro-black;
   border: none;
   position: relative;
 
@@ -79,14 +79,14 @@
     content: '';
     position: absolute;
     inset: -4px;
-    background: var(--neon-pink);
+    background: $retro-pink;
     opacity: 0;
     border-radius: inherit;
     transition: var(--transition-all);
   }
 
   &:hover {
-    background: var(--neon-pink);
+    background: $retro-pink;
     
     &::before {
       opacity: 0.2;
@@ -99,7 +99,7 @@
   }
 
   &.disabled {
-    background: rgba(var(--surface-2), 0.4);
+    background: rgba($retro-black, 0.4);
     &::before {
       display: none;
     }
@@ -107,14 +107,43 @@
 }
 
 .connect-toggle {
-  &:focus-visible {
-    border: 2px solid var(--Neutral-20);
-    outline: 2px solid var(--Neutral-80);
+  @include button-base;
+  background: rgba($retro-black, 0.6);
+  border: 1px solid $retro-blue;
+  color: $retro-blue;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  transition: var(--hover-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--terminal-glow);
+    border-color: $retro-pink;
+    color: $retro-pink;
   }
 
-  &:not(.connected) {
-    background-color: var(--Blue-500);
-    color: var(--Neutral-5);
+  &:active {
+    transform: scale(var(--active-scale));
+  }
+
+  &.connected {
+    background: rgba($retro-black, 0.8);
+    color: $retro-green;
+    border-color: $retro-green;
+    box-shadow: 0 0 15px rgba($retro-green, 0.3);
+
+    &:hover {
+      box-shadow: 0 0 20px rgba($retro-green, 0.4);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px $retro-blue;
   }
 }
 
@@ -123,19 +152,32 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--surface);
-  padding: 1rem;
+  background: rgba($retro-black, 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+  padding: var(--space-md);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  z-index: 100;
-  border-top: 1px solid var(--border);
+  justify-content: flex-start;
+  gap: var(--space-xs);
+  z-index: var(--z-controls);
+  border-top: var(--terminal-line);
+  font-family: var(--font-ui);
+  box-shadow: var(--terminal-shadow);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--scanlines);
+    pointer-events: none;
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+  }
 
   .actions-nav {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-xs);
 
     &.disabled {
       opacity: 0.5;
@@ -214,27 +256,28 @@
     .layout-controls {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
-      margin-left: 0.5rem;
-      padding-left: 0.5rem;
-      border-left: 1px solid var(--border);
+      gap: var(--space-xxs);
+      margin-left: var(--space-xs);
+      padding-left: var(--space-xs);
+      border-left: var(--terminal-line);
 
       button {
         background: none;
-        border: none;
-        color: var(--text-secondary);
+        border: var(--terminal-line);
+        color: $retro-blue;
         width: 32px;
         height: 32px;
-        border-radius: 6px;
+        border-radius: var(--radius-sm);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: var(--hover-transition);
 
         &:hover {
-          background: var(--hover);
-          color: var(--text);
+          color: $retro-pink;
+          border-color: $retro-pink;
+          box-shadow: var(--terminal-glow);
         }
       }
     }
@@ -243,59 +286,35 @@
   .connection-container {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-md);
 
     .connection-button-container {
       position: relative;
-
-      &::before {
-        content: '';
-        position: absolute;
-        inset: -4px;
-        border: 2px solid var(--primary);
-        border-radius: 10px;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-      }
-
-      .connect-toggle {
-        background: var(--primary);
-        color: white;
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-
-        &.connected {
-          background: var(--error);
-        }
-      }
-
-      &:focus-within::before {
-        opacity: 1;
-      }
     }
 
     .text-indicator {
-      color: var(--text-secondary);
-      font-size: 14px;
+      font-family: var(--font-ui);
+      color: $retro-blue;
+      font-size: var(--font-size-sm);
       min-width: 80px;
+      transition: var(--transition-all);
     }
 
     &.connected .text-indicator {
-      color: var(--primary);
+      color: $retro-green;
     }
   }
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 0, 170, 0.7);
+    box-shadow: 0 0 0 0 rgba($retro-pink, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(255, 0, 170, 0);
+    box-shadow: 0 0 0 10px rgba($retro-pink, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 0, 170, 0);
+    box-shadow: 0 0 0 0 rgba($retro-pink, 0);
   }
 }
 
@@ -325,9 +344,9 @@
     transform: translateX(0);
   }
   25% {
-    transform: translateX(-4px);
+    transform: translateX(-5px);
   }
   75% {
-    transform: translateX(4px);
+    transform: translateX(5px);
   }
 }

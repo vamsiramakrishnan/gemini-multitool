@@ -1,168 +1,343 @@
+@import '../../../styles/shared/design-system';
+
 .map-widget {
-  min-width: 300px;
-  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-1) 100%);
-  border-radius: var(--radius-lg);
+  // Base widget styles
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: rgba($retro-black, 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+  border-radius: var(--radius-md);
+  border: var(--terminal-line);
+  box-shadow: var(--terminal-shadow);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--surface-3);
-  
-  // Add glossy border effect like stock widget
+  font-family: var(--font-ui);
+  transition: var(--hover-transition);
+
+  // Scanlines effect
   &::before {
     content: '';
     position: absolute;
-    inset: -2px;
-    border-radius: inherit;
-    padding: 2px;
-    background: linear-gradient(135deg, var(--primary-400) 0%, transparent 50%);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: destination-out;
+    inset: 0;
+    background: var(--scanlines);
     pointer-events: none;
+    opacity: 0.1;
+    mix-blend-mode: overlay;
     z-index: 1;
   }
 
-  .map-main {
+  // CRT glow effect
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 60px rgba($retro-blue, 0.1);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  // Map specific styles
+  .map-header {
+    flex-shrink: 0;
+    padding: var(--space-md);
+    background: linear-gradient(
+      180deg,
+      rgba($retro-black, 0.7) 0%,
+      rgba($retro-black, 0.85) 100%
+    );
+    border-bottom: var(--terminal-line);
+    box-shadow: 0 1px 0 rgba($retro-blue, 0.1);
+    backdrop-filter: blur(var(--blur-md));
     position: relative;
-    backdrop-filter: blur(8px);
-    
-    // Route header
-    .route-header {
-      background: var(--surface-2);
-      border-bottom: 1px solid var(--surface-3);
-      padding: var(--radius-md) var(--radius-lg);
-      
-      .route-icon {
-        background: linear-gradient(135deg, var(--primary-900) 0%, var(--surface-2) 100%);
-        border: 1px solid var(--primary-800);
-        box-shadow: var(--shadow-sm);
-      }
 
-      .route-title {
-        font-family: var(--font-ui);
-        font-size: var(--font-size-sm);
-        color: var(--text-primary);
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-      }
-
-      .route-path {
-        font-family: var(--font-body);
-        font-size: var(--font-size-xs);
-        color: var(--text-secondary);
-      }
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba($retro-blue, 0.2) 20%,
+        rgba($retro-blue, 0.2) 80%,
+        transparent 100%
+      );
     }
 
-    #map-container {
-      height: 400px;
-      &::after {
-        box-shadow: inset 0 0 0 1px var(--surface-3);
-      }
-    }
+    .search-section {
+      &.expandable {
+        .section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: var(--space-sm);
+          background: rgba($retro-black, 0.3);
+          border: 1px solid rgba($retro-blue, 0.3);
+          border-radius: var(--radius-sm);
+          transition: var(--hover-transition);
+          cursor: pointer;
 
-    .map-controls {
-      button {
-        background: var(--surface-2);
-        border: 1px solid var(--surface-3);
-        transition: var(--transition-all);
-        
-        &:hover {
-          background: var(--surface-3);
-          box-shadow: var(--shadow-md);
+          &:hover {
+            border-color: $retro-pink;
+            box-shadow: var(--terminal-glow);
+          }
+
+          .section-title {
+            font-family: var(--font-display);
+            color: $retro-blue;
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+
+          .expand-toggle {
+            color: $retro-blue;
+            transition: transform 0.3s ease;
+
+            &.expanded {
+              transform: rotate(180deg);
+            }
+          }
+        }
+
+        .section-content {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease;
+
+          &.expanded {
+            max-height: 200px;
+            padding-top: var(--space-sm);
+          }
+
+          .search-input {
+            position: relative;
+            
+            input {
+              width: 100%;
+              padding: var(--space-sm) var(--space-md);
+              padding-left: calc(var(--space-md) + 24px);
+              background: rgba($retro-black, 0.3);
+              border: 1px solid rgba($retro-blue, 0.3);
+              border-radius: var(--radius-sm);
+              color: $retro-blue;
+              font-size: var(--font-size-sm);
+              transition: var(--hover-transition);
+
+              &::placeholder {
+                color: rgba($retro-blue, 0.5);
+              }
+
+              &:focus {
+                outline: none;
+                border-color: $retro-pink;
+                box-shadow: var(--terminal-glow);
+              }
+            }
+
+            .search-icon {
+              position: absolute;
+              left: var(--space-sm);
+              top: 50%;
+              transform: translateY(-50%);
+              color: rgba($retro-blue, 0.7);
+              font-size: 20px;
+            }
+          }
         }
       }
     }
   }
 
-  .route-details {
-    background: var(--surface-1);
-    
-    .detail-item {
-      background: var(--surface-2);
-      border: 1px solid var(--surface-3);
-      transition: var(--transition-all);
+  .map-content {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .map-container {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+
+      // Ensure Google Maps elements are properly sized
+      .gm-style {
+        position: absolute !important;
+        height: 100% !important;
+        width: 100% !important;
+        
+        // Style map controls
+        .gm-bundled-control {
+          margin: var(--space-md) !important;
+          
+          .gmnoprint {
+            background: rgba($retro-black, 0.85) !important;
+            backdrop-filter: blur(var(--blur-sm));
+            border: var(--terminal-line) !important;
+            border-radius: var(--radius-sm) !important;
+            overflow: hidden;
+
+            button {
+              background: transparent !important;
+              color: $retro-blue !important;
+              border: none !important;
+              transition: var(--hover-transition);
+
+              &:hover {
+                color: $retro-pink !important;
+                background: rgba($retro-black, 0.3) !important;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .map-controls {
+      position: absolute;
+      top: var(--space-md);
+      right: var(--space-md);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+
+      button {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-sm);
+        background: rgba($retro-black, 0.85);
+        border: var(--terminal-line);
+        color: $retro-blue;
+        backdrop-filter: blur(var(--blur-sm));
+        transition: var(--transition-all);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          color: $retro-pink;
+          border-color: $retro-pink;
+          box-shadow: var(--terminal-glow);
+        }
+
+        .material-symbols-outlined {
+          font-size: 20px;
+        }
+      }
+    }
+
+    .coordinates-section {
+      position: absolute;
+      bottom: var(--space-md);
+      left: var(--space-md);
+      z-index: 2;
+      background: rgba($retro-black, 0.85);
+      backdrop-filter: blur(var(--blur-sm));
+      border: var(--terminal-line);
+      border-radius: var(--radius-sm);
+      padding: var(--space-sm);
       
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
+      &.expandable {
+        .section-header {
+          cursor: pointer;
+          transition: var(--hover-transition);
+          
+          &:hover {
+            color: $retro-pink;
+          }
+        }
+        
+        .section-content {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease;
+          
+          &.expanded {
+            max-height: 200px;
+            margin-top: var(--space-sm);
+          }
+        }
       }
 
-      .detail-icon {
-        font-family: var(--font-ui);
-        font-size: var(--font-size-xs);
-        color: var(--text-secondary);
-      }
+      .coordinates {
+        display: flex;
+        gap: var(--space-md);
 
-      .detail-value {
-        font-family: var(--font-display);
-        font-size: var(--font-size-lg);
-        color: var(--text-primary);
-      }
+        .coordinate {
+          .label {
+            font-size: var(--font-size-xs);
+            color: rgba($retro-blue, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-xxs);
+          }
 
-      .detail-label {
-        font-family: var(--font-ui);
-        font-size: var(--font-size-xxs);
-        color: var(--text-tertiary);
-      }
-    }
-  }
-
-  .navigation-steps {
-    background: var(--surface-1);
-    
-    .step-content {
-      background: var(--surface-2);
-      border: 1px solid var(--surface-3);
-      transition: var(--transition-all);
-
-      .step-title {
-        font-family: var(--font-body);
-        font-size: var(--font-size-sm);
-        color: var(--text-primary);
-      }
-
-      .step-distance {
-        font-family: var(--font-ui);
-        font-size: var(--font-size-xs);
-        color: var(--text-secondary);
+          .value {
+            font-family: var(--font-mono);
+            color: $retro-blue;
+            text-shadow: 0 0 10px rgba($retro-blue, 0.3);
+          }
+        }
       }
     }
   }
 
-  &__container {
-    :global(.gm-style) {
-      filter: grayscale(100%) brightness(35%) contrast(110%);
-      
-      & > div:first-child {
-        background-color: var(--Neutral-20) !important;
-      }
+  // States
+  &.maximized {
+    position: fixed;
+    inset: var(--space-md);
+    z-index: var(--z-modal);
+    height: calc(100vh - var(--space-md) * 2);
+
+    .map-content {
+      flex: 1;
+      min-height: 0;
     }
 
-    :global(.gm-style > div) path[stroke-color^="#"] {
-      stroke: #8A2BE2 !important;
-      stroke-opacity: 0.95 !important;
-      stroke-width: 5px !important;
-      transform-origin: center;
-      animation: route-pulse 1.5s ease-in-out infinite;
-    }
-
-    :global(.gm-style-iw),
-    :global(.gm-style-iw-d),
-    :global(.gm-style > div > div > div > div > div > div > div) {
-      display: none !important;
-    }
-
-    :global(.gm-style img) {
-      opacity: 0.5 !important;
+    @media (max-width: 640px) {
+      inset: 0;
+      border-radius: 0;
     }
   }
 
-  #map-container {
-    background: var(--Neutral-10) !important;
-    
-    &::after {
-      box-shadow: inset 0 0 0 1px var(--Neutral-30);
+  &.minimized:not(.maximized) {
+    .map-content {
+      display: none;
     }
   }
+}
+
+// Loading state
+.map-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba($retro-black, 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+  z-index: 3;
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba($retro-blue, 0.1);
+    border-top-color: $retro-blue;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-container {
@@ -369,10 +544,6 @@
       }
     }
   }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .custom-marker {

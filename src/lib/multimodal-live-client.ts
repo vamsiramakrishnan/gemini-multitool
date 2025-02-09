@@ -346,22 +346,30 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
       const processedChunks = await Promise.all(chunkPromises);
       
       // Process supports with error handling
-      const supportPromises = metadata.groundingSupports?.map(async (support) => {
-        try {
-          return {
-            ...support,
-            content: support.content.trim(),
-            segments: support.segments?.map(segment => ({
-              ...segment,
-              startIndex: Math.max(0, segment.startIndex),
-              endIndex: Math.max(segment.startIndex + 1, segment.endIndex)
-            }))
-          };
-        } catch (error) {
-          console.error('Error processing support:', error);
-          return null;
-        }
-      }) || [];
+      const supportPromises = metadata.groundingSupports
+        ?.filter(support => support != null)
+        ?.map(async (support) => {
+          try {
+            // Check for required fields with fallbacks
+            if (!support?.content) {
+              console.warn('Skipping support with missing content', support);
+              return null;
+            }
+
+            return {
+              ...support,
+              content: support.content.trim(),
+              segments: support.segments?.map(segment => ({
+                ...segment,
+                startIndex: Math.max(0, segment.startIndex || 0),
+                endIndex: Math.max((segment.startIndex || 0) + 1, segment.endIndex || 0)
+              })) || []
+            };
+          } catch (error) {
+            console.error('Error processing support:', error);
+            return null;
+          }
+        }) || [];
 
       const processedSupports = (await Promise.all(supportPromises)).filter(Boolean);
 

@@ -1,4 +1,5 @@
 @import '../../../styles/shared/mixins';
+@import '../../../styles/shared/design-system';
 
 .widget-wrapper {
   position: relative;
@@ -156,7 +157,46 @@
       height: 100%;
       overflow: auto;
       position: relative;
-      padding: 1rem;
+      
+      // Improved scrollbar styling
+      scrollbar-width: thin;
+      scrollbar-color: rgba($retro-blue, 0.3) transparent;
+      
+      &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: rgba($retro-black, 0.2);
+        border-radius: var(--radius-full);
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: rgba($retro-blue, 0.3);
+        border-radius: var(--radius-full);
+        border: 1px solid rgba($retro-blue, 0.2);
+        
+        &:hover {
+          background: rgba($retro-blue, 0.5);
+        }
+      }
+
+      // Map container specific styles
+      .map-container {
+        min-height: 400px;
+        height: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+        
+        // Prevent map overflow
+        .gm-style {
+          position: absolute !important;
+          height: 100% !important;
+          width: 100% !important;
+        }
+      }
     }
 
     .error-state {
@@ -223,115 +263,93 @@
 }
 
 .widget-item {
-  @include card-base;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  break-inside: avoid;
-  height: fit-content;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .widget-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--surface-2), 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    min-height: 48px;
-
-    .widget-title {
-      font-size: var(--font-size-md);
-      font-weight: 600;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-    }
-
-    .widget-controls {
-      display: flex;
-      gap: var(--space-xs);
-      margin-left: auto;
-
-      button {
-        @include button-base;
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        border-radius: var(--radius-full);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &:hover {
-          background: rgba(var(--primary-400), 0.1);
-          color: var(--primary-400);
-        }
-
-        .material-symbols-outlined {
-          font-size: 20px;
-        }
-      }
-    }
-  }
-
-  .widget-content {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    padding: var(--space-md);
-    position: relative;
-    @include custom-scrollbar;
-
-    // Default state
+  height: 400px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.minimized {
     height: auto;
-    max-height: 600px;
-    transition: all 0.3s ease;
+    
+    .widget-content {
+      display: none;
+    }
   }
-
+  
   &.maximized {
     position: fixed;
-    inset: 1rem;
-    z-index: var(--z-modal);
-    background: var(--Neutral-5);
-    border-radius: var(--radius-xl);
-    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 2rem);
-
-    .widget-content {
-      flex: 1;
-      height: auto;
-      max-height: none;
-      min-height: 0;
-
-      .widget-container,
-      .widget-content-container,
-      .widget-content-wrapper {
-        height: 100%;
-      }
-    }
-
-    @media (max-width: 640px) {
-      inset: 0;
-      height: 100vh;
-      border-radius: 0;
+    top: var(--space-md);
+    left: var(--space-md);
+    right: var(--space-md);
+    bottom: var(--space-md);
+    height: calc(100% - var(--space-md) * 2);
+    width: calc(100% - var(--space-md) * 2);
+    z-index: 1000;
+    
+    .widget-card {
+      height: 100%;
     }
   }
-
-  // Minimized state styles
-  &.minimized:not(.maximized) {
-    .widget-content {
-      max-height: 0;
-      overflow: hidden;
+  
+  &:hover {
+    transform: translateY(-2px);
+    
+    .widget-card {
+      box-shadow: var(--shadow-md);
+    }
+  }
+  
+  &:focus-within {
+    .widget-card {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px var(--brand-alpha);
+    }
+  }
+  
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    height: 350px;
+    
+    &.maximized {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      width: 100%;
+    }
+  }
+  
+  // Accessibility improvements
+  .widget-header {
+    button {
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--brand-alpha);
+      }
+      
+      &:focus:not(:focus-visible) {
+        box-shadow: none;
+      }
+    }
+  }
+  
+  // Ensure proper focus visibility for keyboard navigation
+  &:focus {
+    outline: none;
+    
+    .widget-card {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px var(--brand-alpha);
+    }
+  }
+  
+  // Improve touch targets for mobile
+  @media (pointer: coarse) {
+    .widget-header {
+      button {
+        min-width: 44px;
+        min-height: 44px;
+      }
     }
   }
 }

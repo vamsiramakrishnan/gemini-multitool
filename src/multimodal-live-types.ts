@@ -165,7 +165,7 @@ export interface GroundingChunk {
 }
 
 export interface GroundingSupport {
-  content: string;
+  content?: string;
   segments?: GroundingSupportSegment[];
   groundingChunkIndices?: number[];
 }
@@ -307,14 +307,14 @@ export function isGroundingMetadata(value: unknown): value is GroundingMetadata 
   const candidate = value as GroundingMetadata;
   return (
     Array.isArray(candidate.groundingChunks) &&
-    candidate.groundingChunks.every(chunk => 
+    candidate.groundingChunks.every(chunk =>
       typeof chunk.text === 'string' &&
       (chunk.source === 'web' || chunk.source === 'user' || chunk.source === 'assistant')
     ) &&
     (!candidate.groundingSupports || (
       Array.isArray(candidate.groundingSupports) &&
       candidate.groundingSupports.every(support =>
-        typeof support.content === 'string' &&
+        (!support.content || typeof support.content === 'string') &&
         (!support.segments || support.segments.every(segment =>
           typeof segment.startIndex === 'number' &&
           typeof segment.endIndex === 'number'
@@ -332,4 +332,54 @@ export function isValidToolCall(value: unknown): value is ToolCall {
     typeof call.name === 'string' &&
     typeof call.args === 'object'
   );
+}
+
+/**
+ * Processes an array of GroundingChunk objects.
+ * Adds a timestamp to the metadata if one doesn't exist and sets a default source.
+ * @param chunks An array of GroundingChunk objects.
+ * @returns A promise that resolves to an array of processed GroundingChunk objects.
+ */
+export async function processGroundingChunks(chunks?: GroundingChunk[]): Promise<GroundingChunk[]> {
+  if (!chunks) {
+    return [];
+  }
+  return Promise.all(chunks.map(async (chunk) => ({
+    ...chunk,
+    metadata: {
+      ...chunk.metadata,
+      timestamp: chunk.metadata?.timestamp || new Date().toISOString(),
+      source: chunk.source || 'web'
+    }
+  })));
+}
+
+/**
+ * Processes an array of GroundingSupport objects.
+ * Trims the content, validates segment start and end indices.
+ * @param supports - An array of GroundingSupport objects.
+ * @returns - A promise resolving to an array of processed, valid GroundingSupport objects, or null if an error occurs.
+ */
+export async function processGroundingSupports(supports?: GroundingSupport[]): Promise<GroundingSupport[]> {
+  if (!supports) {
+    return [];
+  }
+  const supportPromises = supports.map(async (support) => {
+    try {
+      return {
+        ...support,
+        content: support?.content?.trim() ?? '',
+        segments: support?.segments?.map((segment: GroundingSupportSegment) => ({
+          ...segment,
+          startIndex: Math.max(0, segment?.startIndex ?? 0),
+          endIndex: Math.max((segment?.startIndex ?? 0) + 1, segment?.endIndex ?? 1)
+        })) ?? []
+      };
+    } catch (error) {
+      console.error('Error processing support:', error);
+      return null; // Return null for individual errors
+    }
+  });
+  // Filter out any null values (failed supports)
+  return (await Promise.all(supportPromises)).filter((s): s is GroundingSupport => s !== null);
 }

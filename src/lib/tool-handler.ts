@@ -273,15 +273,16 @@ export class ToolHandler {
         // If there are grounding supports, process them
         if (groundingMetadata.groundingSupports?.length) {
             for (const support of groundingMetadata.groundingSupports) {
+                let relevantChunks: GroundingChunk[] = []; // Initialize relevantChunks
                 // Check if support has segments before trying to access them
                 if (support.segments?.length) {
-                    const relevantChunks = support.segments.flatMap(segment => 
+                    relevantChunks = support.segments.flatMap(segment =>
                         segment.supportingChunkIndexes?.map((idx: number) => indexedChunks[idx]) || []
                     ).filter(Boolean);
 
                 } else if (support.groundingChunkIndices?.length) {
                     // Handle the case where we have groundingChunkIndices directly
-                    const relevantChunks = support.groundingChunkIndices
+                    relevantChunks = support.groundingChunkIndices
                         .map((idx: number) => indexedChunks[idx])
                         .filter(Boolean);
 
@@ -452,11 +453,11 @@ export class ToolHandler {
           throw new Error(response.error);
         }
 
-        // Create widget with full data
+        // Create widget with full data, and use activeTabId
         await this.widgetManager.createWidget('places', {
           title: 'Search Results',
           ...response.widgetData
-        });
+        }, this.activeTabId); // Pass activeTabId here
 
         // Return simplified response for Gemini
         return response.llmResponse;
@@ -466,12 +467,26 @@ export class ToolHandler {
 
   async handleNearbySearch(args: any) {
     return this.handleWithStatus('search_nearby', args,
-      () => searchNearby(args.location, {
-        radius: args.radius,
-        type: args.type,
-        maxResults: args.maxResults,
-        language: args.languageCode
-      })
+      async () => { // Added async
+        const response = await searchNearby(args.location, { // Await the response
+          radius: args.radius,
+          type: args.type,
+          maxResults: args.maxResults,
+          language: args.languageCode
+        });
+
+        if (response.error) { // Check for error
+          throw new Error(response.error);
+        }
+
+        // Create widget with full data and activeTabId
+        await this.widgetManager.createWidget('nearby_places', {
+          title: 'Nearby Places', // More descriptive title
+          ...response.widgetData,
+        }, this.activeTabId); // Pass activeTabId
+
+        return response.llmResponse; // Return simplified response
+      }
     );
   }
 

@@ -47,9 +47,11 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     }
 
     return `
-      <div class="places-widget container mx-auto p-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          ${this.data.places.map(place => this.renderPlaceCard(place)).join('')}
+      <div class="places-widget">
+        <div class="places-content">
+          <div class="place-grid">
+            ${this.data.places.map(place => this.renderPlaceCard(place)).join('')}
+          </div>
         </div>
       </div>
     `;
@@ -64,31 +66,29 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     const mainPhotoUrl = photos && photos.length > 0 ? photos[0] : null;
     
     return `
-      <div class="place-card card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
-        <div class="card-body p-4">
+      <div class="place-card">
+        <div class="place-photo">
           ${mainPhotoUrl ? `
-            <img src="${mainPhotoUrl}" 
-                 class="place-photo w-full h-48 object-cover rounded-lg" 
-                 alt="${name}"
-                 onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image';">
+            <img src="${mainPhotoUrl}" alt="${name}" />
           ` : `
-            <div class="place-photo w-full h-48 rounded-lg bg-base-200 flex items-center justify-center">
-              <span class="material-symbols-outlined text-4xl text-base-content/30">
-                image_not_supported
-              </span>
+            <div class="placeholder-image">
+              <span class="material-symbols-outlined">image_not_supported</span>
             </div>
           `}
-          
-          <div class="place-details flex-1 min-w-0">
-            <h3 class="place-name text-lg font-semibold">${name}</h3>
-            <p class="place-address text-sm text-base-content/70 mt-1">
-              <span class="material-symbols-outlined text-sm align-middle">location_on</span>
-              ${address}
-            </p>
-            ${this.renderRatingAndPrice(rating, userRatings, priceLevel)}
-            <div class="place-types">
-              ${types?.map(type => `<span class="place-type">${this.formatPlaceType(type)}</span>`).join('') || ''}
-            </div>
+          ${rating ? `<div class="rating-badge">
+            <span class="material-symbols-outlined">star</span>
+            ${rating.toFixed(1)}
+          </div>` : ''}
+        </div>
+        <div class="place-details">
+          <h3 class="place-name">${name}</h3>
+          <p class="place-address">
+            <span class="material-symbols-outlined">location_on</span>
+            ${address}
+          </p>
+          ${this.renderRatingAndPrice(rating, userRatings, priceLevel)}
+          <div class="place-categories">
+            ${types?.map(type => `<span class="category-tag">${this.formatPlaceType(type)}</span>`).join('') || ''}
           </div>
         </div>
       </div>
@@ -98,60 +98,16 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
   private renderRatingAndPrice(rating?: number, userRatings?: number, priceLevel?: number): string {
     if (!rating && !priceLevel) return '';
 
-    return `
-      <div class="flex items-center gap-3 mt-2">
-        ${rating ? `
-          <div class="flex items-center gap-1">
-            <div class="rating rating-sm">
-              ${this.generateRatingStars(rating)}
-            </div>
-            <span class="text-sm font-medium">${rating.toFixed(1)}</span>
-            ${userRatings ? `
-              <span class="text-xs text-base-content/60">(${this.formatNumber(userRatings)})</span>
-            ` : ''}
-          </div>
-        ` : ''}
-        ${priceLevel ? `
-          <div class="text-sm font-medium text-base-content/70">
-            ${this.generatePriceLevel(priceLevel)}
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }
-
-  private renderBusinessStatus(place: Place): string {
-    const statusConfig: Record<string, { class: string; icon: string; text: string }> = {
-      'OPERATIONAL': { 
-        class: 'badge-success', 
-        icon: 'check_circle',
-        text: 'Open Now'
-      },
-      'CLOSED_TEMPORARILY': { 
-        class: 'badge-warning', 
-        icon: 'warning',
-        text: 'Temporary Closed'
-      },
-      'CLOSED_PERMANENTLY': { 
-        class: 'badge-error', 
-        icon: 'cancel',
-        text: 'Permanently Closed'
-      }
-    };
-
-    const status = statusConfig[place.businessStatus] || 
-                   { class: 'badge-neutral', icon: 'info', text: place.businessStatus };
+    const ratingStars = rating ? this.generateRatingStars(rating) : '';
+    const priceSymbols = priceLevel ? this.generatePriceLevel(priceLevel) : '';
 
     return `
-      <div class="badge ${status.class} gap-1 shadow-sm">
-        <span class="material-symbols-outlined text-sm">${status.icon}</span>
-        ${status.text}
+      <div class="rating-and-price">
+        ${ratingStars}
+        ${rating && userRatings ? `<span class="user-ratings">(${this.formatNumber(userRatings)})</span>` : ''}
+        ${priceSymbols}
       </div>
     `;
-  }
-
-  private formatNumber(num: number): string {
-    return new Intl.NumberFormat().format(num);
   }
 
   private generateRatingStars(rating: number): string {
@@ -160,14 +116,18 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     
     return `
-      ${Array(fullStars).fill('<span class="text-warning">★</span>').join('')}
-      ${hasHalfStar ? '<span class="text-warning">★</span>' : ''}
-      ${Array(emptyStars).fill('<span class="text-base-content/20">★</span>').join('')}
+      ${Array(fullStars).fill('<span class="material-symbols-outlined text-warning">star</span>').join('')}
+      ${hasHalfStar ? '<span class="material-symbols-outlined text-warning">star_half</span>' : ''}
+      ${Array(emptyStars).fill('<span class="material-symbols-outlined text-base-content/20">star</span>').join('')}
     `;
   }
 
   private generatePriceLevel(level: number): string {
     return Array(level).fill('$').join('');
+  }
+
+  private formatNumber(num: number): string {
+    return new Intl.NumberFormat().format(num);
   }
 
   private formatPlaceType(type: string): string {
@@ -202,22 +162,10 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
 
   protected renderEmptyState(): string {
     return `
-      <div class="hero min-h-[300px] bg-base-200/50 rounded-box backdrop-blur-sm">
-        <div class="hero-content text-center">
-          <div class="max-w-md">
-            <div class="avatar placeholder mb-8 animate-float">
-              <div class="w-24 h-24 rounded-full bg-base-300 ring-2 ring-base-content/10">
-                <span class="material-symbols-outlined text-5xl text-base-content/50">
-                  location_off
-                </span>
-              </div>
-            </div>
-            <h2 class="text-2xl font-bold mb-4">No Results Found</h2>
-            <p class="text-base-content/70">
-              No relevant results were found
-            </p>
-          </div>
-        </div>
+      <div class="places-empty">
+        <span class="material-symbols-outlined">location_off</span>
+        <h3>No Results Found</h3>
+        <p>No relevant results were found</p>
       </div>
     `;
   }

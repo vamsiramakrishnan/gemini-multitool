@@ -27,20 +27,38 @@ export function TabsContainer({
     console.log('Widget data:', widgetData);
   }, [activeTabId, widgets, widgetStates, widgetData]);
 
+  // Handle tab removal
+  const handleRemoveTab = useCallback((tabId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (tabs.length > 1) {
+      // Find the index of the current tab
+      const currentIndex = tabs.findIndex(tab => tab.id === tabId);
+      
+      // Determine which tab to activate next
+      let nextTabId: string;
+      if (tabId === activeTabId) {
+        // If removing active tab, switch to previous tab or next if it's the first tab
+        if (currentIndex > 0) {
+          nextTabId = tabs[currentIndex - 1].id;
+        } else {
+          nextTabId = tabs[currentIndex + 1].id;
+        }
+        onTabChange(nextTabId);
+      }
+
+      // Remove the tab
+      removeTab(tabId);
+      setTabs(prev => prev.filter(tab => tab.id !== tabId));
+    }
+  }, [tabs, activeTabId, onTabChange, removeTab]);
+
   const handleAddTab = useCallback(() => {
     const id = createTab(`Tab ${tabs.length + 1}`);
     setTabs(prev => [...prev, { id, label: `Tab ${prev.length + 1}` }]);
-  }, [tabs.length, createTab]);
-
-  const handleRemoveTab = useCallback((tabId: string) => {
-    if (tabs.length > 1) {
-      removeTab(tabId);
-      setTabs(prev => prev.filter(tab => tab.id !== tabId));
-      if (activeTabId === tabId) {
-        onTabChange(tabs[0].id);
-      }
-    }
-  }, [tabs, activeTabId, onTabChange, removeTab]);
+    onTabChange(id); // Automatically switch to new tab
+  }, [tabs.length, createTab, onTabChange]);
 
   const handleTabTitleChange = useCallback((tabId: string, newTitle: string) => {
     updateTabTitle(tabId, newTitle);
@@ -94,17 +112,19 @@ export function TabsContainer({
             {tabs.length > 1 && (
               <button
                 className="remove-tab"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveTab(tab.id);
-                }}
+                onClick={(e) => handleRemoveTab(tab.id, e)}
+                aria-label={`Close ${tab.label} tab`}
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             )}
           </div>
         ))}
-        <button className="add-tab" onClick={handleAddTab}>
+        <button 
+          className="add-tab" 
+          onClick={handleAddTab}
+          aria-label="Add new tab"
+        >
           <span className="material-symbols-outlined">add</span>
         </button>
       </div>

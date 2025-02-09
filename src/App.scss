@@ -1009,148 +1009,216 @@ body {
 
 .app-layout {
   display: grid;
+  grid-template-columns: 1fr auto;  // Main content | Video
+  grid-template-rows: auto 1fr auto; // Tabs | Widgets+Video | Chat
   grid-template-areas:
-    "sidepanel main video"
-    "sidepanel main chat"
-    "sidepanel control control";
-  grid-template-columns: 0px 1fr auto; /* Initial state: sidepanel closed */
-  grid-template-rows: auto 1fr auto;
+    "tabs  tabs"
+    "widgets video"
+    "chat   chat";
   height: 100vh;
-  overflow: hidden; /* Prevent scrolling of the entire page */
+  overflow: hidden;
+  background: rgba($retro-black, 0.85);
 
-  &.panel-open {
-    grid-template-columns: var(--sidepanel-width) 1fr auto; /* Sidepanel open */
-    @media (max-width: 768px) {
-      grid-template-columns: 0px 1fr auto;
-    }
+  .main-content {
+    grid-area: main;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0; // Important for Firefox
   }
 
-  // Chat open/close
-  &.chat-open {
-    grid-template-rows: auto calc(100vh - 300px - 80px) 80px; /* Adjust based on your needs */
-  }
-
-  @media (max-width: 768px) {
-    grid-template-areas:
-      "video"
-      "main"
-      "chat"
-      "control";
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto auto; /* Adjust as needed */
-
-    &.panel-open{
-      grid-template-areas:
-      "sidepanel"
-      "main"
-      "chat"
-      "control";
-    }
-  }
-}
-
-.main-content {
-  grid-area: main;
-  position: relative;
-  overflow: hidden; /* Ensure content doesn't overflow */
-}
-
-.video-stream-container {
-  grid-area: video;
-  position: relative;
-  min-width: 300px;
-  max-height: 40vh;
-  z-index: var(--z-map);
-  @media (max-width: 768px) {
-    max-height: none;
-  }
-}
-
-.chat-widget-container {
-  grid-area: chat;
-  position: relative; /* Ensure it's positioned within the grid */
-  z-index: var(--z-chat);
-  height: 100%; /* Take up full height of the grid area */
-  width: 100%;
-  max-height: 60vh;
-  @media (max-width: 768px) {
-    max-height: 300px;
-  }
-}
-
-.control-tray {
-  grid-area: control;
-  z-index: var(--z-controls);
-}
-
-.side-panel {
-  grid-area: sidepanel;
-  z-index: var(--z-sidepanel);
-  width: var(--sidepanel-width); /* Use a CSS variable */
-  transition: transform 0.3s ease; /* Smooth transition */
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-}
-
-// Density modes
-[data-layout-mode="compact"] {
-  --space-unit: 0.8rem;
   .widgets-container {
-    gap: var(--space-sm);
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-}
-
-[data-layout-mode="spacious"] {
-  --space-unit: 1.5rem;
-  .widgets-container {
-    gap: var(--space-lg);
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  }
-}
-
-// Mobile optimizations
-@media (max-width: 640px) {
-  .widget-item {
-    container-type: size;
+    flex: 1;
+    min-height: 0; // Important for Firefox
+    overflow: auto;
+    padding: var(--space-md);          // Consistent padding
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+    align-content: start;
     
-    &[data-state="maximized"] {
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
+    // Improved scrollbar styling
+    scrollbar-width: thin;
+    scrollbar-color: rgba($retro-blue, 0.3) transparent;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba($retro-black, 0.2);
+      border-radius: var(--radius-full);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba($retro-blue, 0.3);
+      border-radius: var(--radius-full);
+      border: 1px solid rgba($retro-blue, 0.2);
+      
+      &:hover {
+        background: rgba($retro-blue, 0.5);
+      }
     }
   }
-  
-  .video-stream-container {
-    order: -1;
+
+  .widget-wrapper {
+    height: fit-content;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: rgba($retro-black, 0.7);
+    border: var(--terminal-line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: var(--transition-all);
+
+    &.maximized {
+      position: fixed;
+      inset: var(--space-md);
+      z-index: var(--z-modal);
+      height: calc(100vh - var(--space-md) * 2);
+      
+      .widget-content {
+        flex: 1;
+        min-height: 0;
+        height: auto;
+      }
+    }
+  }
+
+  .tabs-container-wrapper {
+    grid-area: tabs;
+  }
+
+  .widgets-container-wrapper {
+    grid-area: widgets;
+    overflow: auto;
+    @include custom-scrollbar;
+    padding: var(--space-md);          // Consistent padding
+    background: rgba(var(--retro-black), 0.85);  // Consistent background
+    border-bottom: var(--terminal-line);      // Consistent border
+  }
+
+  .video-stream-wrapper {
+    grid-area: video;
+    display: flex;  // Use flexbox for centering
+    justify-content: center;  // Center horizontally
+    align-items: center;      // Center vertically (if needed)
+    padding: var(--space-md);          // Consistent padding
+    background: rgba(var(--retro-black), 0.85);  // Consistent background
+    border-left: var(--terminal-line);      // Consistent border
+    border-bottom: var(--terminal-line);      // Consistent border
+  }
+
+  .chat-widget-wrapper {
+    grid-area: chat;
+    display: flex;  // Use flexbox for bottom alignment
+    align-items: flex-end;    // Bottom alignment
+    padding: var(--space-md);          // Consistent padding
+    background: rgba(var(--retro-black), 0.85);  // Consistent background
+    border-top: var(--terminal-line);        // Consistent border
+  }
+
+  @media (max-width: 768px) {
+    .app-layout {
+      grid-template-columns: 1fr;  // Stack on smaller screens
+      grid-template-rows: auto 1fr auto auto; // Tabs | Widgets | Video | Chat
+      grid-template-areas:
+        "tabs"
+        "widgets"
+        "video"
+        "chat";
+
+      .widgets-container {
+        grid-template-columns: 1fr;
+      }
+
+      .widget-wrapper.maximized {
+        inset: 0;
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
   }
 }
 
-// Add to existing media queries
-@media (min-width: 1600px) {
-  .widgets-container {
-    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+// Ensure proper map container sizing
+.map-container {
+  height: 100% !important;
+  width: 100% !important;
+  min-height: 400px;
+  position: relative !important;
+
+  .gm-style {
+    position: absolute !important;
+    height: 100% !important;
+    width: 100% !important;
   }
 }
 
-// Add scanlines to the body
+// Improved widget content scrolling
+.widget-content {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+
+  .widget-scroll-container {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba($retro-blue, 0.3) transparent;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba($retro-black, 0.2);
+      border-radius: var(--radius-full);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba($retro-blue, 0.3);
+      border-radius: var(--radius-full);
+      border: 1px solid rgba($retro-blue, 0.2);
+      
+      &:hover {
+        background: rgba($retro-blue, 0.5);
+      }
+    }
+  }
+}
+
+// ... rest of existing styles ...
+
+// Add to main App.scss
 body::before {
-  @include scanlines; // Use the mixin
   content: '';
   position: fixed;
   inset: 0;
+  background: var(--scanlines);
   pointer-events: none;
-  z-index: 999; // High z-index to be on top
-  mix-blend-mode: overlay; // Blend mode for the scanlines
+  z-index: 999;
+  mix-blend-mode: overlay;
 }
 
-// Apply CRT glow globally (optional, can be applied to specific elements)
 .global-glow {
   @include crt-glow;
 }
 
-// Example of using CSS variables for z-index
+// Typography
+body {
+  font-size: clamp(14px, 4vw, 18px); // Example fluid sizing
+}
+
+// Update component z-indices
 .map-widget {
   z-index: var(--z-map);
 }
@@ -1163,43 +1231,30 @@ body::before {
   z-index: var(--z-sidepanel);
 }
 
-// New root container layout
-.app-layout {
-  display: grid;
-  grid-template:
-    "main    video" auto
-    "main    chat"  1fr
-    "control control" auto / 1fr auto;
-  height: 100vh;
-
-  @media (max-width: 768px) {
-    grid-template:
-      "video" auto
-      "main" 1fr
-      "chat" 300px
-      "control" auto / 1fr;
-  }
+// Base Styles
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background-color: var(--surface-0);
+  line-height: 1.6;
+  margin: 0; // Remove default margin
+  padding: 0; // Remove default padding
+  overflow: hidden; // Prevent horizontal scrollbars
 }
 
-.main-content {
-  grid-area: main;
-  position: relative;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+  color: var(--text-primary); // Consistent heading color
 }
 
-.video-stream-container {
-  grid-area: video;
-  position: relative;
-  min-width: 300px;
-  max-height: 40vh;
-  z-index: var(--z-map);
-}
-
-.chat-widget-container {
-  grid-area: chat;
-  max-height: 60vh;
-}
-
-.control-tray {
-  grid-area: control;
-  z-index: var(--z-controls);
+code, pre {
+  font-family: var(--font-ui);
+  background: rgba(var(--retro-black), 0.9);
+  border: 1px solid var(--retro-blue);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--retro-green); // Consistent code color
 }

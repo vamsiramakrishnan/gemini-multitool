@@ -1,0 +1,30 @@
+// --- Spacing ---
+:root {
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  // ... (and so on, as needed)
+}
+
+// --- Borders ---
+:root {
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color-primary: var(--retro-blue); // Main border color
+  --border-color-secondary: rgba(var(--retro-blue), 0.3); // Lighter border
+  --border-color-hover: var(--retro-pink); // Hover state
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+  // ... (other border-related variables)
+
+  // --- Terminal Lines ---
+  --terminal-line: var(--border-width) var(--border-style) var(--border-color-secondary);
+  --terminal-line-primary: var(--border-width) var(--border-style) var(--border-color-primary);
+  --terminal-line-hover: var(--border-width) var(--border-style) var(--border-color-hover);
+} 

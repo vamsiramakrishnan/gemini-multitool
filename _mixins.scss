@@ -1,0 +1,33 @@
+@mixin retro-border($type: 'primary') {
+  @if $type == 'primary' {
+    border: var(--terminal-line-primary);
+  } @else if $type == 'secondary' {
+    border: var(--terminal-line);
+  } @else if $type == 'hover' {
+    border: var(--terminal-line-hover);
+  } @else {
+    border: var(--terminal-line); // Default to secondary
+  }
+}
+
+@mixin retro-box-shadow($type: 'default') {
+    @if $type == 'default' {
+        box-shadow: var(--terminal-shadow);
+    } @else if $type == 'glow'{
+        box-shadow: var(--terminal-glow);
+    }
+}
+
+@mixin padding($top, $right: $top, $bottom: $top, $left: $right) {
+  padding: var(--space-#{$top}) var(--space-#{$right}) var(--space-#{$bottom}) var(--space-#{$left});
+}
+
+// A mixin for consistent spacing between elements (margin-bottom)
+@mixin space-between($space: 'md') {
+  margin-bottom: var(--space-#{$space});
+}
+
+// Mixin for consistent internal padding
+@mixin container-padding($size: 'md') {
+  padding: var(--space-#{$size});
+} 

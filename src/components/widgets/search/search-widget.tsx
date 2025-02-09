@@ -138,7 +138,7 @@ export class SearchWidget extends BaseWidget<SearchData> {
           ${supports.map((support, idx) => `
             <li class="point-item">
               <div class="point-content">
-                ${this.highlightRelevantText(support.segment.text, idx)}
+                ${support.segment ? this.highlightRelevantText(support.segment.text, idx) : ''}
                 ${this.renderInlineCitations(support.groundingChunkIndices)}
               </div>
             </li>

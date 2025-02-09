@@ -50,6 +50,12 @@ export class ChatWidget extends BaseWidget<ChatData> {
       messages: [],
       ...data
     };
+    
+    // Initialize window.app if needed
+    if (typeof window !== 'undefined' && !(window as any).app) {
+      (window as any).app = {};
+    }
+    
     this.messages = this.data.messages || [];
     this.chatId = this.data.id || null;
     this.liveAPIClient = this.data.liveAPIClient;
@@ -57,48 +63,57 @@ export class ChatWidget extends BaseWidget<ChatData> {
     this.setupFileInput();
     this.setupMessageHandler();
     this.setupAudioHandling();
+    this.setupWindowControls();
   }
 
   private setupMessageHandler() {
-    // Add global handler for chat message sending
-    (window as any).app.sendChatMessage = async (event: Event) => {
-      event.preventDefault();
-      const form = event.target as HTMLFormElement;
-      const messageInput = form.querySelector('input[name="message"]') as HTMLInputElement;
-      const message = messageInput.value.trim();
-      
-      if (!message) return;
-
-      try {
-        if (!this.liveAPIClient) {
-          throw new Error('LiveAPI client not initialized');
-        }
-        
-        // Add message to UI immediately
-        this.addMessage('user', message);
-        
-        // Clear input
-        messageInput.value = '';
-        
-        // Send as client content with turn
-        await this.liveAPIClient.send([{
-          text: message
-        }], true); // turnComplete = true
-      } catch (error) {
-        console.error('Error sending message:', error);
-        this.addMessage('error', 'Failed to send message. Please try again.');
+    // Ensure window.app exists
+    if (typeof window !== 'undefined') {
+      if (!(window as any).app) {
+        (window as any).app = {};
       }
-    };
 
-    // Add global handlers for chat actions
-    (window as any).app.clearChat = () => {
-      this.clearHistory();
-      this.updateMessages();
-    };
+      // Add global handler for chat message sending
+      (window as any).app.sendChatMessage = async (event: Event) => {
+        event.preventDefault();
+        
+        const form = event.target as HTMLFormElement;
+        const messageInput = form.querySelector('input[name="message"]') as HTMLInputElement;
+        const message = messageInput.value.trim();
+        
+        if (!message) return;
 
-    (window as any).app.exportChat = () => {
-      this.exportHistory();
-    };
+        try {
+          // Add message to UI immediately
+          this.addMessage('user', message);
+          
+          // Clear input and enable it
+          messageInput.value = '';
+          messageInput.disabled = false;
+          messageInput.focus();
+          
+          // Send message if API client exists
+          if (this.liveAPIClient) {
+            await this.liveAPIClient.send([{
+              text: message
+            }], true);
+          }
+        } catch (error) {
+          console.error('Error sending message:', error);
+          this.addMessage('error', 'Failed to send message. Please try again.');
+        }
+      };
+
+      // Add global handlers for chat actions
+      (window as any).app.clearChat = () => {
+        this.clearHistory();
+        this.updateMessages();
+      };
+
+      (window as any).app.exportChat = () => {
+        this.exportHistory();
+      };
+    }
   }
 
   private setupFileInput() {
@@ -111,10 +126,16 @@ export class ChatWidget extends BaseWidget<ChatData> {
     
     this.fileInput.addEventListener('change', this.handleFileSelection.bind(this));
     
-    // Add global handler for file uploads
-    (window as any).app.handleFileUpload = () => {
-      this.fileInput?.click();
-    };
+    // Ensure window.app exists
+    if (typeof window !== 'undefined') {
+      if (!(window as any).app) {
+        (window as any).app = {};
+      }
+      // Add global handler for file uploads
+      (window as any).app.handleFileUpload = () => {
+        this.fileInput?.click();
+      };
+    }
   }
 
   private async handleFileSelection(event: Event) {
@@ -345,6 +366,33 @@ export class ChatWidget extends BaseWidget<ChatData> {
     return Promise.resolve(new Blob([arrayBuffer], { type: 'audio/wav' }));
   }
 
+  private setupWindowControls() {
+    // Ensure window.app exists
+    if (typeof window !== 'undefined') {
+      if (!(window as any).app) {
+        (window as any).app = {};
+      }
+
+      // Add window control handlers
+      (window as any).app.minimizeChat = () => {
+        const container = document.querySelector('.chat-widget-container');
+        container?.classList.add('minimized');
+        container?.classList.remove('maximized');
+      };
+
+      (window as any).app.maximizeChat = () => {
+        const container = document.querySelector('.chat-widget-container');
+        container?.classList.remove('minimized');
+        container?.classList.toggle('maximized');
+      };
+
+      (window as any).app.closeChat = () => {
+        const container = document.querySelector('.chat-widget-container');
+        container?.remove();
+      };
+    }
+  }
+
   async render(data: ChatData = this.data): Promise<string> {
     if (data?.id) {
       this.chatId = data.id;
@@ -353,6 +401,23 @@ export class ChatWidget extends BaseWidget<ChatData> {
 
     return `
       <div class="chat-widget flex flex-col h-full">
+        <div class="chat-header">
+          <div class="title">
+            <span class="material-symbols-outlined">chat</span>
+            <span>AI Assistant</span>
+          </div>
+          <div class="window-controls">
+            <button class="minimize" onclick="window.app.minimizeChat()">
+              <span class="material-symbols-outlined">remove</span>
+            </button>
+            <button class="maximize" onclick="window.app.maximizeChat()">
+              <span class="material-symbols-outlined">crop_square</span>
+            </button>
+            <button class="close" onclick="window.app.closeChat()">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        </div>
         <div class="chat-messages flex-1 overflow-y-auto p-4 space-y-4 prose prose-sm max-w-none">
           ${this.messages.length === 0 ? this.renderEmptyState() : this.renderMessages()}
         </div>
@@ -362,13 +427,13 @@ export class ChatWidget extends BaseWidget<ChatData> {
               <input type="text" 
                      placeholder="Type your message..."
                      name="message"
+                     autocomplete="off"
                      required>
-              <div class="typing-indicator"></div>
             </div>
-            <button type="button" class="btn btn-ghost" onclick="window.app.handleFileUpload()">
+            <button type="button" onclick="window.app.handleFileUpload()">
               <span class="material-symbols-outlined">attach_file</span>
             </button>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit">
               <span class="material-symbols-outlined">send</span>
             </button>
           </form>
@@ -378,14 +443,8 @@ export class ChatWidget extends BaseWidget<ChatData> {
               <span>${this.messages.length} messages</span>
             </div>
             <div class="actions">
-              <button onclick="window.app.clearChat()" 
-                      class="btn btn-ghost">
-                Clear
-              </button>
-              <button onclick="window.app.exportChat()"
-                      class="btn btn-ghost">
-                Export
-              </button>
+              <button onclick="window.app.clearChat()">Clear</button>
+              <button onclick="window.app.exportChat()">Export</button>
             </div>
           </div>
         </div>

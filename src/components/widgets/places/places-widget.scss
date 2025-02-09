@@ -1,145 +1,304 @@
+@import '../../../styles/shared/mixins';
+@import '../../../styles/shared/design-system';
+
 /* Add your styles for places widget here */ 
 .places-widget {
-  .card {
-    transition: all 0.3s ease-in-out;
-    background: var(--base-100);
-    border: 1px solid var(--base-300);
-    
-    &:hover {
-      transform: translateY(-2px);
-      border-color: var(--primary);
-      box-shadow: var(--shadow-lg);
-    }
-  }
-  .place-card {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    background-color: var(--base-100);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease-in-out;
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-  }
-  .place-photo {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-radius: var(--radius-lg);
-    transition: all 0.3s ease-in-out;
-    
-    &:hover {
-      transform: scale(1.02);
-    }
-  }
-  .place-details {
-    flex: 1;
-    padding: 1.5rem;
-  }
-  .place-name {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--base-content);
-    margin-bottom: 0.5rem;
-  }
-  .place-address {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--base-content/70);
-    font-size: 0.875rem;
-    margin-bottom: 1rem;
-    
-    .material-symbols-outlined {
-      font-size: 1rem;
-      color: var(--primary);
-    }
-  }
-  .place-rating {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.9rem;
-    color: var(--warning);
-  }
-  .place-price {
-    font-size: 0.9rem;
-    color: var(--base-content/70);
-  }
-  .place-types {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-  .place-type {
-    background: var(--base-200);
-    color: var(--base-content/70);
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-    
-    &:hover {
-      background: var(--primary/10);
-      color: var(--primary);
-    }
-  }
-  .business-status {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: rgba($retro-black, 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+  border-radius: var(--radius-md);
+  border: var(--terminal-line);
+  box-shadow: var(--terminal-shadow);
+  overflow: hidden;
+  font-family: var(--font-ui);
+  transition: var(--hover-transition);
+  
+  // Scanlines effect
+  &::before {
+    content: '';
     position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 10;
-    
-    .badge {
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 0.5rem 0.75rem;
-      border-radius: var(--radius-full);
+    inset: 0;
+    background: var(--scanlines);
+    pointer-events: none;
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+    z-index: 1;
+  }
+
+  // CRT glow effect
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 60px rgba($retro-blue, 0.1);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .places-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+    background: linear-gradient(
+      180deg,
+      rgba($retro-black, 0.7) 0%,
+      rgba($retro-black, 0.85) 100%
+    );
+    border-bottom: var(--terminal-line);
+    box-shadow: 0 1px 0 rgba($retro-blue, 0.1);
+
+    .search-container {
+      flex: 1;
+      margin-right: var(--space-md);
+      position: relative;
+
+      input {
+        width: 100%;
+        padding: var(--space-sm) var(--space-md);
+        padding-left: calc(var(--space-md) + 24px); // Space for icon
+        background: rgba($retro-black, 0.3);
+        border: 1px solid rgba($retro-blue, 0.3);
+        border-radius: var(--radius-sm);
+        color: $retro-blue;
+        font-family: var(--font-ui);
+        transition: var(--hover-transition);
+
+        &::placeholder {
+          color: rgba($retro-blue, 0.5);
+        }
+
+        &:focus {
+          outline: none;
+          border-color: $retro-pink;
+          box-shadow: var(--terminal-glow);
+        }
+      }
+
+      .search-icon {
+        position: absolute;
+        left: var(--space-sm);
+        top: 50%;
+        transform: translateY(-50%);
+        color: $retro-blue;
+        font-size: 20px;
+      }
+    }
+
+    .filter-controls {
       display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      backdrop-filter: blur(8px);
-      
-      .material-symbols-outlined {
-        font-size: 1rem;
-      }
-      
-      &.badge-success {
-        background: var(--success/10);
-        color: var(--success);
-      }
-      
-      &.badge-warning {
-        background: var(--warning/10);
-        color: var(--warning);
-      }
-      
-      &.badge-error {
-        background: var(--error/10);
-        color: var(--error);
+      gap: var(--space-xs);
+
+      button {
+        @include retro-button;
+        padding: var(--space-xs) var(--space-sm);
+        
+        .material-symbols-outlined {
+          font-size: 18px;
+        }
       }
     }
   }
-  .photo-placeholder {
-    width: 100%;
-    height: 200px;
-    background: var(--base-200);
-    border-radius: var(--radius-lg);
+
+  .places-content {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    @include custom-scrollbar;
+
+    .place-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .place-card {
+      position: relative;
+      border-radius: var(--radius-md);
+      background: rgba($retro-black, 0.7);
+      border: 1px solid rgba($retro-blue, 0.2);
+      transition: var(--hover-transition);
+      overflow: hidden;
+      cursor: pointer;
+
+      &:hover {
+        @include retro-border('hover');
+        @include retro-box-shadow('glow');
+
+        .place-photo img {
+          transform: scale(1.05);
+        }
+
+        .place-name {
+          color: $retro-pink;
+        }
+
+        .place-details {
+          border-color: rgba($retro-pink, 0.3);
+        }
+      }
+
+      .place-photo {
+        position: relative;
+        width: 100%;
+        height: 180px;
+        overflow: hidden;
+        border-bottom: 1px solid rgba($retro-blue, 0.2);
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--scanlines);
+          opacity: 0.1;
+          pointer-events: none;
+          mix-blend-mode: overlay;
+          z-index: 2;
+        }
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease-in-out;
+          filter: saturate(0.8) contrast(1.1);
+        }
+
+        .distance-badge {
+          position: absolute;
+          bottom: var(--space-sm);
+          left: var(--space-sm);
+          padding: var(--space-xs) var(--space-sm);
+          background: rgba($retro-black, 0.85);
+          border: 1px solid rgba($retro-blue, 0.3);
+          border-radius: var(--radius-sm);
+          color: $retro-blue;
+          font-size: var(--font-size-xs);
+          backdrop-filter: blur(var(--blur-sm));
+          z-index: 3;
+        }
+
+        .rating-badge {
+          position: absolute;
+          top: var(--space-sm);
+          right: var(--space-sm);
+          padding: var(--space-xs) var(--space-sm);
+          background: rgba($retro-black, 0.85);
+          border: 1px solid rgba($retro-blue, 0.3);
+          border-radius: var(--radius-sm);
+          color: $retro-blue;
+          font-size: var(--font-size-xs);
+          backdrop-filter: blur(var(--blur-sm));
+          z-index: 3;
+          display: flex;
+          align-items: center;
+          gap: var(--space-2xs);
+
+          .material-symbols-outlined {
+            font-size: 14px;
+            color: $retro-pink;
+          }
+        }
+      }
+
+      .place-details {
+        padding: var(--space-md);
+        border-top: 1px solid rgba($retro-blue, 0.2);
+        transition: var(--hover-transition);
+
+        .place-name {
+          color: $retro-blue;
+          font-size: var(--font-size-sm);
+          font-weight: 600;
+          margin-bottom: var(--space-xs);
+          transition: var(--hover-transition);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .place-address {
+          color: rgba($retro-blue, 0.7);
+          font-size: var(--font-size-xs);
+          margin-bottom: var(--space-xs);
+        }
+
+        .place-categories {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-xs);
+          margin-top: var(--space-sm);
+
+          .category-tag {
+            padding: var(--space-2xs) var(--space-xs);
+            background: rgba($retro-black, 0.3);
+            border: 1px solid rgba($retro-blue, 0.2);
+            border-radius: var(--radius-sm);
+            color: rgba($retro-blue, 0.7);
+            font-size: var(--font-size-xs);
+            transition: var(--hover-transition);
+
+            &:hover {
+              border-color: $retro-pink;
+              color: $retro-pink;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Loading state
+  .places-loading {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 200px;
     
-    .material-symbols-outlined {
-      font-size: 3rem;
-      color: var(--base-content/30);
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba($retro-blue, 0.1);
+      border-top-color: $retro-blue;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
   }
+
+  // Empty state
+  .places-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    padding: var(--space-xl);
+    text-align: center;
+    
+    .material-symbols-outlined {
+      font-size: 48px;
+      color: $retro-blue;
+      margin-bottom: var(--space-md);
+    }
+    
+    h3 {
+      color: $retro-blue;
+      font-size: var(--font-size-lg);
+      margin-bottom: var(--space-sm);
+    }
+    
+    p {
+      color: rgba($retro-blue, 0.7);
+      font-size: var(--font-size-sm);
+    }
+  }
+}
+
+// Animations
+@keyframes spin {
+  to { transform: rotate(360deg); }
 } 

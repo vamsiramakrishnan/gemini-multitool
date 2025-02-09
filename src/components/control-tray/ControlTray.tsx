@@ -315,23 +315,16 @@ function ControlTray({
           {children}
         </nav>
 
-        <div className={cn("connection-container", { connected })}>
-          <div className="connection-button-container">
-            <button
-              ref={connectButtonRef}
-              className={cn("action-button connect-toggle", { connected })}
-              onClick={connected ? disconnect : connect}
-              title={connected ? "Disconnect" : "Connect"}
-            >
-              <span className="material-symbols-outlined filled">
-                {connected ? "pause" : "play_arrow"}
-              </span>
-            </button>
-          </div>
-          <span className="text-indicator">
-            {connected ? "Connected" : "Disconnected"}
+        <button
+          ref={connectButtonRef}
+          className={cn("action-button connect-toggle", { connected })}
+          onClick={connected ? disconnect : connect}
+          title={connected ? "Disconnect" : "Connect"}
+        >
+          <span className="material-symbols-outlined filled">
+            {connected ? "pause" : "play_arrow"}
           </span>
-        </div>
+        </button>
       </section>
 
       {chatWidgetVisible && (

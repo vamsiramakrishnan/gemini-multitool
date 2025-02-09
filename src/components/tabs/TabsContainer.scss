@@ -1,4 +1,5 @@
 @import '../../styles/shared/mixins';
+@import '../../styles/shared/design-system';
 
 // Scrollbar Mixin
 @mixin custom-scrollbar {
@@ -37,145 +38,98 @@
   );
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   backdrop-filter: var(--blur-md);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba($retro-blue, 0.1);
+  box-shadow: var(--terminal-shadow);
 
   .tabs-header {
     display: flex;
-    align-items: center;
-    padding: var(--space-sm);
+    flex-shrink: 0;
+    border-bottom: var(--terminal-line);
+    @include container-padding('sm');
     background: linear-gradient(
       90deg,
-      var(--surface-2) 0%,
-      var(--surface-1) 100%
+      rgba($retro-black, 0.7) 0%,
+      rgba($retro-black, 0.85) 100%
     );
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    min-height: 56px;
-    gap: var(--space-sm);
-
+    box-shadow: 0 1px 0 rgba($retro-blue, 0.1);
+    backdrop-filter: blur(var(--blur-md));
+    overflow-x: auto;
+    @include custom-scrollbar;
+    
     .tab {
-      position: relative;
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      padding: var(--space-sm) var(--space-lg);
-      color: var(--text-secondary);
+      @include retro-button;
+      @include padding('xs', 'md');
+      margin-right: var(--space-xs);
+      border-bottom: none;
+      padding: var(--space-xs) var(--space-sm);
       border-radius: var(--radius-md);
-      font-size: var(--font-size-sm);
-      transition: var(--transition-all);
-      height: 40px;
-      backdrop-filter: var(--blur-sm);
-      border: 1px solid transparent;
-      overflow: hidden;
+      background: rgba($retro-black, 0.3);
+      border: 1px solid rgba($retro-blue, 0.2);
+      transition: var(--hover-transition);
+      min-width: 120px;
+      max-width: 200px;
       cursor: pointer;
+      position: relative;
       
-      // Add oblique line pattern
+      // Scanlines effect
       &::before {
         content: '';
         position: absolute;
         inset: 0;
-        background: 
-          repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 10px,
-            rgba(var(--primary-400), 0.03) 10px,
-            rgba(var(--primary-400), 0.03) 20px
-          );
-        opacity: 0.5;
-        z-index: 0;
-      }
-      
-      // Add subtle neon glow on hover
-      &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          45deg,
-          transparent 30%,
-          rgba(var(--primary-400), 0.1) 70%,
-          transparent 90%
-        );
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        background: var(--scanlines);
+        pointer-events: none;
+        opacity: 0.1;
+        mix-blend-mode: overlay;
         z-index: 1;
       }
       
       &:hover {
-        background: rgba(var(--primary-400), 0.05);
-        color: var(--text-primary);
+        background: rgba($retro-black, 0.5);
+        border-color: $retro-pink;
         transform: translateY(-1px);
+        box-shadow: var(--terminal-glow);
+      }
+      
+      &.active {
+        background: rgba($retro-black, 0.6);
+        border-color: $retro-blue;
+        box-shadow: var(--terminal-glow);
+        border: var(--terminal-line-primary);
+        border-bottom: none;
         
         &::after {
-          opacity: 1;
+          content: '';
+          position: absolute;
+          inset: -1px;
+          border: 1px solid rgba($retro-blue, 0.3);
+          border-radius: inherit;
+          pointer-events: none;
         }
-      }
-
-      &.active {
-        background: rgba(var(--primary-400), 0.1);
-        color: var(--retro-blue);
-        border-color: rgba(var(--retro-blue), 0.3);
-        box-shadow: 0 0 15px rgba(var(--retro-blue), 0.2);
-
-        &::before {
-          opacity: 1;
-          background: 
-            repeating-linear-gradient(
-              45deg,
-              transparent,
-              transparent 10px,
-              rgba(var(--retro-blue), 0.05) 10px,
-              rgba(var(--retro-blue), 0.05) 20px
-            );
-        }
-
-        &::after {
-          opacity: 1;
-          background: linear-gradient(
-            45deg,
-            transparent 30%,
-            rgba(var(--retro-blue), 0.15) 45%,
-            rgba(var(--retro-blue), 0.15) 55%,
-            transparent 70%
-          );
-        }
-
-        input {
-          color: var(--retro-blue);
-          font-weight: 500;
-          position: relative;
-          z-index: 1;
-        }
-          &:focus-visible {
-              @include focus-styling;
-          }
-      }
-
-      // Ensure content stays above patterns
-      input, .remove-tab {
-        position: relative;
-        z-index: 1;
       }
 
       input {
-        background: none;
+        flex: 1;
+        background: transparent;
         border: none;
-        color: inherit;
-        font-size: inherit;
-        padding: 0;
-        margin: 0;
-        width: 100%;
-        min-width: 80px;
-        transition: var(--transition-all);
+        color: $retro-blue;
+        font-size: var(--font-size-sm);
         font-family: var(--font-ui);
-
+        padding: 0;
+        min-width: 0;
+        position: relative;
+        z-index: 2;
+        
         &:focus {
           outline: none;
-          color: var(--text-primary);
+          color: $retro-pink;
         }
-          &:focus-visible {
-              @include focus-styling;
-          }
+      }
+
+      .material-symbols-outlined {
+        font-size: var(--font-size-lg);
+        color: $retro-blue;
+        position: relative;
+        z-index: 2;
       }
 
       .remove-tab {
@@ -185,27 +139,24 @@
         width: 24px;
         height: 24px;
         padding: 0;
-        margin: 0;
-        border: none;
-        background: none;
-        color: inherit;
-        opacity: 0.6;
+        border: 1px solid rgba($retro-blue, 0.3);
+        background: rgba($retro-black, 0.3);
+        color: $retro-blue;
         border-radius: var(--radius-sm);
-        transition: var(--transition-all);
         cursor: pointer;
+        transition: var(--hover-transition);
+        position: relative;
+        z-index: 2;
 
         &:hover {
-          opacity: 1;
-          background: var(--Red-500);
-          color: white;
+          border-color: $retro-pink;
+          color: $retro-pink;
+          box-shadow: var(--terminal-glow);
         }
 
-        &:active {
-          transform: scale(0.95);
+        .material-symbols-outlined {
+          font-size: 18px;
         }
-          &:focus-visible {
-              @include focus-styling;
-          }
       }
     }
 
@@ -216,12 +167,10 @@
       padding: 0;
       margin-left: var(--space-sm);
       border-radius: var(--radius-md);
+      flex-shrink: 0;
 
       &:hover {
-      }
-
-      &:active {
-        transform: scale(0.98);
+        transform: translateY(-2px);
       }
 
       .material-symbols-outlined {
@@ -232,33 +181,108 @@
 
   .tab-content {
     flex: 1;
-    overflow: auto;
-    padding: var(--space-lg);
-    background: transparent;
-    @include custom-scrollbar;
-
+    overflow: hidden;
+    @include container-padding('md');
+    background: rgba($retro-black, 0.85);
+    backdrop-filter: blur(var(--blur-sm));
+    
     .widgets-container {
+      height: 100%;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: var(--space-lg);
-      padding: var(--space-lg);
-      min-height: 100%;
-      width: 100%;
-    }
-
-    .empty-state {
-      @include empty-state;
-      grid-column: 1 / -1;
-
-      .empty-icon {
-      }
+      gap: var(--space-md);
+      overflow-y: auto;
+      @include custom-scrollbar;
+      @include padding('none', 'sm', 'none', 'none');
       
-      h3 {
-      }
-      
-      p {
+      .empty-state {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm);
+        padding: var(--space-xl);
+        background: rgba($retro-black, 0.3);
+        border: 1px solid rgba($retro-blue, 0.2);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        position: relative;
+        @include retro-border('secondary');
+        
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--scanlines);
+          pointer-events: none;
+          opacity: 0.1;
+          mix-blend-mode: overlay;
+        }
+        
+        .empty-icon {
+          font-size: 48px;
+          color: $retro-blue;
+          text-shadow: var(--terminal-glow);
+        }
+        
+        h3 {
+          color: $retro-blue;
+          font-size: var(--font-size-lg);
+          font-family: var(--font-display);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        
+        p {
+          color: rgba($retro-blue, 0.7);
+          font-family: var(--font-ui);
+        }
       }
     }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 640px) {
+  .tabs-container {
+    .tabs-header {
+      padding: var(--space-xs);
+      
+      .tab {
+        min-width: 100px;
+        padding: var(--space-2xs) var(--space-xs);
+      }
+    }
+    
+    .tab-content {
+      padding: var(--space-sm);
+      
+      .widgets-container {
+        gap: var(--space-sm);
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
   }
 }
 
@@ -305,41 +329,6 @@
     border-bottom-color: var(--primary-400);
     border-radius: 50%;
     animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-}
-
-// Animations
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-// Responsive
-@media (max-width: 640px) {
-  .tabs-container .tabs-header {
-    [role="tablist"] {
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      
-      &::-webkit-scrollbar {
-        display: none;
-      }
-    }
-
-    [role="tab"] {
-      flex-shrink: 0;
-    }
   }
 }
 
