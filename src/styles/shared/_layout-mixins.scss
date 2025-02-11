@@ -12,27 +12,114 @@
   justify-content: center;
 }
 
-// Input & Control Mixins
+// Input & Control Mixins (refined for retro style)
 @mixin input-base {
   width: 100%;
   padding: var(--space-sm);
-  background: rgba(var(--surface-2), 0.8);
-  border: 1px solid rgba($retro-blue, 0.2);
-  border-radius: var(--radius-md);
-  color: var(--text-color-primary);
+  background: rgba(var(--retro-black), 0.7); // Darker background
+  border: 1px solid rgba(var(--retro-blue), 0.4); // Slightly stronger border
+  border-radius: var(--radius-sm); // Smaller radius
+  color: var(--retro-green); // Consistent text color
   font-family: var(--font-ui);
   font-size: var(--font-size-sm);
   transition: all 0.2s ease;
+  box-shadow: 0 0 8px rgba(var(--retro-blue), 0.2); // Subtle glow
 
   &:focus {
     outline: none;
-    border-color: rgba($retro-blue, 0.5);
-    box-shadow: 0 0 0 2px rgba($retro-blue, 0.2);
+    border-color: var(--retro-blue); // Full color on focus
+    box-shadow: 0 0 12px rgba(var(--retro-blue), 0.4); // Stronger glow
   }
 
   &::placeholder {
-    color: var(--text-color-secondary);
+    color: rgba(var(--retro-green), 0.7); // Lighter placeholder
   }
+
+    // Add this to handle the appearance of disabled inputs
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none; // Remove glow when disabled
+    }
+}
+
+// Text area
+@mixin textarea-base {
+    @include input-base; // Start with input-base styles
+    resize: vertical; // Allow vertical resizing
+    min-height: 80px; // Set a minimum height
+}
+
+// Checkbox and Radio
+@mixin checkbox-radio-base {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(var(--retro-blue), 0.4);
+  border-radius: var(--radius-sm); // Consistent radius
+  margin-right: var(--space-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative; // For custom checkmark/dot positioning
+
+  &:checked {
+    border-color: var(--retro-blue);
+    background: rgba(var(--retro-blue), 0.2); // Subtle fill on check
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--retro-blue), 0.4);
+  }
+
+    // Add this to handle the appearance of disabled inputs
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        border-color: rgba(var(--retro-blue), 0.2); // Dimmed border
+    }
+}
+
+@mixin checkbox-custom {
+  @include checkbox-radio-base;
+  border-radius: var(--radius-sm); // Square for checkboxes
+
+  &:checked::before {
+    content: '✓'; // Unicode checkmark
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--retro-blue);
+    font-size: 12px;
+  }
+}
+
+@mixin radio-custom {
+  @include checkbox-radio-base;
+  border-radius: 50%; // Circle for radio buttons
+
+  &:checked::before {
+    content: '•';  // Unicode bullet
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--retro-blue);
+    font-size: 14px;
+  }
+}
+
+// Select
+@mixin select-base {
+    @include input-base;
+    appearance: none; // Remove default arrow
+    padding-right: var(--space-lg); // Make room for custom arrow
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f3ff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); // Retro blue arrow
+    background-repeat: no-repeat;
+    background-position: right var(--space-sm) center;
+    background-size: 16px;
+    cursor: pointer;
 }
 
 @mixin control-button {
@@ -41,7 +128,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: transparent; // Fully transparent background
   border: none;
   color: var(--text-color-secondary);
   cursor: pointer;
@@ -49,22 +136,22 @@
 
   &:hover {
     color: var(--text-color-primary);
-    transform: scale(1.1);
+    transform: scale(1.1); // Slightly enlarge on hover
   }
 }
 
 @mixin retro-button-icon {
-  @include control-button;
+  @include control-button; // Use control-button as a base
   width: 36px;
   height: 36px;
-  background: rgba($retro-blue, 0.1);
-  border: 1px solid rgba($retro-blue, 0.2);
+  background: rgba($retro-blue, 0.1); // Subtle background
+  border: 1px solid rgba($retro-blue, 0.2); // Subtle border
   border-radius: var(--radius-md);
-  color: $retro-blue;
+  color: $retro-blue; // Icon color
 
   &:hover {
-    background: rgba($retro-blue, 0.2);
-    border-color: rgba($retro-blue, 0.4);
+    background: rgba($retro-blue, 0.2); // Slightly brighter background on hover
+    border-color: rgba($retro-blue, 0.4); // Brighter border on hover
     color: $retro-blue;
   }
 }
@@ -75,27 +162,27 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(var(--blur-md));
-  border: 1px solid rgba($retro-blue, 0.1);
+  border: 1px solid rgba($retro-blue, 0.1); // Very subtle border
   transition: all 0.3s var(--ease-out-quad);
 }
 
-// Scrollbar Mixins
+// Scrollbar Mixins (refined for retro style)
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 8px; // Slightly thinner scrollbar
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(var(--surface-2), 0.5);
+    background: rgba(var(--surface-2), 0.5); // Darker track
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba($retro-blue, 0.3);
+    background: rgba($retro-blue, 0.3); // Neon blue thumb
     border-radius: 4px;
 
     &:hover {
-      background: rgba($retro-blue, 0.5);
+      background: rgba($retro-blue, 0.5); // Brighter on hover
     }
   }
 }
@@ -105,10 +192,10 @@
   position: fixed;
   display: flex;
   flex-direction: column;
-  background: rgba($retro-black, 0.95);
+  background: rgba($retro-black, 0.95); // Darker background
   backdrop-filter: blur(var(--blur-md));
-  border: var(--terminal-line);
-  box-shadow: var(--terminal-shadow);
+  border: var(--terminal-line); // Use the terminal line style
+  box-shadow: var(--terminal-shadow); // Use terminal shadow
   transition: transform 0.3s var(--ease-out-quad);
   z-index: var(--z-sidepanel);
 
@@ -116,7 +203,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--scanlines);
+    background: var(--scanlines); // Add scanlines
     pointer-events: none;
     opacity: 0.1;
     mix-blend-mode: overlay;
@@ -135,8 +222,8 @@
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.3s var(--ease-out-quad);
-  box-shadow: 
-    0 0 15px rgba($retro-blue, 0.2),
+  box-shadow:
+    0 0 15px rgba($retro-blue, 0.2), // Add glow
     0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: calc(var(--z-sidepanel) + 1);
 
@@ -149,11 +236,11 @@
 
   &:hover svg {
     transform: scale(1.1);
-    color: var(--retro-pink);
+    color: var(--retro-pink); // Change color on hover
   }
 
   &:active {
-    transform: translateY(0) scale(0.95);
+    transform: translateY(0) scale(0.95); // Slight scale on active
   }
 }
 
@@ -165,11 +252,11 @@
     180deg,
     rgba($retro-black, 0.95) 0%,
     rgba($retro-black, 0.98) 100%
-  );
+  ); // Dark gradient
   border-top: var(--terminal-line);
-  box-shadow: 
+  box-shadow:
     0 -4px 20px rgba($retro-black, 0.2),
-    0 0 30px rgba($retro-blue, 0.1);
+    0 0 30px rgba($retro-blue, 0.1); // Add subtle glow
   backdrop-filter: blur(var(--blur-md));
   width: 100%;
   position: relative;
