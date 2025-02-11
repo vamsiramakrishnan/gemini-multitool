@@ -1,13 +1,23 @@
-@import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
+@import '../../../styles/shared/mixins';
 @import '../../../styles/shared/widget-base';
+@import '../../../styles/shared/responsive';
+@import '../../../styles/shared/animations';
 
 /* Add your styles for weather widget here */
 .weather-widget {
   @include widget-base;
+  @include widget-content-styles;
+  @include crt-glow($retro-pink);
+  @include scanlines;
+  @include crt-texture;
+
+  container-name: weather-widget;
+  container-type: inline-size;
 
   .weather-header {
     @include widget-header;
+    @include cyber-header;
   }
 
   .weather-content {
@@ -20,9 +30,30 @@
     display: flex;
     align-items: center;
     gap: var(--space-lg);
+    padding: var(--space-lg);
+    position: relative;
+
+    @include retro-border('primary');
+    @include retro-box-shadow('glow');
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba($retro-blue, 0.2) 20%,
+        rgba($retro-blue, 0.2) 80%,
+        transparent 100%
+      );
+    }
 
     .weather-icon {
-      @include retro-icon-container;
+      @include retro-icon-container($retro-blue);
       width: 96px;
       height: 96px;
       
@@ -36,13 +67,18 @@
     .temperature-info {
       .weather-temp {
         @include retro-text-glow($retro-blue);
-        font-size: 4rem;
+        font-size: 2.5rem;
         font-weight: 700;
+        
+        .unit {
+          font-size: 1rem;
+          color: rgba($retro-blue, 0.7);
+        }
       }
 
       .weather-condition {
         @include retro-text-glow($retro-pink);
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-base);
         text-transform: uppercase;
       }
 
@@ -50,15 +86,31 @@
         @include retro-badge;
       }
     }
+
+    @container weather-widget (max-width: 480px) {
+      flex-direction: column;
+      text-align: center;
+      
+      .weather-icon {
+        margin: 0 auto;
+      }
+    }
   }
 
   .weather-stats {
-    @include widget-grid(200px);
+    @include responsive-grid(200px);
     padding: var(--space-lg);
+    background: rgba($retro-black, 0.3);
+    border-top: var(--terminal-line);
+
+    @include container-query(weather-stats, "max-width: 300px") {
+      grid-template-columns: 1fr;
+    }
 
     .stat-item {
       @include widget-grid-item;
       @include retro-glow-hover;
+      padding: var(--space-md);
 
       .stat-icon {
         @include retro-icon-with-text;
@@ -66,31 +118,46 @@
 
       .stat-value {
         @include retro-text-glow($retro-blue);
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-lg);
       }
 
       .stat-label {
         @include retro-text-secondary;
       }
     }
+
+    .stat-value {
+      @include data-stream-animation;
+      @include matrix-glitch;
+    }
   }
 
   .sun-times {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    @include responsive-grid(240px);
     gap: var(--space-md);
     padding: var(--space-lg);
 
     .time-card {
       @include widget-card;
       @include retro-glow-hover;
+      padding: var(--space-md);
+      @include cassette-button;
+      @interface cyber-hover;
 
-      &.sunrise .time-icon {
-        @include retro-icon-container($retro-green);
+      &:hover {
+        @include holographic-hover($retro-pink);
       }
 
-      &.sunset .time-icon {
-        @include retro-icon-container($retro-pink);
+      &.sunrise {
+        .time-icon {
+          @include retro-icon-container($retro-green);
+        }
+      }
+
+      &.sunset {
+        .time-icon {
+          @include retro-icon-container($retro-pink);
+        }
       }
 
       .time-value {
@@ -117,9 +184,11 @@
   }
 
   .weather-main {
+    @include widget-content-styles;
     flex: 1;
     display: flex;
     flex-direction: column;
+    @include crt-screen-border;
   }
 
   font-family: var(--font-ui);
@@ -219,7 +288,7 @@
 
       .temperature-info {
         .weather-temp {
-          font-size: 4rem;
+          font-size: 2.5rem;
           font-weight: 700;
           color: $retro-blue;
           line-height: 1;
@@ -228,14 +297,14 @@
           text-shadow: 0 0 20px rgba($retro-blue, 0.4);
 
           .unit {
-            font-size: 1.5rem;
+            font-size: 1rem;
             color: rgba($retro-blue, 0.7);
             margin-left: var(--space-sm);
           }
         }
 
         .weather-condition {
-          font-size: var(--font-size-lg);
+          font-size: var(--font-size-base);
           color: $retro-pink;
           text-transform: uppercase;
           margin-bottom: var(--space-sm);
@@ -326,7 +395,7 @@
         }
 
         .stat-value {
-          font-size: var(--font-size-xl);
+          font-size: var(--font-size-lg);
           font-weight: 600;
           color: $retro-blue;
           margin-bottom: 2px;
@@ -409,7 +478,7 @@
       }
 
       .time-value {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-base);
         font-weight: 600;
         color: $retro-blue;
         margin-bottom: 2px;
@@ -422,6 +491,46 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
+    }
+  }
+
+  // Fluid temperature size
+  .weather-temp {
+    font-size: clamp(2rem, 6cqi, 2.5rem);
+    @include holographic-display(
+      $primary: $retro-pink,
+      $secondary: $retro-blue,
+      $intensity: 0.8
+    );
+  }
+
+  .weather-location {
+    @extend .retro-responsive-text--sm;
+  }
+
+  .sun-times {
+    @extend .retro-responsive-hide--mobile;
+  }
+
+  .weather-stats {
+    @include holographic-grid($retro-pink);
+  }
+
+  .weather-actions {
+    @include neon-panel(
+      $glow-color: $retro-pink,
+      $border-style: 'dashed'
+    );
+    
+    button {
+      @interface cyber-button($retro-pink);
+    }
+  }
+
+  .weather-header {
+    .weather-city {
+      @include neon-text-glow($retro-pink);
+      font-family: var(--font-cyber);
     }
   }
 } 

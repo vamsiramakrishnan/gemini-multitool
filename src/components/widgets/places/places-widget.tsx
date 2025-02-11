@@ -57,6 +57,9 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
   async render(data: PlacesData = this.data): Promise<string> {
     this.data = { ...this.data, ...data };
     
+    // Reset map state when new data arrives
+    this.mapInitialized = false;
+
     if (!this.data || this.data.error) {
       return this.createErrorState(this.data?.error || 'No data available');
     }
@@ -175,7 +178,7 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     const isOpen = businessStatus === 'OPERATIONAL';
     
     return `
-      <div class="place-card">
+      <div class="place-card" data-place-id="${place.id}">
         <div class="place-photo">
           ${mainPhotoUrl ? `
             <img src="${mainPhotoUrl}" alt="${name}" loading="lazy" />

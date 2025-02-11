@@ -7,8 +7,21 @@ import { ChatWidgetComponent } from './chat/ChatWidgetComponent';
 import { AltairWidget } from './altair/Altair';
 import { CodeExecutionWidget } from './code-execution/CodeExecutionWidget';
 import { NearbyPlacesWidget } from './nearby-places/NearbyPlacesWidget';
+import { TableWidget } from './table/TableWidget';
 
-export const WidgetRegistry = {
+export type WidgetType = 
+  | 'weather'
+  | 'stock'
+  | 'map'
+  | 'places'
+  | 'nearby_places'
+  | 'google_search'
+  | 'chat'
+  | 'altair'
+  | 'code_execution'
+  | 'table';
+
+export const WidgetRegistry: Record<WidgetType, React.ComponentType<any>> = {
   weather: WeatherWidget,
   stock: StockWidget,
   map: MapWidget,
@@ -17,7 +30,9 @@ export const WidgetRegistry = {
   google_search: SearchWidget,
   chat: ChatWidgetComponent,
   altair: AltairWidget,
-  code_execution: CodeExecutionWidget
-} as const;
+  code_execution: CodeExecutionWidget,
+  table: TableWidget
+};
 
-export type WidgetType = keyof typeof WidgetRegistry; 
+// Add type for chart types
+export type ChartType = 'line' | 'bar' | 'scatter' | 'area' | 'pie'; 

@@ -1,99 +1,56 @@
 @import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
+@import '../../../styles/shared/_layout-mixins';
+@import '../../../styles/shared/_animations';
+@import '../../../styles/shared/_widget-base';
 
 .nearby-places-widget {
+  @include widget-base;
   @include widget-content-styles;
+  @include crt-glow($retro-pink);
+  @include scanlines;
+  @include crt-texture;
 
-  .places-grid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-md);
-  }
+  container-name: nearby-places-widget;
+  container-type: inline-size;
 
   .nearby-places-main {
-    position: relative;
-    background: rgba($retro-black, 0.95);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    backdrop-filter: blur(var(--blur-md));
-    border: var(--terminal-line);
+    @include widget-content;
+    @include crt-screen-border;
 
     .search-section {
+      @include neon-panel($retro-blue);
       padding: var(--space-md);
-      border-bottom: var(--terminal-line);
-      background: rgba($retro-black, 0.7);
 
       .search-container {
+        @include cyber-input;
         position: relative;
         margin-bottom: var(--space-md);
 
         input {
           width: 100%;
-          padding: var(--space-sm) var(--space-md);
           padding-left: calc(var(--space-md) + 24px);
-          background: rgba($retro-black, 0.3);
-          border: 1px solid rgba($retro-blue, 0.3);
-          border-radius: var(--radius-sm);
-          color: $retro-blue;
-          font-family: var(--font-ui);
-          transition: var(--hover-transition);
-
-          &::placeholder {
-            color: rgba($retro-blue, 0.5);
-          }
-
-          &:focus {
-            outline: none;
-            border-color: $retro-pink;
-            box-shadow: var(--terminal-glow);
-          }
         }
 
         .search-icon {
+          @include retro-icon-container($retro-blue);
           position: absolute;
           left: var(--space-sm);
           top: 50%;
           transform: translateY(-50%);
-          color: $retro-blue;
-          font-size: 20px;
         }
       }
 
       .filters {
         .filter-tags {
-          display: flex;
+          @include stack('xs', 'horizontal');
           flex-wrap: wrap;
-          gap: var(--space-xs);
 
           .filter-tag {
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-            padding: var(--space-xs) var(--space-sm);
-            background: rgba($retro-black, 0.3);
-            border: 1px solid rgba($retro-blue, 0.3);
-            border-radius: var(--radius-sm);
-            color: $retro-blue;
-            font-size: var(--font-size-xs);
-            transition: var(--hover-transition);
-            cursor: pointer;
-
-            &:hover {
-              border-color: $retro-pink;
-              color: $retro-pink;
-              box-shadow: var(--terminal-glow);
-            }
-
+            @include cyber-button($retro-blue);
+            
             &.active {
-              background: rgba($retro-blue, 0.1);
-              border-color: $retro-blue;
-              color: $retro-blue;
-              box-shadow: var(--terminal-glow);
-            }
-
-            .material-symbols-outlined {
-              font-size: 16px;
+              @include neon-panel($retro-pink, 'dashed');
             }
           }
         }
@@ -101,51 +58,30 @@
     }
 
     .map-section {
+      @include holographic-grid($retro-blue);
       height: 300px;
-      border-bottom: var(--terminal-line);
       position: relative;
       overflow: hidden;
-
-      .map-container {
-        height: 100%;
-        width: 100%;
-        position: absolute !important;
-        top: 0;
-        left: 0;
-        background: rgba($retro-black, 0.3);
-        
-        .gm-style {
-          height: 100% !important;
-          width: 100% !important;
-        }
-      }
     }
 
     .places-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: var(--space-md);
+      @include responsive-grid(280px);
       padding: var(--space-lg);
       background: rgba($retro-black, 0.3);
-      border-bottom: var(--terminal-line);
 
       .place-card {
-        @include card-base;
-        transition: var(--hover-transition);
-
+        @include widget-card;
+        @include retro-glow-hover;
+        @include neon-panel($retro-blue);
+        
         &:hover {
-          transform: translateY(-2px);
-          border-color: $retro-pink;
-          box-shadow: var(--terminal-glow);
+          @include holographic-hover($retro-pink);
         }
 
         .place-photo {
-          position: relative;
-          width: 100%;
+          @include data-stream-animation;
           height: 180px;
           overflow: hidden;
-          border-bottom: var(--terminal-line);
-          background: rgba($retro-black, 0.3);
 
           img {
             width: 100%;
@@ -156,69 +92,38 @@
           }
 
           .rating-badge {
+            @include cyber-badge($retro-blue);
             position: absolute;
             top: var(--space-sm);
             right: var(--space-sm);
-            padding: var(--space-xs) var(--space-sm);
-            background: rgba($retro-black, 0.85);
-            border: 1px solid rgba($retro-blue, 0.3);
-            border-radius: var(--radius-sm);
-            color: $retro-blue;
-            backdrop-filter: blur(var(--blur-sm));
-            display: flex;
-            align-items: center;
-            gap: var(--space-2xs);
-
-            .material-symbols-outlined {
-              font-size: 14px;
-              color: $retro-pink;
-            }
           }
         }
 
         .place-details {
           padding: var(--space-md);
-          background: rgba($retro-black, 0.3);
 
           .place-name {
+            @include cyber-heading(4);
+            @include neon-text-glow($retro-blue);
             font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: $retro-blue;
-            margin-bottom: var(--space-xs);
-            text-shadow: 0 0 10px rgba($retro-blue, 0.3);
           }
 
           .place-address {
-            font-size: var(--font-size-sm);
-            color: rgba($retro-blue, 0.7);
-            margin-bottom: var(--space-sm);
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-
-            .material-symbols-outlined {
-              font-size: 16px;
-            }
+            @include retro-icon-with-text;
+            margin: var(--space-sm) 0;
           }
 
           .place-types {
-            display: flex;
+            @include stack('xs', 'horizontal');
             flex-wrap: wrap;
-            gap: var(--space-xs);
             margin-top: var(--space-sm);
 
             .place-type {
-              padding: var(--space-2xs) var(--space-xs);
-              background: rgba($retro-black, 0.3);
-              border: 1px solid rgba($retro-blue, 0.2);
-              border-radius: var(--radius-sm);
-              color: rgba($retro-blue, 0.7);
+              @include cyber-badge($retro-blue);
               font-size: var(--font-size-xs);
-              transition: var(--hover-transition);
-
+              
               &:hover {
-                border-color: $retro-pink;
-                color: $retro-pink;
+                @include holographic-hover($retro-pink);
               }
             }
           }
@@ -227,53 +132,50 @@
     }
 
     .places-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--space-md);
+      @include responsive-grid(200px);
       padding: var(--space-lg);
       background: rgba($retro-black, 0.3);
 
       .stat-item {
+        @include widget-card;
+        @include retro-glow-hover;
         padding: var(--space-md);
-        background: rgba($retro-black, 0.4);
-        border-radius: var(--radius-sm);
-        border: 1px solid rgba($retro-blue, 0.2);
-        transition: var(--hover-transition);
-        position: relative;
-        box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
-
-        &:hover {
-          border-color: $retro-pink;
-          transform: translateY(-2px);
-          box-shadow: var(--terminal-glow);
-        }
 
         .stat-icon {
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-          margin-bottom: var(--space-sm);
-          color: rgba($retro-blue, 0.7);
-
-          .material-symbols-outlined {
-            font-size: 20px;
-            color: $retro-blue;
-          }
+          @include retro-icon-with-text;
         }
 
         .stat-value {
-          font-size: var(--font-size-xl);
-          font-weight: 600;
-          color: $retro-blue;
-          margin-bottom: 2px;
-          text-shadow: 0 0 10px rgba($retro-blue, 0.3);
+          @include neon-text-glow($retro-blue);
+          font-size: var(--font-size-lg);
         }
 
         .stat-label {
-          font-size: var(--font-size-xs);
-          color: rgba($retro-blue, 0.6);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
+          @include retro-text-secondary;
+        }
+      }
+    }
+  }
+
+  // States
+  &.loading {
+    @include widget-loading;
+  }
+
+  &.empty {
+    @include widget-empty;
+  }
+
+  &.error {
+    @include widget-error;
+  }
+
+  // Responsive styles
+  @container nearby-places-widget (max-width: 600px) {
+    .search-section {
+      .filters {
+        .filter-tags {
+          grid-template-columns: repeat(2, 1fr);
         }
       }
     }

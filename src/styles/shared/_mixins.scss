@@ -426,17 +426,58 @@
   }
 }
 
-// CRT Glow (mixin for reusability)
-@mixin crt-glow {
-  position: relative;
-  &::after {
+
+// CRT screen texture effect
+@mixin crt-texture {
+  &::before {
     content: '';
     position: absolute;
     inset: 0;
-    box-shadow: 0 0 40px 2px var(--crt-glow);
+    background: 
+      linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.25) 50%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.06),
+        rgba(0, 255, 0, 0.02),
+        rgba(0, 0, 255, 0.06)
+      );
+    background-size: 100% 2px, 3px 100%;
     pointer-events: none;
-    z-index: -1; // Ensure it's behind the content
-    border-radius: inherit; // Inherit border-radius from parent
+    z-index: var(--z-overlay);
+    mix-blend-mode: multiply;
+  }
+}
+
+// Scanlines effect
+@mixin scanlines {
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15) 0px,
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+}
+
+// CRT screen border effect
+@mixin crt-screen-border {
+  border: 2px solid rgba($retro-black, 0.8);
+  box-shadow: 
+    inset 0 0 10px rgba($retro-blue, 0.2),
+    0 0 20px rgba($retro-blue, 0.1);
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid rgba($retro-blue, 0.3);
+    border-radius: inherit;
+    pointer-events: none;
   }
 }
 
@@ -849,10 +890,15 @@
 }
 
 // Add new systematic layout mixins
-@mixin responsive-grid {
+@mixin responsive-grid($min-width: 300px, $gap: 'md') {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, $min-width), 1fr));
+  gap: var(--space-#{$gap});
+  container-type: inline-size;
+
+  @supports not (container-type: inline-size) {
+    @content; // Fallback for older browsers
+  }
 }
 
 // Widget State Mixins
@@ -908,4 +954,433 @@
   height: var(--header-height);
   display: flex;
   align-items: center;
+}
+
+@mixin retro-icon-container($color: $retro-blue) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $color;
+  border-radius: var(--radius-sm);
+  background: rgba($retro-black, 0.3);
+  box-shadow: 0 0 20px rgba($color, 0.2);
+
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid $color;
+    border-radius: inherit;
+  }
+  
+  &::before { opacity: 0.3; }
+  &::after { opacity: 0.1; inset: -2px; }
+}
+
+// Holographic Effects
+@mixin holographic-display($primary, $secondary, $intensity: 0.6) {
+  position: relative;
+  background: linear-gradient(
+    45deg,
+    rgba($primary, 0.1) 0%,
+    rgba($secondary, 0.1) 100%
+  );
+  box-shadow: 
+    0 0 30px rgba($primary, $intensity * 0.3),
+    inset 0 0 15px rgba($secondary, $intensity * 0.2);
+  backdrop-filter: blur(10px);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba($primary, 0.1) 0%,
+      rgba($primary, 0.1) 1px,
+      transparent 4px
+    );
+    pointer-events: none;
+  }
+}
+
+// Cyber Interface Elements
+@mixin cyber-button($color: $retro-blue) {
+  @include retro-toggle($color);
+  font-family: var(--font-cyber);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  
+  &:hover {
+    transform: skewX(-10deg) translateY(-2px);
+    text-shadow: 0 0 15px rgba($color, 0.8);
+  }
+}
+
+@mixin cyber-header {
+  font-family: var(--font-cyber);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      $retro-blue 50%,
+      transparent 100%
+    );
+    animation: header-glow 2s infinite;
+  }
+}
+
+@keyframes header-glow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@mixin neon-text-glow($color, $intensity: 0.8) {
+  text-shadow: 
+    0 0 calc(10px * $intensity) rgba($color, 0.5),
+    0 0 calc(20px * $intensity) rgba($color, 0.3),
+    0 0 calc(30px * $intensity) rgba($color, 0.1);
+}
+
+@mixin cassette-button {
+  @include retro-border;
+  background: rgba($retro-black, 0.4);
+  padding: var(--space-sm) var(--space-md);
+  transition: var(--hover-transition);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      145deg,
+      rgba(255,255,255,0.1) 0%,
+      rgba(0,0,0,0.2) 100%
+    );
+    mix-blend-mode: overlay;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--terminal-glow);
+  }
+}
+
+@mixin retro-glow-hover {
+  transition: var(--hover-transition);
+  
+  &:hover {
+    box-shadow: 0 0 15px rgba($retro-blue, 0.2);
+    transform: translateY(-2px);
+  }
+}
+
+@mixin retro-icon-with-text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  
+  .material-symbols-outlined {
+    @include retro-icon-container;
+    padding: var(--space-xs);
+  }
+}
+
+@mixin holographic-grid($color) {
+  position: relative;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      rgba($color, 0.05) 0px,
+      rgba($color, 0.05) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba($color, 0.05) 0px,
+      rgba($color, 0.05) 1px,
+      transparent 1px,
+      transparent 5px
+    );
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba($color, 0.1) 0%,
+      transparent 60%
+    );
+    animation: hologram-pulse 4s infinite;
+  }
+}
+
+@mixin holographic-hover($color) {
+  transition: var(--hover-transition);
+  
+  &:hover {
+    box-shadow: 0 0 25px rgba($color, 0.3);
+    transform: translateY(-2px) scale(1.02);
+  }
+}
+
+@keyframes hologram-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+@mixin neon-panel($glow-color, $border-style: 'solid') {
+  position: relative;
+  background: rgba($retro-black, 0.6);
+  border: 1px $border-style rgba($glow-color, 0.3);
+  border-radius: var(--radius-sm);
+  box-shadow: 
+    0 0 15px rgba($glow-color, 0.2),
+    inset 0 0 10px rgba($glow-color, 0.1);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 1px solid rgba($glow-color, 0.1);
+    border-radius: inherit;
+    pointer-events: none;
+    animation: neon-pulse 2s infinite;
+  }
+  
+  @keyframes neon-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+}
+
+@mixin cyber-input {
+  position: relative;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba($retro-black, 0.3);
+  border: 1px solid rgba($retro-blue, 0.3);
+  border-radius: var(--radius-sm);
+  color: $retro-blue;
+  font-family: var(--font-ui);
+  transition: var(--hover-transition);
+
+  &::placeholder {
+    color: rgba($retro-blue, 0.5);
+  }
+
+  &:focus {
+    @include holographic-focus;
+    // Fallback if holographic-focus is removed
+    outline: none;
+    border-color: $retro-pink;
+    box-shadow: var(--terminal-glow);
+  }
+}
+
+@mixin cyber-select {
+  @include cyber-input;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23#{str-slice(inspect($retro-blue), 2)}'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-sm) center;
+}
+
+@mixin status-indicator($state) {
+  $colors: (
+    'success': $retro-green,
+    'error': $retro-red,
+    'warning': $retro-yellow,
+    'info': $retro-blue
+  );
+  
+  position: relative;
+  padding-left: var(--space-lg);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: map-get($colors, $state);
+    box-shadow: 0 0 10px rgba(map-get($colors, $state), 0.3);
+    animation: status-pulse 2s infinite;
+  }
+}
+
+@mixin holographic-overlay($intensity: 0.3) {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 50% 50%, rgba($retro-blue, $intensity) 0%, transparent 60%),
+      repeating-linear-gradient(
+        45deg,
+        rgba($retro-pink, $intensity * 0.3) 0%,
+        rgba($retro-pink, $intensity * 0.3) 1px,
+        transparent 2px,
+        transparent 5px
+      );
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+}
+
+// Add this with the other interactive state mixins
+@mixin focus-ring {
+  outline: 2px solid var(--retro-blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 3px rgba(var(--retro-blue), 0.1);
+}
+
+// Update the interactive-element mixin to use it
+@mixin interactive-element {
+  cursor: pointer;
+  transition: all var(--animation-speed-base) var(--animation-easing);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glow-primary);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Add this with the other holographic mixins
+@mixin holographic-focus {
+  outline: none;
+  border-color: $retro-pink;
+  box-shadow: 
+    0 0 0 2px rgba($retro-black, 0.8),
+    0 0 15px rgba($retro-pink, 0.4);
+  background: linear-gradient(
+    165deg,
+    rgba($retro-pink, 0.1) 0%,
+    rgba($retro-pink, 0.05) 100%
+  );
+}
+
+// Add this with other retro mixins
+@mixin retro-toggle($color: $retro-blue) {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba($retro-black, 0.3);
+  border: 1px solid rgba($color, 0.3);
+  border-radius: var(--radius-sm);
+  color: $color;
+  font-size: var(--font-size-sm);
+  transition: var(--hover-transition);
+  cursor: pointer;
+
+  &:hover {
+    border-color: $retro-pink;
+    color: $retro-pink;
+    box-shadow: var(--terminal-glow);
+  }
+}
+
+// Add this with other widget mixins
+@mixin widget-card {
+  background: rgba($retro-black, 0.3);
+  border: 1px solid rgba($retro-blue, 0.2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: var(--hover-transition);
+  position: relative;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: $retro-pink;
+    box-shadow: var(--terminal-glow);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--scanlines);
+    opacity: 0.1;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+}
+
+// Add with other retro mixins
+@mixin retro-text-secondary {
+  font-size: var(--font-size-xs);
+  color: rgba($retro-blue, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// Add with other widget mixins
+@mixin widget-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: var(--space-xl);
+  text-align: center;
+  background: rgba($retro-black, 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+
+  .material-symbols-outlined {
+    color: $retro-blue;
+    font-size: 24px;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-message {
+    color: $retro-blue;
+    margin-top: var(--space-sm);
+    font-family: var(--font-ui);
+    text-shadow: 0 0 10px rgba($retro-blue, 0.3);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+}
+
+.stat-value {
+  font-size: var(--font-size-sm);
+}
+
+.cyber-button {
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.retro-text-secondary {
+  font-size: var(--font-size-xs);
 } 

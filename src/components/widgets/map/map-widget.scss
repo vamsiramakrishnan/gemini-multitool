@@ -1,5 +1,10 @@
 @import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
+@import '../../../styles/shared/_layout-mixins';
+@import '../../../styles/shared/_animations';
+@import '../../../styles/shared/_layout';
+@import '../../../styles/shared/_responsive';
+@import '../../../styles/shared/_widget-base';
 
 @mixin custom-scrollbar {
   scrollbar-width: thin;
@@ -25,106 +30,41 @@
 }
 
 .map-widget {
-  @include widget-content-styles;
-
-  .map-container {
-    flex: 1;
-    min-height: 400px;
-    position: relative;
-    padding: 0; // Override default padding for map
-  }
-
-  display: grid;
-  grid-template-columns: minmax(300px, 30%) 1fr;
-  gap: var(--space-md);
-  height: 100%;
-  min-height: 0; // Important for grid scroll containment
-  background: rgba($retro-black, 0.85);
-  backdrop-filter: blur(var(--blur-sm));
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  font-family: var(--font-ui);
-  border: var(--terminal-line);
-  box-shadow: var(--terminal-shadow);
-  position: relative;
+  @include widget-base;
+  @include grid-container;
+  grid-template-columns: minmax(var(--panel-width), 30%) 1fr;
+  gap: var(--panel-spacing);
   
-  // Scanlines effect
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--scanlines);
-    pointer-events: none;
-    opacity: 0.1;
-    mix-blend-mode: overlay;
-    z-index: 1;
-  }
-
-  // CRT glow effect
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    box-shadow: inset 0 0 60px rgba($retro-blue, 0.1);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  @media (max-width: 768px) {
+  @include respond-to('md') {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
+    @include mobile-layout-stack;
   }
 
   .map-sidebar {
-    display: flex;
-    flex-direction: column;
-    background: rgba($retro-black, 0.95);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    backdrop-filter: blur(var(--blur-md));
-    border: var(--terminal-line);
-    overflow: hidden; // Contain scrolling children
+    @include widget-content;
+    background: rgba(var(--surface-2), 0.9);
+    border-right: var(--terminal-line);
+    width: var(--panel-width);
+    padding: 0;
+
+    @include respond-to('md') {
+      @include collapsed-panel;
+    }
 
     .route-header {
-      flex-shrink: 0;
-      padding: var(--space-lg);
-      border-bottom: var(--terminal-line);
-      background: linear-gradient(
-        180deg,
-        rgba($retro-black, 0.7) 0%,
-        rgba($retro-black, 0.85) 100%
-      );
-      box-shadow: 0 1px 0 rgba($retro-blue, 0.1);
-      position: relative;
-
-      &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 1px;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          rgba($retro-blue, 0.2) 20%,
-          rgba($retro-blue, 0.2) 80%,
-          transparent 100%
-        );
-      }
+      @include widget-header;
+      height: var(--header-height);
 
       .route-info {
         .route-title {
-          font-family: var(--font-display);
-          font-size: var(--font-size-lg);
-          color: $retro-blue;
+          @include retro-text-glow;
+          font-size: var(--font-size-base);
           margin-bottom: var(--space-xs);
-          text-shadow: 0 0 10px rgba($retro-blue, 0.3);
         }
 
         .route-path {
-          color: rgba($retro-blue, 0.7);
-          font-size: var(--font-size-sm);
+          @include retro-text-secondary;
 
           .separator {
             color: $retro-pink;
@@ -132,121 +72,146 @@
           }
         }
       }
+    }
 
-      .search-section {
-        &.expandable {
-          .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--space-sm);
-            background: rgba($retro-black, 0.3);
-            border: 1px solid rgba($retro-blue, 0.3);
-            border-radius: var(--radius-sm);
-            transition: var(--hover-transition);
-            cursor: pointer;
+    .search-section {
+      padding: var(--space-md);
+      
+      &.expandable {
+        .section-header {
+          @include widget-card;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: var(--space-sm);
+          cursor: pointer;
 
-            &:hover {
-              border-color: $retro-pink;
-              box-shadow: var(--terminal-glow);
-            }
-
-            .section-title {
-              font-family: var(--font-display);
-              color: $retro-blue;
-              font-size: var(--font-size-sm);
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-            }
-
-            .expand-toggle {
-              color: $retro-blue;
-              transition: transform 0.3s ease;
-
-              &.expanded {
-                transform: rotate(180deg);
-              }
-            }
+          .section-title {
+            @include retro-text-glow;
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
           }
 
-          .section-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+          .expand-toggle {
+            @include retro-icon-container;
+            transition: transform 0.3s ease;
 
             &.expanded {
-              max-height: 200px;
-              padding-top: var(--space-sm);
+              transform: rotate(180deg);
             }
+          }
+        }
 
-            .search-input {
-              position: relative;
-              
-              input {
-                width: 100%;
-                padding: var(--space-sm) var(--space-md);
-                padding-left: calc(var(--space-md) + 24px);
-                background: rgba($retro-black, 0.3);
-                border: 1px solid rgba($retro-blue, 0.3);
-                border-radius: var(--radius-sm);
-                color: $retro-blue;
-                font-size: var(--font-size-sm);
-                transition: var(--hover-transition);
+        .section-content {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease;
 
-                &::placeholder {
-                  color: rgba($retro-blue, 0.5);
-                }
+          &.expanded {
+            max-height: 200px;
+            padding-top: var(--space-sm);
+          }
 
-                &:focus {
-                  outline: none;
-                  border-color: $retro-pink;
-                  box-shadow: var(--terminal-glow);
-                }
-              }
-
-              .search-icon {
-                position: absolute;
-                left: var(--space-sm);
-                top: 50%;
-                transform: translateY(-50%);
-                color: rgba($retro-blue, 0.7);
-                font-size: 20px;
-              }
-            }
+          .search-input {
+            @include widget-search;
           }
         }
       }
     }
 
     .route-details {
-      flex-shrink: 0;
       padding: var(--space-md);
       border-bottom: var(--terminal-line);
-      background: rgba($retro-black, 0.3);
 
       .detail-item {
-        background: rgba($retro-black, 0.4);
-        backdrop-filter: blur(var(--blur-sm));
-        border: 1px solid rgba($retro-blue, 0.2);
+        @include widget-card;
+        margin-bottom: var(--space-sm);
         padding: var(--space-md);
-        transition: var(--hover-transition);
-        position: relative;
-        box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
-
-        &:hover {
-          border-color: $retro-pink;
-          transform: translateY(-2px);
-          box-shadow: var(--terminal-glow);
-        }
 
         .detail-icon {
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-          color: rgba($retro-blue, 0.7);
+          @include retro-icon-with-text;
           margin-bottom: var(--space-sm);
-          font-family: var(--font-ui);
-          font-size: var(--font-size-sm);
+        }
+      }
+    }
+
+    .navigation-steps {
+      @include widget-scrollable;
+      padding: var(--space-md);
+      
+      .steps-container {
+        @include stack('sm', 'vertical');
+        position: relative;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 20px;
+          width: 2px;
+          background: linear-gradient(
+            to bottom,
+            rgba($retro-blue, 0.3),
+            rgba($retro-pink, 0.3)
+          );
+          z-index: 0;
+        }
+      }
+
+      .step {
+        @include interactive-element;
+        @include neon-panel($retro-blue, 'solid');
+        @include data-stream-animation;
+        position: relative;
+        padding: var(--space-md);
+        transition: var(--hover-transition);
+        cursor: pointer;
+        z-index: 1;
+
+        &:hover {
+          @include holographic-hover($retro-pink);
+          .step-instruction {
+            @include matrix-glitch;
+          }
+        }
+
+        &.active {
+          @include neon-panel($retro-pink, 'dashed');
+          @include holographic-overlay(0.2);
+          transform: translateX(var(--space-sm));
+
+          .step-icon {
+            @include pulse-animation;
+            color: $retro-pink;
+          }
+
+          &::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: $retro-pink;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba($retro-pink, 0.5);
+          }
+        }
+
+        .step-content {
+          display: flex;
+          align-items: flex-start;
+          gap: var(--space-md);
+        }
+
+        .step-icon {
+          @include retro-icon-container($retro-blue);
+          width: 40px;
+          height: 40px;
+          flex-shrink: 0;
 
           .material-symbols-outlined {
             font-size: 20px;
@@ -254,243 +219,140 @@
           }
         }
 
-        .detail-value {
-          font-family: var(--font-display);
-          font-size: var(--font-size-xl);
-          color: $retro-blue;
-          margin-bottom: 2px;
-          text-shadow: 0 0 10px rgba($retro-blue, 0.3);
-        }
-
-        .detail-label {
-          font-size: var(--font-size-xs);
-          color: rgba($retro-blue, 0.6);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-      }
-    }
-
-    .navigation-steps.scrollable {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding: var(--space-md);
-      @include custom-scrollbar;
-
-      .steps-container {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-sm);
-      }
-
-      .step {
-        background: rgba($retro-black, 0.4);
-        border: 1px solid rgba($retro-blue, 0.2);
-        border-radius: var(--radius-sm);
-        transition: var(--hover-transition);
-        cursor: pointer;
-
-        &:hover {
-          transform: translateX(4px);
-          border-color: $retro-pink;
-          box-shadow: var(--terminal-glow);
-        }
-
-        &.active {
-          border-left: 2px solid $retro-pink;
-          background: rgba($retro-blue, 0.1);
-        }
-
-        .step-content {
-          display: flex;
-          align-items: flex-start;
-          gap: var(--space-sm);
-          padding: var(--space-sm);
-        }
-
-        .step-icon {
-          background: rgba($retro-black, 0.3);
-          border: 1px solid rgba($retro-blue, 0.2);
-          color: $retro-blue;
-        }
-
         .step-info {
+          flex: 1;
+
           .step-instruction {
+            @include cyber-heading(4);
             color: $retro-blue;
-            text-shadow: 0 0 5px rgba($retro-blue, 0.2);
+            margin-bottom: var(--space-xs);
+            font-size: var(--font-size-sm);
+            transition: color 0.2s ease;
           }
 
           .step-distance {
-            color: rgba($retro-blue, 0.7);
+            @include data-label;
+            @include retro-text-glow($retro-blue);
+            font-size: var(--font-size-xs);
+            opacity: 0.8;
+          }
+
+          .step-details {
+            @include cyber-badge($retro-blue);
+            margin-top: var(--space-xs);
+            font-size: var(--font-size-xs);
           }
         }
       }
 
       .no-steps {
+        @include empty-state;
         color: rgba($retro-blue, 0.7);
+        padding: var(--space-xl);
+        text-align: center;
+
+        .material-symbols-outlined {
+          font-size: 48px;
+          margin-bottom: var(--space-md);
+          opacity: 0.5;
+        }
       }
     }
   }
 
-  .map-main {
+  .map-content {
+    @include widget-content;
     position: relative;
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    z-index: 1;
+    border-radius: var(--radius-md);
+    overflow: hidden;
 
-    #map-container {
-      flex: 1;
-      min-height: 0;
-      position: relative;
-      
-      // Ensure Google Maps elements are properly sized
-      .gm-style {
-        position: absolute !important;
-        height: 100% !important;
-        width: 100% !important;
-      }
+    &.loading {
+      @include widget-loading;
+    }
 
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: var(--scanlines);
-        pointer-events: none;
-        opacity: 0.05;
-        mix-blend-mode: overlay;
-        z-index: 2;
-      }
+    &.error {
+      @include widget-error;
     }
 
     .map-controls {
       position: absolute;
       top: var(--space-md);
       right: var(--space-md);
+      z-index: 10;
       display: flex;
-      flex-direction: column;
-      gap: var(--space-xs);
-      z-index: 2;
+      gap: var(--space-sm);
 
-      button {
-        @include retro-button;
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      .control-button {
+        @include retro-icon-container;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        transition: var(--hover-transition);
 
-        .material-symbols-outlined {
-          font-size: 20px;
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--terminal-glow);
         }
       }
     }
   }
 
-  // Mobile optimizations
   @media (max-width: 768px) {
+    @include widget-state-transitions;
     .map-sidebar {
-      order: 2; // Move sidebar below map on mobile
+      order: 2;
       border-right: none;
       border-top: var(--terminal-line);
-      max-height: 40vh; // Limit height on mobile
+      max-height: 40vh;
       overflow-y: auto;
     }
 
-    .map-main {
-      order: 1; // Keep map at top on mobile
+    .map-content {
+      order: 1;
       height: 60vh;
     }
   }
 
-  // Maximized state adjustments
   &.maximized {
     .map-sidebar {
       @media (min-width: 769px) {
-        width: 400px; // Wider sidebar when maximized
+        width: 400px;
       }
     }
 
-    .map-main {
+    .map-content {
       flex: 1;
     }
   }
-}
 
-// Loading state
-.map-loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba($retro-black, 0.85);
-  backdrop-filter: blur(var(--blur-sm));
-  z-index: 3;
+  .loading-state,
+  .error-state {
+    @include empty-state;
+    @include flex-center;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--space-md);
+    text-align: center;
+    color: var(--text-color-secondary);
+    font-family: var(--font-ui);
 
-  .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba($retro-blue, 0.1);
-    border-top-color: $retro-blue;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-}
+    .material-symbols-outlined {
+      @include loading-spinner;
+      font-size: 2rem;
+      margin-bottom: var(--space-sm);
+    }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-container {
-  background: rgba($retro-black, 0.85);
-  backdrop-filter: blur(var(--blur-md));
-  
-  .loading-spinner {
-    border-color: rgba($retro-blue, 0.1);
-    border-top-color: $retro-blue;
+    .loading-message,
+    .error-message {
+      font-size: var(--font-size-base);
+    }
   }
 
-  .loading-text {
-    color: $retro-blue;
-    text-shadow: 0 0 10px rgba($retro-blue, 0.3);
+  .error-state {
+    color: var(--retro-red);
   }
-}
 
-.custom-marker {
-  .marker-inner {
-    background: $retro-pink;
-    border: 2px solid $retro-blue;
-    box-shadow: 0 0 15px rgba($retro-blue, 0.3);
-  }
-}
-
-.error-state {
-  font-family: var(--font-ui);
-  font-size: var(--font-size-sm);
-  color: $retro-pink;
-  text-shadow: 0 0 10px rgba($retro-pink, 0.3);
-  
-  .material-symbols-outlined {
-    font-size: var(--font-size-xl);
-    color: $retro-pink;
-  }
-}
-
-@keyframes route-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.02);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
+  @keyframes route-pulse {
+    @include pulse-animation;
   }
 } 

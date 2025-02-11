@@ -14,9 +14,8 @@ import {
 } from '../multimodal-live-types';
 import { BaseWidgetData } from '../components/widgets/base/base-widget';
 import type { AltairData } from '../components/widgets/altair/altair-widget';
-import type { WidgetType } from './widget-manager';
-import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
-import { WidgetRegistry } from '../components/widgets/registry';
+import { WidgetRegistry, WidgetType } from '../components/widgets/registry';
+import { TableWidget } from '../components/widgets/table/table-widget';
 
 interface SearchWidgetData extends BaseWidgetData {
   groundingMetadata: GroundingMetadata;
@@ -64,9 +63,8 @@ export type ToolName =
   | 'get_directions'
   | 'search_places'
   | 'search_nearby'
-  | 'google_search'
   | 'render_altair'
-  | 'code_execution';
+  | 'render_table';
 
 export class ToolHandler {
   widgetManager: WidgetManager;
@@ -84,9 +82,8 @@ export class ToolHandler {
       get_directions: this.handleDirections.bind(this),
       search_places: this.handlePlacesSearch.bind(this),
       search_nearby: this.handleNearbySearch.bind(this),
-      google_search: this.handleSearch.bind(this),
       render_altair: this.handleAltair.bind(this),
-      code_execution: this.handleCodeExecution.bind(this),
+      render_table: this.handleTable.bind(this),
     };
   }
 
@@ -122,16 +119,11 @@ export class ToolHandler {
     this.widgetManager.destroyAllWidgets();
   }
 
-  async handleToolCall(toolCall: { functionCalls: Array<{ name: string; args: any }> }) {
+  async handleToolCall(toolCall: { functionCalls: Array<{ id: string; name: string; args: any }> }) {
     return Promise.all(toolCall.functionCalls.map(async (call) => {
       try {
         const widgetType = this.mapToolToWidgetType(call.name);
-        const WidgetComponent = WidgetRegistry[widgetType];
         
-        if (!WidgetComponent) {
-          throw new Error(`Widget component not found for type: ${widgetType}`);
-        }
-
         // Process the tool call with the correct widget type
         const result = await this.processToolCall(call, widgetType);
         return this.formatToolResponse(call.id, call.name, result);
@@ -155,12 +147,10 @@ export class ToolHandler {
         return this.handlePlacesSearch(call.args);
       case 'nearby_places':
         return this.handleNearbySearch(call.args);
-      case 'google_search':
-        return this.handleSearch(call.args);
       case 'altair':
         return this.handleAltair(call.args);
-      case 'code_execution':
-        return this.handleCodeExecution(call.args);
+      case 'table':
+        return this.handleTable(call.args);
       default:
         throw new Error(`Unhandled widget type: ${widgetType}`);
     }
@@ -225,7 +215,6 @@ export class ToolHandler {
   }
 
   async handleGroundingChunks(groundingMetadata: GroundingMetadata) {
-
     try {
         // Index the chunks for reference in supports
         const indexedChunks = groundingMetadata.groundingChunks.map((chunk, index) => {
@@ -240,60 +229,29 @@ export class ToolHandler {
             };
         });
 
-        // Create search widget with grounding data
-        const searchData: SearchWidgetData = {
-            title: 'Search Results',
-            groundingMetadata: {
-                ...groundingMetadata,
-                groundingChunks: indexedChunks
-            },
-            timestamp: new Date().toISOString()
-        };
-        await this.widgetManager.createWidget('google_search', searchData);
-
-        // If there are grounding supports, process them
+        // Process grounding supports if present
         if (groundingMetadata.groundingSupports?.length) {
             for (const support of groundingMetadata.groundingSupports) {
-                let relevantChunks: GroundingChunk[] = []; // Initialize relevantChunks
+                let relevantChunks = []; // Initialize relevantChunks
                 // Check if support has segments before trying to access them
                 if (support.segments?.length) {
                     relevantChunks = support.segments.flatMap(segment =>
                         segment.supportingChunkIndexes?.map((idx: number) => indexedChunks[idx]) || []
                     ).filter(Boolean);
-
                 } else if (support.groundingChunkIndices?.length) {
                     // Handle the case where we have groundingChunkIndices directly
                     relevantChunks = support.groundingChunkIndices
                         .map((idx: number) => indexedChunks[idx])
                         .filter(Boolean);
-
                 } else {
                     console.warn('Support missing both segments and groundingChunkIndices:', support);
                 }
             }
         }
-
     } catch (error: any) {
         console.error('Error handling grounding chunks:', error);
         throw error;
     }
-  }
-
-  async handleSearch(args: any) {
-    console.log('Search request:', args);
-    return this.handleWithStatus('google_search', args,
-      async () => {
-        console.log('Initiating search for:', args.query);
-        // This is a placeholder since actual search is handled by Gemini
-        // and comes through grounding chunks
-        const searchRequest = {
-          query: args.query,
-          status: 'searching'
-        };
-        console.log('Search request initialized:', searchRequest);
-        return searchRequest;
-      }
-    );
   }
 
   async handleWithStatus(toolName: ToolName, args: any, apiCall: () => Promise<any>) {
@@ -328,9 +286,8 @@ export class ToolHandler {
       'get_directions': 'map',
       'search_places': 'places',
       'search_nearby': 'nearby_places',
-      'google_search': 'google_search',
       'render_altair': 'altair',
-      'code_execution': 'code_execution'
+      'render_table': 'table'
     };
 
     const widgetType = mapping[toolName];
@@ -353,12 +310,10 @@ export class ToolHandler {
         return 'Places Search';
       case 'search_nearby':
         return 'Nearby Places';
-      case 'google_search':
-        return 'Search Results';
       case 'render_altair':
         return 'Visualization';
-      case 'code_execution':
-        return 'Code Execution';
+      case 'render_table':
+        return 'Data Table';
       default:
         return 'Widget';
     }
@@ -528,24 +483,27 @@ export class ToolHandler {
     try {
       const { language, code } = args;
       
+      // Execute code and get result
       const result = await this.handleWithStatus('code_execution', args,
         async () => {
           console.log('Executing code:', { language, code });
-          // This is a placeholder since actual execution is handled by Gemini
-          // and comes through grounding chunks
-          const executionRequest = {
+          const executionResult = await executeCode(language, code);
+          
+          // Create code execution widget to display result
+          await this.widgetManager.createWidget('code_execution', {
             language,
             code,
-            status: 'executing'
-          };
-          console.log('Execution request initialized:', executionRequest);
-          return executionRequest;
+            output: executionResult.output || '',
+            outcome: executionResult.success ? 'success' : 'error'
+          });
+
+          return executionResult;
         }
       );
 
       return {
         success: true,
-        result: result.result,
+        result: result,
         message: 'Code execution completed successfully'
       };
     } catch (error: any) {
@@ -555,5 +513,28 @@ export class ToolHandler {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+
+  private async handleTable(args: any) {
+    return this.handleWithStatus('render_table', args,
+      async () => {
+        const { markdown, title, description } = args;
+        
+        // Create widget data
+        const widgetData = {
+          markdown,
+          title: title || 'Data Table',
+          description: description || ''
+        };
+
+        // Create widget through widget manager
+        await this.widgetManager.createWidget('table', widgetData);
+
+        return {
+          success: true,
+          message: 'Table rendered successfully'
+        };
+      }
+    );
   }
 } 

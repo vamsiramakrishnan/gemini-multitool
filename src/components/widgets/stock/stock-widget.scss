@@ -1,14 +1,23 @@
-@import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
+@import '../../../styles/shared/mixins';
+@import '../../../styles/shared/widget-base';
+@import '../../../styles/shared/responsive';
+@import '../../../styles/shared/animations';
 
 /* Add your styles for stock widget here */ 
 .stock-widget {
+  @include widget-base;
   @include widget-content-styles;
+  @include crt-glow($retro-blue);
+  @include scanlines;
+  @include crt-texture;
 
   .stock-main {
+    @include widget-content;
     flex: 1;
     display: flex;
     flex-direction: column;
+    @include crt-screen-border;
   }
 
   background: rgba($retro-black, 0.85);
@@ -19,28 +28,6 @@
   border: var(--terminal-line);
   box-shadow: var(--terminal-shadow);
   position: relative;
-
-  // Scanlines effect
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--scanlines);
-    pointer-events: none;
-    opacity: 0.1;
-    mix-blend-mode: overlay;
-    z-index: 1;
-  }
-
-  // CRT glow effect
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    box-shadow: inset 0 0 60px rgba($retro-blue, 0.1);
-    pointer-events: none;
-    z-index: 2;
-  }
 
   .stock-main {
     position: relative;
@@ -82,26 +69,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid $retro-blue;
-        box-shadow: 0 0 20px rgba($retro-blue, 0.2);
+        border: var(--terminal-line);
+        box-shadow: var(--terminal-shadow);
 
-        &::before {
-          content: '';
-          position: absolute;
-          inset: -1px;
-          border: 1px solid $retro-blue;
-          opacity: 0.3;
-          border-radius: inherit;
-        }
-
-        &::after {
-          content: '';
-          position: absolute;
-          inset: -2px;
-          border: 1px solid $retro-blue;
-          opacity: 0.1;
-          border-radius: inherit;
-        }
+        @include retro-icon-container($retro-blue);
 
         .stock-symbol {
           font-size: var(--font-size-2xl);
@@ -115,7 +86,12 @@
         flex: 1;
 
         .current-price {
-          font-size: 4rem;
+          @include holographic-display(
+            $primary: $retro-blue,
+            $secondary: $retro-pink,
+            $intensity: 0.8
+          );
+          font-size: clamp(2rem, 5cqi, 2.5rem);
           font-weight: 700;
           color: $retro-blue;
           line-height: 1;
@@ -125,6 +101,7 @@
         }
 
         .price-change {
+          @include data-stream-animation;
           display: flex;
           align-items: center;
           gap: var(--space-sm);
@@ -158,7 +135,8 @@
           }
 
           .change-value {
-            font-size: var(--font-size-lg);
+            @include matrix-glitch;
+            font-size: var(--font-size-base);
             font-weight: 600;
             color: $retro-pink;
             text-shadow: 0 0 10px rgba($retro-pink, 0.4);
@@ -203,15 +181,15 @@
         }
 
         .range-bar {
+          @include retro-border('secondary');
           flex: 1;
           height: 4px;
-          background: rgba($retro-black, 0.4);
-          border-radius: var(--radius-sm);
           position: relative;
           overflow: hidden;
           border: 1px solid rgba($retro-blue, 0.2);
 
           .progress {
+            @include retro-box-shadow('glow');
             position: absolute;
             left: 0;
             top: 0;
@@ -227,6 +205,7 @@
           }
 
           .current-marker {
+            @include retro-icon-container($retro-pink);
             position: absolute;
             width: 12px;
             height: 12px;
@@ -242,26 +221,20 @@
     }
 
     .trading-info {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      @include responsive-grid(240px);
       gap: var(--space-md);
       padding: var(--space-lg);
       background: rgba($retro-black, 0.3);
       border-top: var(--terminal-line);
 
       .info-item {
+        @include widget-card;
+        @include retro-glow-hover;
         padding: var(--space-md);
         background: rgba($retro-black, 0.4);
-        border-radius: var(--radius-sm);
         border: 1px solid rgba($retro-blue, 0.2);
         transition: var(--hover-transition);
         box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
-
-        &:hover {
-          border-color: $retro-pink;
-          transform: translateY(-2px);
-          box-shadow: var(--terminal-glow);
-        }
 
         .info-icon {
           display: flex;
@@ -271,13 +244,14 @@
           color: rgba($retro-blue, 0.7);
 
           .material-symbols-outlined {
+            @include retro-icon-container($retro-blue);
             font-size: 20px;
-            color: $retro-blue;
+            padding: var(--space-xxs);
           }
         }
 
         .info-value {
-          font-size: var(--font-size-xl);
+          font-size: var(--font-size-lg);
           font-weight: 600;
           color: $retro-blue;
           margin-bottom: 2px;
@@ -295,6 +269,7 @@
   }
 
   .stock-header {
+    @include cyber-header;
     padding: var(--space-md);
     border-bottom: var(--terminal-line);
     background: rgba($retro-black, 0.7);
@@ -306,8 +281,9 @@
       margin-bottom: var(--space-md);
 
       .stock-symbol {
-        font-family: var(--font-display);
-        font-size: var(--font-size-xl);
+        @include neon-text-glow($retro-blue);
+        font-family: var(--font-cyber);
+        font-size: var(--font-size-lg);
         font-weight: 700;
         color: $retro-blue;
         text-shadow: 0 0 10px rgba($retro-blue, 0.3);
@@ -350,6 +326,11 @@
         }
       }
     }
+
+    @include container-query(stock-header, "max-width: 400px") {
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
   }
 
   .stock-chart {
@@ -357,6 +338,7 @@
     background: rgba($retro-black, 0.7);
     backdrop-filter: blur(var(--blur-sm));
     border-bottom: var(--terminal-line);
+    @include holographic-grid($retro-blue);
     
     canvas {
       width: 100% !important;
@@ -366,6 +348,7 @@
   }
 
   .stock-stats {
+    @include widget-grid(120px);
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--space-sm);
@@ -421,6 +404,11 @@
   }
 
   .stock-actions {
+    @include neon-panel(
+      $glow-color: $retro-blue,
+      $border-style: 'dashed'
+    );
+    
     padding: var(--space-md);
     display: flex;
     gap: var(--space-sm);
@@ -429,37 +417,11 @@
     background: rgba($retro-black, 0.7);
 
     button {
+      @interface cyber-button($retro-blue);
       padding: var(--space-sm) var(--space-md);
-      border-radius: var(--radius-sm);
-      border: 1px solid rgba($retro-blue, 0.3);
-      background: rgba($retro-black, 0.3);
-      color: $retro-blue;
-      font-size: var(--font-size-sm);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      transition: var(--hover-transition);
-      position: relative;
-
+      
       &::after {
-        content: '';
-        position: absolute;
-        inset: -1px;
-        border: 1px solid currentColor;
-        opacity: 0.2;
-        border-radius: inherit;
-        transition: var(--hover-transition);
-      }
-
-      &:hover {
-        border-color: $retro-pink;
-        color: $retro-pink;
-        box-shadow: var(--terminal-glow);
-
-        &::after {
-          opacity: 0.4;
-          inset: -2px;
-        }
+        content: none;
       }
 
       .material-symbols-outlined {
@@ -468,4 +430,41 @@
       }
     }
   }
+
+  // Add container name for queries
+  container-name: stock-widget;
+  container-type: inline-size;
+
+  // Responsive price section
+  .price-section {
+    @container stock-widget (max-width: 600px) {
+      flex-direction: column;
+      text-align: center;
+      
+      .stock-symbol-container {
+        margin: 0 auto;
+      }
+    }
+  }
+} 
+
+.info-item {
+  @include cassette-button;
+  @interface cyber-hover;
+  
+  &:hover {
+    @include holographic-hover($retro-blue);
+  }
+}
+
+.stock-actions button {
+  transition: var(--hover-transition);
+}
+
+.stock-symbol {
+  @extend .retro-responsive-text--lg;
+}
+
+.stock-name {
+  @extend .retro-responsive-hide--mobile;
 } 

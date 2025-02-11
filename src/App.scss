@@ -227,8 +227,12 @@
 }
 
 body {
-  font-family: "Space Mono", monospace;
-  background: var(--Neutral-30);
+  font-family: var(--font-body);
+  background: var(--surface-0);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+  overflow: hidden; // Prevent horizontal scroll
 }
 
 .material-symbols-outlined {
@@ -649,18 +653,17 @@ body {
   
   .workspace {
     flex: 1;
-    min-height: 0;
+    min-height: 0; // Important for Firefox
     display: flex;
     position: relative;
-    padding-right: var(--space-xl);
+    overflow: hidden;
     
     &.panel-open {
-      margin-right: 400px;
-      padding-right: calc(var(--space-xl) + 20px);
+      margin-right: var(--panel-width);
+      transition: margin-right 0.3s var(--ease-out-quad);
       
       @media (max-width: 768px) {
         margin-right: 0;
-        padding-right: var(--space-xl);
       }
     }
   }
@@ -670,15 +673,25 @@ body {
     min-height: 0;
     position: relative;
     overflow: hidden;
-    padding-right: var(--space-xl);
+    display: flex;
+    flex-direction: column;
     
     .widgets-container {
-      height: 100%;
-      width: 100%;
-      padding: var(--space-md);
-      padding-right: calc(var(--space-xl) + 20px);
+      flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      padding: var(--space-md);
+      padding-right: calc(var(--space-xl) + var(--panel-spacing));
+      display: grid;
+      gap: var(--space-md);
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+      align-content: start;
       @include custom-scrollbar;
+      
+      @media (max-width: 768px) {
+        padding: var(--space-sm);
+        grid-template-columns: 1fr;
+      }
     }
   }
 }
@@ -856,15 +869,34 @@ body {
   border-radius: var(--radius-lg);
   border: 1px solid var(--surface-2);
   overflow: hidden;
+  height: fit-content;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
   transition: var(--transition-all);
   
   &.maximized {
     position: fixed;
     inset: var(--space-md);
-    z-index: var(--z-maximized);
+    z-index: var(--z-modal);
+    height: calc(100vh - var(--space-md) * 2);
     
     .widget-content {
-      height: calc(100vh - var(--space-xl));
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      
+      .widget-scroll-area {
+        height: 100%;
+        overflow-y: auto;
+        @include custom-scrollbar;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      inset: 0;
+      height: 100vh;
+      border-radius: 0;
     }
   }
   

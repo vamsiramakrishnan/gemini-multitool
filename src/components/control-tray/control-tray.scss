@@ -28,7 +28,7 @@
 }
 
 @property --volume {
-  syntax: "length";
+  syntax: "<length>";
   inherit: false;
   initial-value: 0px;
 }
