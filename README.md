@@ -2,13 +2,13 @@
 
 Author: vamramak@google.com
 
-This repository contains a react-based starter app for using the [Multimodal Live API](https://ai.google.dev/api/multimodal-live) over a websocket. It provides modules for streaming audio playback, recording user media such as from a microphone, webcam or screen capture as well as a unified log view to aid in development of your application.
+This repository contains a React-based starter app for using the [Multimodal Live API](https://ai.google.dev/api/multimodal-live) over a websocket. It provides modules for streaming audio playback, recording user media such as from a microphone, webcam, or screen capture, as well as a unified log view to aid in the development of your application.
 
 [![Multimodal Live API Demo](readme/thumbnail.png)](https://www.youtube.com/watch?v=J_q7JY1XxFE)
 
 Watch the demo of the Multimodal Live API [here](https://www.youtube.com/watch?v=J_q7JY1XxFE).
 
-## Usage
+## Getting Started
 
 To get started, [create a free Gemini API key](https://aistudio.google.com/apikey) and add it to the `.env` file. Then:
 
@@ -26,13 +26,14 @@ We have provided several example applications on other branches of this reposito
 
 This application includes a variety of widgets to display different types of data. Here's a list of available widgets:
 
+*   **Chat Widget:** Provides a chat interface for interacting with an AI assistant.
+*   **CodeExecution Widget:** Allows execution of code snippets (Python, JavaScript, JSON) and displays results with syntax highlighting.
+*   **Search Widget:** Allows users to search for information and displays grounded search results.
 *   **Weather Widget:** Displays current weather information.
 *   **Stock Widget:** Shows real-time stock prices and related data.
 *   **Map Widget:** Integrates with Google Maps to display locations and directions.
 *   **Places Widget:** Displays information about specific places, including name, address, and ratings.
 *   **Nearby Places Widget:** Finds and displays information about places near a given location.
-*   **Search Widget:** Allows users to search for information and displays grounded search results.
-*   **Chat Widget:** Provides a chat interface for interacting with an AI assistant.
 *   **Altair Widget:** Renders graphs using Vega-Embed based on JSON input.
 *   **Image Widget:** Displays images.
 *   **Document Widget:** Displays documents.
@@ -40,16 +41,27 @@ This application includes a variety of widgets to display different types of dat
 ## Example Usage
 
 ```typescript
-// Example of using the WeatherWidget
-<WidgetItem item={{ id: 'weather-1', type: 'weather' }} widgetData={{ city: 'London' }} />
+// Example of using the CodeExecutionWidget
+<WidgetItem
+  item={{
+    id: 'code-1',
+    type: 'CodeExecutionWidget'
+  }}
+  widgetData={{
+    language: 'python',
+    code: 'print("Hello, world!")\ndef add(a, b):\n  return a + b\n\nprint(add(5, 3))',
+    output: '', // Output will be populated after execution
+    outcome: 'success' // or 'error'
+  }}
+/>
 
 // Example of using the MapWidget
-<WidgetItem item={{ id: 'map-1', type: 'map' }} widgetData={{ origin: 'London', destination: 'Paris' }} />
+// <WidgetItem item={{ id: 'map-1', type: 'map' }} widgetData={{ origin: 'London', destination: 'Paris' }} />
 ```
 
 ## Example
 
-Below is an example of an entire application that will use Google Search grounding and then render graphs using [vega-embed](https://github.com/vega/vega-embed):
+Below is an example of an entire application that will use Google Search grounding and then render graphs using [vega-embed](https://github.com/vega/vega-embed).  To use this component, simply import it and include it in your application's JSX, like so: `<Altair />`
 
 ```typescript
 import { type FunctionDeclaration, SchemaType } from "@google/generative-ai";
@@ -127,6 +139,7 @@ Project consists of:
 - an Event-emitting websocket-client to ease communication between the websocket and the front-end
 - communication layer for processing audio in and out
 - a boilerplate view for starting to build your apps and view logs
+- styling using SCSS with reusable mixins for consistent design.
 
 ## Available Scripts
 

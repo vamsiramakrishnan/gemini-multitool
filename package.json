@@ -43,6 +43,7 @@
     "react-select": "^5.8.3",
     "react-syntax-highlighter": "^15.6.1",
     "sass": "^1.80.6",
+    "storybook": "^8.5.4",
     "tapable": "^2.2.1",
     "vega": "^5.30.0",
     "vega-embed": "^6.29.0",
