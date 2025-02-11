@@ -4,13 +4,85 @@ Author: vamramak@google.com
 
 This repository contains a React-based starter app for using the [Multimodal Live API](https://ai.google.dev/api/multimodal-live) over a websocket. It provides modules for streaming audio playback, recording user media such as from a microphone, webcam, or screen capture, as well as a unified log view to aid in the development of your application.
 
+## Introduction
+
+The application features a sophisticated UI architecture with multiple components designed for an interactive AI-powered workspace:
+
+### Core Layout Components
+- **Tab System**: Multi-tab interface supporting widget organization, tab management, and customizable workspaces
+- **Widget System**: Extensible widget architecture with common functionality, responsive design, and state management
+
+### Interactive Widgets
+- **Chat Widget**: Real-time AI assistant interface with natural language processing
+- **Code Execution Widget**: Code editor with syntax highlighting and real-time execution
+- **Search Widget**: Integrated search functionality with relevance scoring and citations
+
+### Data Visualization Widgets
+- **Map Widget**: Interactive Google Maps with navigation and routing features
+- **Stock Widget**: Real-time market data tracking and visualization
+- **Weather Widget**: Location-based weather information and forecasts
+
+### Control Components
+- **Media Controls**: Webcam and screen sharing functionality
+- **Layout Controls**: Flexible view options (compact, spacious, auto)
+- **Widget Controls**: Minimize/maximize, drag-and-drop, and state management
+
+### Additional Features
+- **Onboarding Experience**: User-friendly introduction and setup guides
+- **Media Components**: Video streaming and audio visualization
+- **Utility Components**: Logging interface and side panel controls
+
+Each component follows a consistent design system supporting responsive layouts, real-time updates, accessibility features, and seamless integration with the Multimodal Live API.
+
+## Overview
+
 [![Multimodal Live API Demo](readme/thumbnail.png)](https://www.youtube.com/watch?v=J_q7JY1XxFE)
 
 Watch the demo of the Multimodal Live API [here](https://www.youtube.com/watch?v=J_q7JY1XxFE).
 
 ## Getting Started
 
-To get started, [create a free Gemini API key](https://aistudio.google.com/apikey) and add it to the `.env` file. Then:
+The application uses several API keys to power different widgets through their corresponding tools:
+
+1. **Gemini API Key** (`REACT_APP_GEMINI_API_KEY`)
+   - Powers the core AI functionality and tool calls
+   - Required for Chat Widget and general AI interactions
+   - [Create a free key here](https://aistudio.google.com/apikey)
+
+2. **Google Maps API Key** (`REACT_APP_GOOGLE_MAPS_API_KEY`)
+   - Enables Map Widget, Places Widget, and Nearby Places Widget
+   - Powers location search and navigation features
+   - Used by the Places Search Tool and Maps Tool
+
+3. **Finnhub API Key** (`REACT_APP_FINNHUB_API_KEY`) 
+   - Required for Stock Widget functionality
+   - Used by Stock Tool to fetch real-time market data
+   - Powers financial data visualization
+
+4. **OpenWeather API Key** (`REACT_APP_OPENWEATHER_API_KEY`)
+   - Enables Weather Widget features
+   - Used by Weather Tool to fetch forecasts
+   - Powers weather data visualization
+
+To configure these API keys:
+
+1. Create a `.env` file in the root directory
+2. Add your API keys:
+   ```
+   REACT_APP_GEMINI_API_KEY=your_api_key_here
+   REACT_APP_GOOGLE_MAPS_API_KEY=your_maps_api_key_here 
+   REACT_APP_FINNHUB_API_KEY=your_finnhub_api_key_here
+   REACT_APP_OPENWEATHER_API_KEY=your_weather_api_key_here
+   ```
+3. Add `.env` to your `.gitignore`:
+   ```
+   # API keys
+   .env
+   ```
+5. You can access the API keys in your code via `process.env`:
+   ```js
+   const geminiApiKey = process.env.REACT_APP_GEMINI_API_KEY;
+   ```
 
 ```bash
 $ npm install && npm start
