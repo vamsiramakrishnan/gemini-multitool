@@ -21,8 +21,14 @@ import Select from "react-select";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
 import { useLoggerStore } from "../../lib/store-logger";
 import Logger, { LoggerFilterType } from "../logger/Logger";
+import VideoStream from "../video-stream/VideoStream";
 import "./side-panel.scss";
 import { useLayout } from "../../contexts/LayoutContext";
+import { useWidget } from "../../contexts/RootContext";
+
+interface SidePanelProps {
+  videoStream: MediaStream | null;
+}
 
 const filterOptions = [
   { value: "conversations", label: "Conversations" },
@@ -30,11 +36,11 @@ const filterOptions = [
   { value: "none", label: "All" },
 ];
 
-export default function SidePanel() {
+export default function SidePanel({ videoStream }: SidePanelProps) {
   const { connected, client } = useLiveAPIContext();
   const { panelOpen, setPanelOpen } = useLayout();
+  const { widgetData } = useWidget();
   const loggerRef = useRef<HTMLDivElement>(null);
-  const loggerLastHeightRef = useRef<number>(-1);
   const { log, logs } = useLoggerStore();
 
   const [textInput, setTextInput] = useState("");
@@ -63,7 +69,6 @@ export default function SidePanel() {
 
   const handleSubmit = () => {
     client.send([{ text: textInput }]);
-
     setTextInput("");
     if (inputRef.current) {
       inputRef.current.innerText = "";
@@ -72,58 +77,96 @@ export default function SidePanel() {
 
   return (
     <>
+      {/* Panel Toggle Button - Move outside the side panel container */}
+      <button
+        className={cn("panel-toggle", { open: panelOpen })}
+        onClick={() => setPanelOpen(!panelOpen)}
+        aria-label={panelOpen ? "Close panel" : "Open panel"}
+      >
+        {panelOpen ? (
+          <RiSidebarFoldLine style={{ color: 'var(--retro-blue)' }} />
+        ) : (
+          <RiSidebarUnfoldLine style={{ color: 'var(--retro-blue)' }} />
+        )}
+      </button>
+
       <div className={cn("side-panel", { open: panelOpen })}>
-        <header className="top">
-          <h2>Console</h2>
-        </header>
-        <section className="indicators">
-          <Select
-            className="react-select"
-            classNamePrefix="react-select"
-            styles={{
-              control: (baseStyles) => ({
-                ...baseStyles,
-                backgroundColor: "var(--Neutral-20)",
-                border: "1px solid var(--Neutral-30)",
-                color: "var(--Neutral-90)",
-                height: "30px",
-                minHeight: "unset",
-              }),
-              singleValue: (styles) => ({
-                ...styles,
-                color: "var(--Neutral-90)",
-              }),
-              menu: (styles) => ({
-                ...styles,
-                backgroundColor: "var(--Neutral-20)",
-                color: "var(--Neutral-90)",
-              }),
-              option: (styles, { isFocused, isSelected }) => ({
-                ...styles,
-                backgroundColor: isFocused
-                  ? "var(--Neutral-30)"
-                  : isSelected
-                    ? "var(--Neutral-20)"
-                    : undefined,
-              }),
-            }}
-            defaultValue={selectedOption}
-            options={filterOptions}
-            onChange={(e) => {
-              setSelectedOption(e);
-            }}
-          />
-          <div className={cn("streaming-indicator", { connected })}>
-            {connected
-              ? `🔵${panelOpen ? " Streaming" : ""}`
-              : `⏸️${panelOpen ? " Paused" : ""}`}
-          </div>
-        </section>
-        <div className="side-panel-container" ref={loggerRef}>
-          <Logger
-            filter={(selectedOption?.value as LoggerFilterType) || "none"}
-          />
+        <div className="panel-header">
+          <h2>Activity Panel</h2>
         </div>
+
+        <div className="video-stream-section">
+          <div className="video-stream-container">
+            <VideoStream stream={videoStream} />
+            {videoStream && (
+              <div className="on-air-indicator">
+                <span className="material-symbols-outlined">videocam</span>
+                ON AIR
+              </div>
+            )}
+            {!videoStream && (
+              <div className="video-placeholder">
+                <span className="material-symbols-outlined">videocam_off</span>
+                <p>No video stream available</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Logger Section */}
+        <div className="logger-section">
+          {/* Logger Header with Filters */}
+          <div className="logger-header">
+            <div className="filters">
+              <Select
+                className="react-select"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (baseStyles) => ({
+                    ...baseStyles,
+                    backgroundColor: "var(--Neutral-20)",
+                    border: "1px solid var(--Neutral-30)",
+                    color: "var(--Neutral-90)",
+                    height: "30px",
+                    minHeight: "unset",
+                  }),
+                  singleValue: (styles) => ({
+                    ...styles,
+                    color: "var(--Neutral-90)",
+                  }),
+                  menu: (styles) => ({
+                    ...styles,
+                    backgroundColor: "var(--Neutral-20)",
+                    color: "var(--Neutral-90)",
+                  }),
+                  option: (styles, { isFocused, isSelected }) => ({
+                    ...styles,
+                    backgroundColor: isFocused
+                      ? "var(--Neutral-30)"
+                      : isSelected
+                        ? "var(--Neutral-20)"
+                        : undefined,
+                  }),
+                }}
+                defaultValue={selectedOption}
+                options={filterOptions}
+                onChange={(e) => setSelectedOption(e)}
+              />
+              <div className={cn("streaming-indicator", { connected })}>
+                {connected ? "🔵 Streaming" : "⏸️ Paused"}
+              </div>
+            </div>
+          </div>
+
+          {/* Logger Content */}
+          <div className="logger-content" ref={loggerRef}>
+            <Logger
+              filter={(selectedOption?.value as LoggerFilterType) || "none"}
+            />
+          </div>
+        </div>
+
+        {/* Input Container */}
         <div className={cn("input-container", { disabled: !connected })}>
           <div className="input-content">
             <textarea
@@ -138,15 +181,8 @@ export default function SidePanel() {
               }}
               onChange={(e) => setTextInput(e.target.value)}
               value={textInput}
-            ></textarea>
-            <span
-              className={cn("input-content-placeholder", {
-                hidden: textInput.length,
-              })}
-            >
-              Type&nbsp;something...
-            </span>
-
+              placeholder="Type something..."
+            />
             <button
               className="send-button material-symbols-outlined filled"
               onClick={handleSubmit}
@@ -156,17 +192,6 @@ export default function SidePanel() {
           </div>
         </div>
       </div>
-
-      <button
-        className={`panel-toggle ${panelOpen ? "open" : ""}`}
-        onClick={() => setPanelOpen(!panelOpen)}
-      >
-        {panelOpen ? (
-          <RiSidebarFoldLine color="var(--retro-blue)" />
-        ) : (
-          <RiSidebarUnfoldLine color="var(--retro-blue)" />
-        )}
-      </button>
     </>
   );
 }

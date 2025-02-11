@@ -1,153 +1,113 @@
+@import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
 
 /* Add your styles for stock widget here */ 
 .stock-widget {
-  position: relative;
-  min-width: 300px;
-  max-width: 400px;
-  background: var(--Neutral-10);
-  border-radius: 1rem;
-  overflow: hidden;
-  margin: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  
-  .card {
-    transition: all 0.3s ease-in-out;
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-  }
-  .stock-info {
+  @include widget-content-styles;
+
+  .stock-main {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    background-color: var(--base-100);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease-in-out;
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
   }
-  .stock-symbol {
-    font-size: 1.5rem;
-    font-weight: bold;
+
+  background: rgba($retro-black, 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-family: var(--font-ui);
+  border: var(--terminal-line);
+  box-shadow: var(--terminal-shadow);
+  position: relative;
+
+  // Scanlines effect
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--scanlines);
+    pointer-events: none;
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+    z-index: 1;
   }
-  .stock-price {
-    font-size: 2rem;
-    font-weight: bold;
+
+  // CRT glow effect
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 60px rgba($retro-blue, 0.1);
+    pointer-events: none;
+    z-index: 2;
   }
-  .stock-change {
-    font-size: 1rem;
-    color: var(--success);
-  }
-  .stock-change.negative {
-    color: var(--error);
-  }
-  .stock-range {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-  .stock-range-value {
-    font-size: 0.9rem;
-  }
-  .stock-range-bar {
-    flex: 1;
-    height: 0.5rem;
-    background-color: var(--base-200);
-    border-radius: 0.25rem;
-  }
-  .stock-range-progress {
-    height: 100%;
-    background-color: var(--primary);
-    border-radius: 0.25rem;
-  }
-  .stock-trading-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-  .stock-trading-item {
-    font-size: 0.9rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.25rem;
-    background-color: var(--base-200);
-    color: var(--base-content/70);
-  }
+
   .stock-main {
     position: relative;
-    background: linear-gradient(
-      135deg,
-      var(--surface-2) 0%,
-      var(--surface-1) 100%
-    );
-    border-radius: var(--radius-lg);
+    background: rgba($retro-black, 0.95);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    backdrop-filter: blur(8px);
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        45deg,
-        var(--primary-500) 0%,
-        transparent 40%
-      );
-      opacity: 0.05;
-      pointer-events: none;
-    }
+    backdrop-filter: blur(var(--blur-md));
+    border: var(--terminal-line);
 
     .price-section {
-      padding: var(--radius-lg);
+      padding: var(--space-lg);
       display: flex;
-      align-items: flex-start;
-      gap: var(--radius-lg);
+      align-items: center;
+      gap: var(--space-lg);
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba($retro-blue, 0.2) 20%,
+          rgba($retro-blue, 0.2) 80%,
+          transparent 100%
+        );
+      }
 
       .stock-symbol-container {
         position: relative;
         width: 96px;
         height: 96px;
-        border-radius: var(--radius-lg);
-        background: linear-gradient(
-          135deg,
-          var(--primary-900) 0%,
-          var(--surface-2) 100%
-        );
+        border-radius: var(--radius-sm);
+        background: rgba($retro-black, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--primary-800);
+        border: 1px solid $retro-blue;
+        box-shadow: 0 0 20px rgba($retro-blue, 0.2);
 
         &::before {
           content: '';
           position: absolute;
-          inset: -2px;
+          inset: -1px;
+          border: 1px solid $retro-blue;
+          opacity: 0.3;
           border-radius: inherit;
-          padding: 2px;
-          background: linear-gradient(
-            135deg,
-            var(--primary-400) 0%,
-            transparent 50%
-          );
-          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          mask-composite: exclude;
-          -webkit-mask-composite: destination-out;
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border: 1px solid $retro-blue;
+          opacity: 0.1;
+          border-radius: inherit;
         }
 
         .stock-symbol {
           font-size: var(--font-size-2xl);
           font-weight: 700;
-          color: var(--primary-300);
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          color: $retro-blue;
+          text-shadow: 0 0 10px rgba($retro-blue, 0.4);
         }
       }
 
@@ -155,24 +115,20 @@
         flex: 1;
 
         .current-price {
-          font-size: var(--font-size-3xl);
-          background: linear-gradient(
-            135deg,
-            var(--text-primary) 0%,
-            var(--text-secondary) 100%
-          );
-          -webkit-background-clip: text;
-          color: transparent;
+          font-size: 4rem;
+          font-weight: 700;
+          color: $retro-blue;
           line-height: 1;
           letter-spacing: -0.02em;
-          margin-bottom: var(--radius-sm);
+          margin-bottom: var(--space-sm);
+          text-shadow: 0 0 20px rgba($retro-blue, 0.4);
         }
 
         .price-change {
           display: flex;
           align-items: center;
-          gap: var(--radius-sm);
-          margin-bottom: var(--radius-md);
+          gap: var(--space-sm);
+          margin-bottom: var(--space-md);
 
           &.positive {
             color: var(--success-500);
@@ -191,29 +147,35 @@
             width: 32px;
             height: 32px;
             border-radius: var(--radius-md);
+            background: rgba($retro-black, 0.3);
+            border: 1px solid $retro-blue;
 
             .material-symbols-outlined {
               font-size: 20px;
+              color: $retro-blue;
+              text-shadow: 0 0 10px rgba($retro-blue, 0.4);
             }
           }
 
           .change-value {
             font-size: var(--font-size-lg);
             font-weight: 600;
+            color: $retro-pink;
+            text-shadow: 0 0 10px rgba($retro-pink, 0.4);
           }
         }
       }
     }
 
     .price-range {
-      padding: var(--radius-lg);
-      background: var(--surface-2);
-      border-top: 1px solid var(--surface-3);
+      padding: var(--space-lg);
+      background: rgba($retro-black, 0.3);
+      border-top: var(--terminal-line);
 
       .range-label {
         font-size: var(--font-size-sm);
-        color: var(--text-secondary);
-        margin-bottom: var(--radius-sm);
+        color: rgba($retro-blue, 0.6);
+        margin-bottom: var(--space-sm);
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
@@ -221,13 +183,14 @@
       .range-bar-container {
         display: flex;
         align-items: center;
-        gap: var(--radius-md);
-        margin-bottom: var(--radius-md);
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
 
         .range-value {
           font-size: var(--font-size-sm);
           font-weight: 500;
           min-width: 80px;
+          color: rgba($retro-blue, 0.8);
 
           &.low {
             color: var(--error-500);
@@ -242,10 +205,11 @@
         .range-bar {
           flex: 1;
           height: 4px;
-          background: var(--surface-3);
+          background: rgba($retro-black, 0.4);
           border-radius: var(--radius-sm);
           position: relative;
           overflow: hidden;
+          border: 1px solid rgba($retro-blue, 0.2);
 
           .progress {
             position: absolute;
@@ -255,7 +219,7 @@
             background: linear-gradient(
               to right,
               var(--error-500),
-              var(--primary-500) 50%,
+              $retro-blue 50%,
               var(--success-500)
             );
             border-radius: inherit;
@@ -267,11 +231,11 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: var(--text-primary);
-            border: 2px solid var(--surface-1);
+            background: $retro-pink;
+            border: 2px solid rgba($retro-black, 0.95);
             top: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 12px rgba(var(--primary-400), 0.3);
+            box-shadow: 0 0 12px rgba($retro-pink, 0.3);
           }
         }
       }
@@ -280,45 +244,49 @@
     .trading-info {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: var(--radius-md);
-      padding: var(--radius-lg);
-      background: var(--surface-1);
+      gap: var(--space-md);
+      padding: var(--space-lg);
+      background: rgba($retro-black, 0.3);
+      border-top: var(--terminal-line);
 
       .info-item {
-        padding: var(--radius-md);
-        background: var(--surface-2);
-        border-radius: var(--radius-md);
-        border: 1px solid var(--surface-3);
-        transition: var(--transition-all);
+        padding: var(--space-md);
+        background: rgba($retro-black, 0.4);
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba($retro-blue, 0.2);
+        transition: var(--hover-transition);
+        box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
 
         &:hover {
-          border-color: var(--primary-500);
+          border-color: $retro-pink;
           transform: translateY(-2px);
+          box-shadow: var(--terminal-glow);
         }
 
         .info-icon {
           display: flex;
           align-items: center;
-          gap: var(--radius-sm);
-          margin-bottom: var(--radius-sm);
-          color: var(--text-secondary);
+          gap: var(--space-sm);
+          margin-bottom: var(--space-sm);
+          color: rgba($retro-blue, 0.7);
 
           .material-symbols-outlined {
             font-size: 20px;
-            color: var(--primary-400);
+            color: $retro-blue;
           }
         }
 
         .info-value {
           font-size: var(--font-size-xl);
           font-weight: 600;
-          color: var(--text-primary);
+          color: $retro-blue;
           margin-bottom: 2px;
+          text-shadow: 0 0 10px rgba($retro-blue, 0.3);
         }
 
         .info-label {
           font-size: var(--font-size-xs);
-          color: var(--text-tertiary);
+          color: rgba($retro-blue, 0.6);
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
@@ -329,11 +297,7 @@
   .stock-header {
     padding: var(--space-md);
     border-bottom: var(--terminal-line);
-    background: linear-gradient(
-      180deg,
-      rgba($retro-black, 0.7) 0%,
-      rgba($retro-black, 0.85) 100%
-    );
+    background: rgba($retro-black, 0.7);
 
     .stock-info {
       display: flex;
@@ -406,20 +370,18 @@
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--space-sm);
     padding: var(--space-md);
-    background: linear-gradient(
-      0deg,
-      rgba($retro-black, 0.85) 0%,
-      rgba($retro-black, 0.7) 100%
-    );
+    background: rgba($retro-black, 0.3);
+    border-top: var(--terminal-line);
 
     .stat-item {
       padding: var(--space-sm);
       border-radius: var(--radius-sm);
-      background: rgba($retro-black, 0.3);
-      border: 1px solid rgba($retro-blue, 0.3);
+      background: rgba($retro-black, 0.4);
+      border: 1px solid rgba($retro-blue, 0.2);
       position: relative;
       overflow: hidden;
       transition: var(--hover-transition);
+      box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
 
       &::before {
         content: '';
@@ -442,7 +404,7 @@
 
       .stat-label {
         font-size: var(--font-size-xs);
-        color: $retro-blue;
+        color: rgba($retro-blue, 0.6);
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: var(--space-xxs);
@@ -464,7 +426,7 @@
     gap: var(--space-sm);
     justify-content: flex-end;
     border-top: var(--terminal-line);
-    background: rgba($retro-black, 0.85);
+    background: rgba($retro-black, 0.7);
 
     button {
       padding: var(--space-sm) var(--space-md);

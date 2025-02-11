@@ -1,0 +1,29 @@
+// Design Tokens - Single source of truth for design values
+
+// Color System
+:root {
+  // Primary Palette
+  --color-primary-100: #{$retro-blue};
+  --color-primary-200: #{lighten($retro-blue, 10%)};
+  --color-primary-300: #{darken($retro-blue, 10%)};
+  
+  // Accent Colors
+  --color-accent-100: #{$retro-pink};
+  --color-accent-200: #{$retro-purple};
+  --color-accent-300: #{$retro-green};
+  
+  // Semantic Colors
+  --color-success: #{$retro-green};
+  --color-error: #{$retro-red};
+  --color-warning: #{adjust-hue($retro-pink, 15deg)};
+  
+  // Effects
+  --glow-primary: 0 0 20px rgba(#{$retro-blue}, 0.3);
+  --glow-accent: 0 0 20px rgba(#{$retro-pink}, 0.3);
+  
+  // Animation Timing
+  --animation-speed-fast: 150ms;
+  --animation-speed-base: 300ms;
+  --animation-speed-slow: 500ms;
+  --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+} 

@@ -1,11 +1,5 @@
 // Import shared styles
-@import './styles/shared/design-system';
-@import './styles/shared/mixins';
-@import './styles/shared/animations';
-@import './styles/shared/accessibility';
-@import './styles/shared/layout';
-@import './styles/shared/performance';
-@import './styles/shared/responsive';
+@import './styles/shared/_index';
 
 // Define mixins first
 @mixin custom-scrollbar {
@@ -32,9 +26,22 @@
 }
 
 :root {
-  /* Core Colors - Cyberpunk Terminal Theme */
+  /* Remove these as they should come from _tokens.scss */
+  --surface-0: rgba(9, 9, 11, 0.8);
+  --surface-1: rgba(24, 24, 27, 0.8);
+  --surface-2: rgba(39, 39, 42, 0.8);
+  --surface-3: rgba(63, 63, 70, 0.8);
+  
+  /* Move these to _tokens.scss */
   --terminal-black: #0a0b0c;
   --terminal-bg: #0c1115;
+  
+  /* Semantic Colors */
+  --success-50: #f0fdf4;
+  --success-500: #22c55e;
+  --success-700: #15803d;
+  
+  /* Core Colors - Cyberpunk Terminal Theme */
   --terminal-dark: #131820;
   --terminal-darker: #1a1f28;
   
@@ -55,12 +62,6 @@
   --primary-700: #00cc9e;
   --primary-800: #00b388;
   --primary-900: #009972;
-  
-  /* Surface Colors */
-  --surface-0: 12, 17, 21;  /* #0c1115 */
-  --surface-1: 19, 24, 32;  /* #131820 */
-  --surface-2: 26, 31, 40;  /* #1a1f28 */
-  --surface-3: 38, 44, 55;  /* #262c37 */
   
   /* Text Colors */
   --text-primary: rgba(255, 255, 255, 0.95);
@@ -121,25 +122,6 @@
   --neutral-900: #18181b;
   --neutral-950: #09090b;
 
-  /* Surface Colors */
-  --surface-0: rgba(9, 9, 11, 0.8);
-  --surface-1: rgba(24, 24, 27, 0.8);
-  --surface-2: rgba(39, 39, 42, 0.8);
-  --surface-3: rgba(63, 63, 70, 0.8);
-  
-  /* Semantic Colors */
-  --success-50: #f0fdf4;
-  --success-500: #22c55e;
-  --success-700: #15803d;
-  
-  --error-50: #fef2f2;
-  --error-500: #ef4444;
-  --error-700: #b91c1c;
-  
-  --warning-50: #fffbeb;
-  --warning-500: #f59e0b;
-  --warning-700: #b45309;
-
   /* Text Colors */
   --text-primary: rgba(250, 250, 250, 0.95);
   --text-secondary: rgba(161, 161, 170, 0.9);
@@ -180,11 +162,12 @@
   --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   /* Z-index */
-  --z-widget: 10;
-  --z-overlay: 20;
-  --z-modal: 30;
-  --z-popover: 40;
-  --z-tooltip: 50;
+  --z-base: 1;
+  --z-map: 100;
+  --z-controls: 200;
+  --z-sidepanel: 300;
+  --z-modal: 400;
+  --z-overlay: 500;
 
   --text: white;
   --gray-200: #b4b8bb;
@@ -236,6 +219,11 @@
 
   --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  // Layout spacing
+  --content-padding-right: 80px;
+  --panel-width: 400px;
+  --panel-spacing: 20px;
 }
 
 body {
@@ -469,70 +457,46 @@ body {
   }
 
   .widgets-container {
-    display: grid;
-    gap: 1.5rem;
-    padding: 1rem;
-    width: 100%;
-    min-height: 0;
-    overflow-y: auto;
-    align-items: start;
-    align-content: start;
     flex: 1;
-    height: calc(100vh - 200px);
-    
-    // Responsive grid
+    min-height: 0; // Important for Firefox
+    overflow: auto;
+    padding: var(--space-md);
+    display: grid;
+    gap: var(--space-md);
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+    align-content: start;
     
-    @media (min-width: 1536px) {
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 450px), 1fr));
-    }
+    // Improved scrollbar styling
+    @include custom-scrollbar;
 
-    // Scrollbar styling
-    &::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background: var(--Neutral-30);
-      border-radius: 4px;
-      
-      &:hover {
-        background: var(--Neutral-40);
-      }
-    }
-
-    // Grid area adjustments for maximized widgets
-    &.has-maximized {
-      .widget-wrapper:not(.maximized) {
-        opacity: 0.5;
-        pointer-events: none;
-        transform: scale(0.98);
-        filter: blur(2px);
-        transition: all 0.3s ease;
-      }
-    }
-
-    // Widget container styles
-    .widget-container {
-      background: var(--Neutral-10);
-      border: 1px solid var(--Neutral-20);
-      border-radius: 1rem;
-      overflow: hidden;
+    .widget-wrapper {
       height: fit-content;
-      min-width: 0;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-                  0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      
-      &:hover {
-        transform: translateY(-2px);
-        border-color: var(--Blue-500);
-        box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.2);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: rgba($retro-black, 0.7);
+      border: var(--terminal-line);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: var(--transition-all);
+
+      &.maximized {
+        position: fixed;
+        inset: var(--space-md);
+        z-index: var(--z-modal);
+        height: calc(100vh - var(--space-md) * 2);
+        
+        .widget-content {
+          flex: 1;
+          min-height: 0;
+          height: auto;
+        }
+      }
+
+      &.minimized {
+        .widget-content {
+          display: none;
+        }
       }
     }
   }
@@ -566,81 +530,10 @@ body {
 
 // Widget Wrapper Styles
 .widget-wrapper {
-  position: relative;
-  transition: var(--transition-all);
-  
-  &:hover {
-    box-shadow: var(--terminal-glow);
-    border-color: var(--neon-blue);
-  }
-  
-  &.dragging {
-    opacity: 0.7;
-    transform: scale(1.02);
-    cursor: grabbing;
-  }
+  @include widget-component;
   
   &.maximized {
-    position: fixed;
-    inset: 2rem;
-    z-index: 50;
-    background: rgba(var(--surface-1), 0.8);
-    border-radius: var(--radius-lg);
-    border: var(--terminal-line);
-    box-shadow: var(--terminal-shadow);
-    
-    .widget-content {
-      height: calc(100% - 4rem);
-      max-height: none;
-      overflow-y: auto;
-    }
-  }
-  
-  &.minimized {
-    height: auto;
-    
-    .widget-content {
-      display: none;
-    }
-  }
-  
-  .widget-header {
-    padding: 0.75rem 1rem;
-    background: rgba(var(--surface-2), 0.9);
-    border-bottom: var(--terminal-line);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-family: var(--font-display);
-    
-    h2 {
-      color: var(--neon-blue);
-      font-size: var(--font-size-lg);
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      margin: 0;
-    }
-    
-    .controls {
-      display: flex;
-      gap: 0.5rem;
-      
-      button {
-        color: var(--text-secondary);
-        transition: var(--transition-all);
-        
-        &:hover {
-          color: var(--neon-blue);
-          text-shadow: var(--terminal-glow);
-        }
-      }
-    }
-  }
-  
-  .widget-content {
-    padding: 1rem;
-    font-family: var(--font-mono);
-    color: var(--text-secondary);
+    @include widget-maximized;
   }
 }
 
@@ -751,206 +644,140 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden; /* Prevent scrolling */
-}
-
-.widgets-container {
-  display: grid;
-  gap: var(--radius-lg);
-  padding: var(--radius-lg);
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  @include custom-scrollbar;
+  overflow: hidden;
+  background: var(--surface-0);
   
-  // Responsive grid
-  grid-template-columns: 1fr;
-  
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  }
-  
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  }
-  
-  @media (min-width: 1280px) {
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  }
-
-  // Grid area adjustments for maximized widgets
-  &.has-maximized {
-    .widget-wrapper:not(.maximized) {
-      opacity: 0.5;
-      pointer-events: none;
-      transform: scale(0.98);
-    }
-  }
-
-  .widget-wrapper {
-    // Default span full width on mobile
-    grid-column: 1 / -1;
-    
-    @media (min-width: 480px) {
-      grid-column: auto;
-    }
-
-    // Maximized state takes up more columns as screen size increases
-    &.maximized {
-      grid-column: 1 / -1;
-      grid-row: 1 / span 2;
-      height: auto;
-      min-height: 50vh;
-      
-      @media (min-width: 768px) {
-        grid-column: 1 / span 2;
-      }
-      
-      @media (min-width: 1024px) {
-        grid-column: 1 / span 3;
-      }
-      
-      @media (min-width: 1280px) {
-        grid-column: 1 / span 3;
-      }
-
-      .widget-content {
-        max-height: none;
-      }
-    }
-
-    // Minimized state takes less space
-    &.minimized {
-      grid-row: span 1;
-      
-      @media (min-width: 768px) {
-        grid-column: span 1;
-      }
-    }
-  }
-
-  // Empty state styles
-  &:empty {
+  .workspace {
+    flex: 1;
+    min-height: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: 
-      linear-gradient(45deg, var(--Neutral-10) 25%, transparent 25%) -20px 0,
-      linear-gradient(-45deg, var(--Neutral-10) 25%, transparent 25%) -20px 0,
-      linear-gradient(45deg, transparent 75%, var(--Neutral-10) 75%) -20px 0,
-      linear-gradient(-45deg, transparent 75%, var(--Neutral-10) 75%) -20px 0;
-    background-size: clamp(20px, 2vw, 40px) clamp(20px, 2vw, 40px);
-    background-color: var(--Neutral-5);
-    min-height: 50vh;
-
-    &::before {
-      content: 'Drag widgets here';
-      color: var(--Neutral-60);
-      font-size: clamp(0.875rem, 1.5vw, 1rem);
-      padding: clamp(1rem, 2vw, 2rem);
-      border: 2px dashed var(--Neutral-30);
-      border-radius: var(--radius-lg);
-      background: var(--Neutral-5);
-      backdrop-filter: blur(8px);
-      transition: all 0.2s ease;
-
-      @media (hover: hover) {
-        &:hover {
-          border-color: var(--Blue-500);
-          color: var(--Blue-500);
-          transform: scale(1.05);
-        }
+    position: relative;
+    padding-right: var(--space-xl);
+    
+    &.panel-open {
+      margin-right: 400px;
+      padding-right: calc(var(--space-xl) + 20px);
+      
+      @media (max-width: 768px) {
+        margin-right: 0;
+        padding-right: var(--space-xl);
       }
     }
   }
-}
-
-// Global dragging styles
-body.is-dragging {
-  cursor: grabbing !important;
-  user-select: none;
-
-  * {
-    cursor: grabbing !important;
-  }
-
-  .widget-wrapper:not(.dragging) {
-    transition: transform 0.2s ease;
+  
+  .workspace-content {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    padding-right: var(--space-xl);
     
-    &:hover {
-      transform: translateY(0);
+    .widgets-container {
+      height: 100%;
+      width: 100%;
+      padding: var(--space-md);
+      padding-right: calc(var(--space-xl) + 20px);
+      overflow-y: auto;
+      @include custom-scrollbar;
     }
   }
 }
 
-.widget-wrapper {
-  position: relative;
-  transition: transform 0.2s ease;
-  
-  &.dragging {
-    opacity: 0.5;
-    transform: scale(1.02);
-  }
-  
-  .drag-handle {
-    cursor: grab;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    
-    &:active {
-      cursor: grabbing;
-    }
-  }
-}
-
-.widget-wrapper.maximized {
+// Update side panel positioning
+.side-panel {
   position: fixed;
-  inset: 1rem;
-  z-index: var(--z-modal);
-  background: var(--Neutral-5);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--Neutral-20);
+  right: var(--space-xl);
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  z-index: var(--z-sidepanel);
+  transform: translateX(100%);
   
-  .widget-content {
-    height: calc(100% - 3rem);
-    max-height: none;
-    overflow-y: auto;
+  &.open {
+    transform: translateX(0);
   }
-
-  @media (max-width: 640px) {
-    inset: 0;
-    border-radius: 0;
+  
+  @media (max-width: 768px) {
+    right: 0;
   }
 }
 
-.drop-target-over {
-  background-color: rgba(0, 0, 0, 0.05);
+// Update panel toggle button position
+.panel-toggle {
+  position: fixed;
+  right: calc(var(--space-xl) + 20px);
+  bottom: 80px;
+  z-index: calc(var(--z-sidepanel) + 1);
+  
+  &.open {
+    right: calc(420px + var(--space-xl));
+  }
+  
+  @media (max-width: 768px) {
+    right: 20px;
+    
+    &.open {
+      right: calc(90% + 20px);
+    }
+  }
 }
 
-/* Global Styles */
-body {
-  background: rgb(var(--surface-0));
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
+// Remove duplicate widget grid styles from App.scss since they're now in TabsContainer.scss
+.widget-grid {
+  display: none;
+}
+
+.workspace-controls {
+  flex: none;
+  height: 60px;
+  padding: var(--space-sm) var(--space-md);
+  padding-right: 80px; // Space for panel toggle
+  background: var(--surface-1);
+  border-top: 1px solid var(--surface-2);
+  z-index: var(--z-controls);
   
-  &::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: 
-      repeating-linear-gradient(
-        0deg,
-        rgba(0, 255, 249, 0.03) 0px,
-        rgba(0, 255, 249, 0.03) 1px,
-        transparent 1px,
-        transparent 2px
-      );
-    pointer-events: none;
-    z-index: 10;
+  @media (max-width: 768px) {
+    padding-right: var(--space-md);
+  }
+}
+
+// Main workspace
+.workspace-header {
+  flex: none;
+  padding: var(--space-sm);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--surface-2);
+  z-index: var(--z-header);
+}
+
+// Right sidebar
+.workspace-sidebar {
+  display: none;
+}
+
+// Accessibility improvements
+:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Touch device optimizations
+@media (pointer: coarse) {
+  .workspace-content {
+    padding: var(--space-sm);
+  }
+
+  button {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
@@ -1008,195 +835,65 @@ body {
 }
 
 .app-layout {
+  @include app-grid-layout;
+}
+
+.app-header {
+  @include app-header;
+}
+
+.widgets-container {
   display: grid;
-  grid-template-columns: 1fr auto;  // Main content | Video
-  grid-template-rows: auto 1fr auto; // Tabs | Widgets+Video | Chat
-  grid-template-areas:
-    "tabs  tabs"
-    "widgets video"
-    "chat   chat";
-  height: 100vh;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-md);
+  overflow-y: auto;
+  padding-right: var(--space-sm);
+  @include custom-scrollbar;
+}
+
+.widget-wrapper {
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-2);
   overflow: hidden;
-  background: rgba($retro-black, 0.85);
-
-  .main-content {
-    grid-area: main;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0; // Important for Firefox
-  }
-
-  .widgets-container {
-    flex: 1;
-    min-height: 0; // Important for Firefox
-    overflow: auto;
-    padding: var(--space-md);          // Consistent padding
-    display: grid;
-    gap: var(--space-md);
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-    align-content: start;
+  transition: var(--transition-all);
+  
+  &.maximized {
+    position: fixed;
+    inset: var(--space-md);
+    z-index: var(--z-maximized);
     
-    // Improved scrollbar styling
-    scrollbar-width: thin;
-    scrollbar-color: rgba($retro-blue, 0.3) transparent;
-    
-    &::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    
-    &::-webkit-scrollbar-track {
-      background: rgba($retro-black, 0.2);
-      border-radius: var(--radius-full);
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background: rgba($retro-blue, 0.3);
-      border-radius: var(--radius-full);
-      border: 1px solid rgba($retro-blue, 0.2);
-      
-      &:hover {
-        background: rgba($retro-blue, 0.5);
-      }
+    .widget-content {
+      height: calc(100vh - var(--space-xl));
     }
   }
-
-  .widget-wrapper {
-    height: fit-content;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    background: rgba($retro-black, 0.7);
-    border: var(--terminal-line);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    transition: var(--transition-all);
-
-    &.maximized {
-      position: fixed;
-      inset: var(--space-md);
-      z-index: var(--z-modal);
-      height: calc(100vh - var(--space-md) * 2);
-      
-      .widget-content {
-        flex: 1;
-        min-height: 0;
-        height: auto;
-      }
-    }
-  }
-
-  .tabs-container-wrapper {
-    grid-area: tabs;
-  }
-
-  .widgets-container-wrapper {
-    grid-area: widgets;
-    overflow: auto;
-    @include custom-scrollbar;
-    padding: var(--space-md);          // Consistent padding
-    background: rgba(var(--retro-black), 0.85);  // Consistent background
-    border-bottom: var(--terminal-line);      // Consistent border
-  }
-
-  .video-stream-wrapper {
-    grid-area: video;
-    display: flex;  // Use flexbox for centering
-    justify-content: center;  // Center horizontally
-    align-items: center;      // Center vertically (if needed)
-    padding: var(--space-md);          // Consistent padding
-    background: rgba(var(--retro-black), 0.85);  // Consistent background
-    border-left: var(--terminal-line);      // Consistent border
-    border-bottom: var(--terminal-line);      // Consistent border
-  }
-
-  .chat-widget-wrapper {
-    grid-area: chat;
-    display: flex;  // Use flexbox for bottom alignment
-    align-items: flex-end;    // Bottom alignment
-    padding: var(--space-md);          // Consistent padding
-    background: rgba(var(--retro-black), 0.85);  // Consistent background
-    border-top: var(--terminal-line);        // Consistent border
-  }
-
-  @media (max-width: 768px) {
-    .app-layout {
-      grid-template-columns: 1fr;  // Stack on smaller screens
-      grid-template-rows: auto 1fr auto auto; // Tabs | Widgets | Video | Chat
-      grid-template-areas:
-        "tabs"
-        "widgets"
-        "video"
-        "chat";
-
-      .widgets-container {
-        grid-template-columns: 1fr;
-      }
-
-      .widget-wrapper.maximized {
-        inset: 0;
-        height: 100vh;
-        border-radius: 0;
-      }
-    }
+  
+  &:hover {
+    border-color: var(--surface-3);
+    box-shadow: var(--shadow-md);
   }
 }
 
-// Ensure proper map container sizing
-.map-container {
-  height: 100% !important;
-  width: 100% !important;
-  min-height: 400px;
-  position: relative !important;
+.widget-wrapper {
+  @extend .animate-fade-in;
+}
 
-  .gm-style {
-    position: absolute !important;
-    height: 100% !important;
-    width: 100% !important;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-0: var(--terminal-darker);
+    --surface-1: var(--terminal-dark);
+    --surface-2: var(--terminal-bg);
+    --surface-3: var(--terminal-black);
   }
 }
 
-// Improved widget content scrolling
-.widget-content {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-
-  .widget-scroll-container {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba($retro-blue, 0.3) transparent;
-    
-    &::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    
-    &::-webkit-scrollbar-track {
-      background: rgba($retro-black, 0.2);
-      border-radius: var(--radius-full);
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background: rgba($retro-blue, 0.3);
-      border-radius: var(--radius-full);
-      border: 1px solid rgba($retro-blue, 0.2);
-      
-      &:hover {
-        background: rgba($retro-blue, 0.5);
-      }
-    }
+@media (pointer: coarse) {
+  .widget-controls button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: var(--space-sm);
   }
 }
-
-// ... rest of existing styles ...
 
 // Add to main App.scss
 body::before {

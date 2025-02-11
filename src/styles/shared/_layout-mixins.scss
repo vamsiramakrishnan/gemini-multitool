@@ -1,0 +1,183 @@
+// Text Utilities
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Flex Layout Utilities
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Input & Control Mixins
+@mixin input-base {
+  width: 100%;
+  padding: var(--space-sm);
+  background: rgba(var(--surface-2), 0.8);
+  border: 1px solid rgba($retro-blue, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--text-color-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: rgba($retro-blue, 0.5);
+    box-shadow: 0 0 0 2px rgba($retro-blue, 0.2);
+  }
+
+  &::placeholder {
+    color: var(--text-color-secondary);
+  }
+}
+
+@mixin control-button {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--text-color-primary);
+    transform: scale(1.1);
+  }
+}
+
+@mixin retro-button-icon {
+  @include control-button;
+  width: 36px;
+  height: 36px;
+  background: rgba($retro-blue, 0.1);
+  border: 1px solid rgba($retro-blue, 0.2);
+  border-radius: var(--radius-md);
+  color: $retro-blue;
+
+  &:hover {
+    background: rgba($retro-blue, 0.2);
+    border-color: rgba($retro-blue, 0.4);
+    color: $retro-blue;
+  }
+}
+
+// Widget Base Mixins
+@mixin widget-base {
+  background: rgba(var(--surface-1), 0.95);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(var(--blur-md));
+  border: 1px solid rgba($retro-blue, 0.1);
+  transition: all 0.3s var(--ease-out-quad);
+}
+
+// Scrollbar Mixins
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(var(--surface-2), 0.5);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba($retro-blue, 0.3);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba($retro-blue, 0.5);
+    }
+  }
+}
+
+// Panel Layout Mixins
+@mixin panel-base {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: rgba($retro-black, 0.95);
+  backdrop-filter: blur(var(--blur-md));
+  border: var(--terminal-line);
+  box-shadow: var(--terminal-shadow);
+  transition: transform 0.3s var(--ease-out-quad);
+  z-index: var(--z-sidepanel);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--scanlines);
+    pointer-events: none;
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+  }
+}
+
+@mixin panel-toggle-button {
+  position: fixed;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba($retro-black, 0.95);
+  border: 1px solid $retro-blue;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out-quad);
+  box-shadow: 
+    0 0 15px rgba($retro-blue, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: calc(var(--z-sidepanel) + 1);
+
+  svg {
+    width: 24px;
+    height: 24px;
+    color: var(--retro-blue);
+    transition: transform 0.3s var(--ease-out-quad);
+  }
+
+  &:hover svg {
+    transform: scale(1.1);
+    color: var(--retro-pink);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.95);
+  }
+}
+
+@mixin control-tray-base {
+  display: flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(
+    180deg,
+    rgba($retro-black, 0.95) 0%,
+    rgba($retro-black, 0.98) 100%
+  );
+  border-top: var(--terminal-line);
+  box-shadow: 
+    0 -4px 20px rgba($retro-black, 0.2),
+    0 0 30px rgba($retro-blue, 0.1);
+  backdrop-filter: blur(var(--blur-md));
+  width: 100%;
+  position: relative;
+  z-index: var(--z-controls);
+}
+
+@mixin flex-center-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+} 

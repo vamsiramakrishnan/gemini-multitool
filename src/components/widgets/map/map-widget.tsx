@@ -102,7 +102,7 @@ export class MapWidget extends BaseWidget<MapData> {
 
     return `
       <div class="map-widget">
-        <div class="map-main">
+        <div class="map-sidebar">
           <div class="route-header">
             <div class="route-icon">
               <span class="material-symbols-outlined">route</span>
@@ -117,6 +117,38 @@ export class MapWidget extends BaseWidget<MapData> {
             </div>
           </div>
 
+          <div class="route-details">
+            <div class="detail-item">
+              <div class="detail-icon">
+                <span class="material-symbols-outlined">location_on</span>
+                Starting Point
+              </div>
+              <div class="detail-value">${MapWidget.formattedAddressCache[this.data.origin]}</div>
+            </div>
+            
+            <div class="detail-item">
+              <div class="detail-icon">
+                <span class="material-symbols-outlined">flag</span>
+                Destination
+              </div>
+              <div class="detail-value">${MapWidget.formattedAddressCache[this.data.destination]}</div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-icon">
+                <span class="material-symbols-outlined">schedule</span>
+                Duration
+              </div>
+              <div class="detail-value">${this.getRouteDuration(this.data)}</div>
+            </div>
+          </div>
+
+          <div class="navigation-steps scrollable">
+            ${this.renderNavigationSteps(this.data)}
+          </div>
+        </div>
+
+        <div class="map-main">
           ${this.loading ? this.createLoadingState() : ''}
           <div id="map-container"></div>
           
@@ -131,39 +163,6 @@ export class MapWidget extends BaseWidget<MapData> {
               <span class="material-symbols-outlined">fullscreen</span>
             </button>
           </div>
-        </div>
-
-        <div class="route-details">
-          <div class="detail-item">
-            <div class="detail-icon">
-              <span class="material-symbols-outlined">location_on</span>
-              Starting Point
-            </div>
-            <div class="detail-value">${MapWidget.formattedAddressCache[this.data.origin]}</div>
-            <div class="detail-label">Origin</div>
-          </div>
-          
-          <div class="detail-item">
-            <div class="detail-icon">
-              <span class="material-symbols-outlined">flag</span>
-              Destination
-            </div>
-            <div class="detail-value">${MapWidget.formattedAddressCache[this.data.destination]}</div>
-            <div class="detail-label">End Point</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-icon">
-              <span class="material-symbols-outlined">schedule</span>
-              Duration
-            </div>
-            <div class="detail-value">${this.getRouteDuration(this.data)}</div>
-            <div class="detail-label">Estimated Time</div>
-          </div>
-        </div>
-
-        <div class="navigation-steps">
-          ${this.renderNavigationSteps(this.data)}
         </div>
       </div>
     `;
@@ -249,6 +248,9 @@ export class MapWidget extends BaseWidget<MapData> {
         
         // Debounce bounds calculation
         this.debouncedFitBounds(data._rawResponse);
+
+        // Setup step interactions
+        this.setupStepInteractions(container, data);
       }
 
       // Handle map container resizing with debounce
@@ -324,20 +326,60 @@ export class MapWidget extends BaseWidget<MapData> {
       { element: fullscreenBtn!, listener: fullscreenHandler }
     );
 
-    // Add passive flag for wheel events
+    // Remove passive flag and preventDefault
     container.addEventListener('wheel', this.handleWheelZoom, { 
-      passive: true,
-      capture: true
+      passive: false
     });
   }
 
   private handleWheelZoom = (e: WheelEvent) => {
-    e.preventDefault();
-    if (this.map) {
-      const delta = e.deltaY > 0 ? -1 : 1;
-      this.map.setZoom(this.map.getZoom()! + delta);
-    }
+    if (!this.map) return;
+    
+    // Instead of preventing default, let's handle the zoom more gracefully
+    const delta = e.deltaY > 0 ? -1 : 1;
+    const currentZoom = this.map.getZoom() || 0;
+    const newZoom = Math.min(Math.max(currentZoom + delta, 1), 20); // Limit zoom range
+    
+    // Use smooth zoom with native Google Maps API
+    this.smoothZoom(this.map, newZoom, {
+      duration: 200
+    });
   };
+
+  // Smooth zoom implementation using native Google Maps methods
+  private smoothZoom(map: google.maps.Map, targetZoom: number, options: { duration: number }) {
+    if (!map) return;
+    
+    const startZoom = map.getZoom() || 0;
+    const startTime = performance.now();
+    
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / options.duration, 1);
+      
+      // Apply easing
+      const eased = this.easeOutCubic(progress);
+      
+      // Calculate new zoom
+      const zoom = startZoom + (targetZoom - startZoom) * eased;
+      
+      // Use native setZoom
+      map.setZoom(zoom);
+      
+      // Continue animation if not complete
+      if (progress < 1) {
+        this.animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+    
+    // Start animation
+    this.animationFrameId = requestAnimationFrame(animate);
+  }
+
+  // Keep the easing function
+  private easeOutCubic(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
+  }
 
   private setupStepInteractions(container: HTMLElement, data: MapData): void {
     const steps = container.querySelectorAll('.step');
@@ -345,15 +387,17 @@ export class MapWidget extends BaseWidget<MapData> {
       const clickHandler = () => {
         const routeStep = data._rawResponse?.routes?.[0]?.legs?.[0]?.steps?.[index];
         if (routeStep && this.map) {
+          // Remove active class from all steps
           steps.forEach(s => s.classList.remove('active'));
+          // Add active class to clicked step
           step.classList.add('active');
           
-          // Use smooth pan animation for better UX
+          // Pan to step location
           this.map.panTo(routeStep.start_location);
           this.map.setZoom(16);
           
-          // Debounce marker updates to prevent excessive redraws
-          debounce(() => this.updateStepMarker(this.map, routeStep), 100)();
+          // Update step marker
+          this.updateStepMarker(this.map, routeStep);
         }
       };
       
@@ -408,30 +452,30 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   private renderNavigationSteps(data: MapData): string {
-    if (!data._rawResponse?.routes?.[0]?.legs?.[0]?.steps) return '';
+    if (!data._rawResponse?.routes?.[0]?.legs?.[0]?.steps) {
+      return '<div class="no-steps">No route steps available</div>';
+    }
 
     return `
-      <div class="navigation-steps">
-        <div class="steps-scroll-container" style="height: 300px; overflow-y: auto;">
-          ${data._rawResponse.routes[0].legs[0].steps
-            .slice(0, 50) // Initial render limit
-            .map((step, index) => this.renderStep(step, index))
-            .join('')}
-        </div>
-      </div>`;
-  }
-
-  private renderStep(step: google.maps.DirectionsStep, index: number): string {
-    return `
-      <div class="step" data-step-index="${index}">
-        <div class="step-content">
-          <div class="step-marker">${index + 1}</div>
-          <div class="step-info">
-            <div class="step-title">${step.instructions}</div>
-            <div class="step-distance">${step.distance?.text}</div>
-          </div>
-        </div>
-      </div>`;
+      <div class="steps-container">
+        ${data._rawResponse.routes[0].legs[0].steps
+          .map((step, index) => `
+            <div class="step" data-step-index="${index}">
+              <div class="step-content">
+                <div class="step-icon">
+                  <span class="material-symbols-outlined">
+                    ${this.getManeuverIcon(step.maneuver)}
+                  </span>
+                </div>
+                <div class="step-info">
+                  <div class="step-instruction">${step.instructions}</div>
+                  <div class="step-distance">${step.distance?.text || ''}</div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+      </div>
+    `;
   }
 
   private async updateStepMarker(map: google.maps.Map | null, step: google.maps.DirectionsStep): Promise<void> {

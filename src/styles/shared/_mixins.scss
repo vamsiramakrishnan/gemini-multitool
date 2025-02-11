@@ -1,4 +1,4 @@
-@import './design-system';
+@import './_design-system.scss';
 
 // Glass Effect Mixins
 @mixin glass-morphism($opacity: 0.7, $blur: 12px) {
@@ -160,46 +160,223 @@
   }
 }
 
-@mixin retro-button {
-  @include button-base;
-  border: 1px solid var(--retro-blue);
-  background: rgba(var(--retro-black), 0.8);
-  color: var(--retro-blue);
-  text-shadow: 0 0 8px rgba(var(--retro-blue), 0.6);
-
-  &:hover {
-    background: rgba(var(--retro-blue), 0.1);
-    box-shadow: 0 0 12px rgba(var(--retro-blue), 0.3);
+// Retro Button Mixins
+@mixin retro-button-base {
+  position: relative;
+  background: linear-gradient(
+    165deg,
+    rgba($retro-black, 0.8) 0%,
+    rgba($retro-black, 0.95) 100%
+  );
+  border: 1px solid rgba($retro-blue, 0.4);
+  color: $retro-blue;
+  font-family: var(--font-mono);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(var(--blur-sm));
+  box-shadow: 
+    0 0 0 1px rgba($retro-blue, 0.1),
+    0 2px 4px rgba($retro-black, 0.2);
+  text-shadow: 0 0 8px rgba($retro-blue, 0.5);
+  overflow: hidden;
+  
+  // Scanline effect
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--scanlines);
+    opacity: 0.1;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    z-index: 1;
   }
-
+  
+  // Glow effect
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(
+      45deg,
+      transparent 0%,
+      rgba($retro-blue, 0.1) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  &:hover {
+    transform: translateY(-1px);
+    border-color: $retro-pink;
+    color: $retro-pink;
+    box-shadow: 
+      0 0 0 1px rgba($retro-pink, 0.2),
+      0 0 20px rgba($retro-pink, 0.2),
+      0 4px 8px rgba($retro-black, 0.3);
+    text-shadow: 0 0 8px rgba($retro-pink, 0.5);
+    
+    &::after {
+      opacity: 1;
+    }
+  }
+  
   &:active {
     transform: translateY(1px);
+    box-shadow: 
+      0 0 0 1px rgba($retro-pink, 0.1),
+      0 0 10px rgba($retro-pink, 0.1);
   }
-    &:focus-visible {
-        @include focus-styling;
-    }
+  
+  &:disabled,
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: rgba($retro-blue, 0.2);
+    box-shadow: none;
+  }
+  
+  .material-symbols-outlined {
+    position: relative;
+    z-index: 2;
+  }
 }
 
-// Scrollbar Styling
+@mixin retro-button-primary {
+  @include retro-button-base;
+  background: linear-gradient(
+    165deg,
+    rgba($retro-blue, 0.2) 0%,
+    rgba($retro-blue, 0.1) 100%
+  );
+  border-color: $retro-blue;
+  color: $retro-blue;
+  box-shadow: 
+    0 0 0 1px rgba($retro-blue, 0.2),
+    0 0 15px rgba($retro-blue, 0.2);
+  
+  &:hover {
+    background: linear-gradient(
+      165deg,
+      rgba($retro-pink, 0.2) 0%,
+      rgba($retro-pink, 0.1) 100%
+    );
+  }
+}
+
+@mixin retro-button-secondary {
+  @include retro-button-base;
+  background: rgba($retro-black, 0.3);
+  border-color: rgba($retro-blue, 0.3);
+  color: $retro-blue;
+  
+  &:hover {
+    border-color: $retro-pink;
+    color: $retro-pink;
+    background: rgba($retro-black, 0.4);
+    box-shadow: 
+      0 0 0 1px rgba($retro-pink, 0.2),
+      0 0 15px rgba($retro-pink, 0.2);
+  }
+}
+
+@mixin retro-button-success {
+  @include retro-button-base;
+  background: linear-gradient(
+    165deg,
+    rgba($retro-green, 0.2) 0%,
+    rgba($retro-green, 0.1) 100%
+  );
+  border-color: $retro-green;
+  color: $retro-green;
+  box-shadow: 
+    0 0 0 1px rgba($retro-green, 0.2),
+    0 0 15px rgba($retro-green, 0.2);
+  text-shadow: 0 0 8px rgba($retro-green, 0.5);
+  
+  &:hover {
+    border-color: lighten($retro-green, 10%);
+    color: lighten($retro-green, 10%);
+    box-shadow: 
+      0 0 0 1px rgba($retro-green, 0.3),
+      0 0 20px rgba($retro-green, 0.3);
+  }
+}
+
+@mixin retro-button-danger {
+  @include retro-button-base;
+  background: linear-gradient(
+    165deg,
+    rgba($retro-red, 0.2) 0%,
+    rgba($retro-red, 0.1) 100%
+  );
+  border-color: $retro-red;
+  color: $retro-red;
+  box-shadow: 
+    0 0 0 1px rgba($retro-red, 0.2),
+    0 0 15px rgba($retro-red, 0.2);
+  text-shadow: 0 0 8px rgba($retro-red, 0.5);
+  
+  &:hover {
+    border-color: lighten($retro-red, 10%);
+    color: lighten($retro-red, 10%);
+    box-shadow: 
+      0 0 0 1px rgba($retro-red, 0.3),
+      0 0 20px rgba($retro-red, 0.3);
+  }
+}
+
+@mixin retro-button-small {
+  @include retro-button-base;
+  padding: var(--space-2xs) var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+@mixin retro-button-large {
+  @include retro-button-base;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-lg);
+}
+
+@mixin retro-button-icon {
+  @include retro-button-base;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+// Custom Scrollbar Mixin
 @mixin custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: var(--surface-3) transparent;
-
+  scrollbar-color: rgba($retro-blue, 0.3) transparent;
+  
   &::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-
+  
   &::-webkit-scrollbar-track {
     background: transparent;
   }
-
+  
   &::-webkit-scrollbar-thumb {
-    background: var(--surface-3);
+    background: rgba($retro-blue, 0.3);
     border-radius: var(--radius-full);
-
+    
     &:hover {
-      background: var(--surface-2);
+      background: rgba($retro-blue, 0.5);
     }
   }
 }
@@ -242,7 +419,11 @@
 
 // Mixin for consistent internal padding
 @mixin container-padding($size: 'md') {
-  padding: var(--space-#{$size});
+  padding: var(--container-padding-#{$size});
+  
+  @media (max-width: 768px) {
+    padding: calc(var(--container-padding-#{$size}) / 2);
+  }
 }
 
 // CRT Glow (mixin for reusability)
@@ -257,4 +438,474 @@
     z-index: -1; // Ensure it's behind the content
     border-radius: inherit; // Inherit border-radius from parent
   }
+}
+
+@mixin widget-base {
+  position: relative;
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-3);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--surface-4);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+@mixin widget-header {
+  position: relative;
+  z-index: 10;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--surface-3);
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin widget-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--surface-3);
+    border-radius: var(--radius-full);
+    
+    &:hover {
+      background: var(--surface-4);
+    }
+  }
+}
+
+// Widget-specific mixins
+@mixin responsive-text($size) {
+  @if $size == 'sm' {
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+  } @else if $size == 'base' {
+    font-size: clamp(0.875rem, 2vw, 1rem);
+  } @else if $size == 'lg' {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+  }
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin control-button {
+  width: clamp(28px, 4vw, 32px);
+  height: clamp(28px, 4vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--surface-3);
+    color: var(--text-1);
+  }
+
+  .material-symbols-outlined {
+    font-size: clamp(18px, 2.5vw, 20px);
+  }
+}
+
+@mixin scrollable-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: clamp(0.75rem, 3vw, 1.5rem);
+  @include custom-scrollbar;
+
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  line-height: 1.5;
+
+  > * + * {
+    margin-top: clamp(0.75rem, 2vw, 1.5rem);
+  }
+}
+
+@mixin collapsed-content {
+  max-height: 100px;
+
+  .collapse-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--surface-1)
+    );
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: clamp(0.5rem, 2vw, 1rem);
+
+    .expand-button {
+      @include responsive-button;
+    }
+  }
+}
+
+@mixin maximized-state {
+  position: fixed;
+  inset: clamp(0.5rem, 3vw, 1rem);
+  z-index: var(--z-modal);
+  height: auto;
+
+  .widget-content {
+    max-height: none;
+  }
+
+  @media (max-width: 640px) {
+    inset: 0;
+    border-radius: 0;
+  }
+}
+
+@mixin responsive-container {
+  @container (width < 400px) {
+    .widget-header {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .widget-content-inner {
+      padding: 0.75rem;
+    }
+  }
+}
+
+@mixin touch-optimizations {
+  @media (pointer: coarse) {
+    .widget-controls button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .widget-content-inner {
+      a, button, [role="button"] {
+        min-height: 44px;
+        padding: 0.5rem 1rem;
+      }
+    }
+  }
+}
+
+@mixin responsive-button {
+  padding: 0.25rem clamp(0.5rem, 2vw, 1rem);
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--surface-3);
+    color: var(--text-1);
+  }
+}
+
+@mixin retro-button {
+  @include retro-button-base;
+  background: linear-gradient(
+    165deg,
+    rgba($retro-blue, 0.2) 0%,
+    rgba($retro-blue, 0.1) 100%
+  );
+  border-color: $retro-blue;
+  color: $retro-blue;
+  box-shadow: 
+    0 0 0 1px rgba($retro-blue, 0.2),
+    0 0 15px rgba($retro-blue, 0.2);
+  
+  &:hover {
+    background: linear-gradient(
+      165deg,
+      rgba($retro-pink, 0.2) 0%,
+      rgba($retro-pink, 0.1) 100%
+    );
+    border-color: $retro-pink;
+    color: $retro-pink;
+  }
+}
+
+// Add new mixins for consistent spacing and hierarchy
+@mixin widget-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
+}
+
+@mixin widget-scrollable {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  @include custom-scrollbar;
+  padding: var(--space-md);
+}
+
+@mixin widget-header {
+  position: relative;
+  z-index: 10;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--surface-3);
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin widget-state-transitions {
+  // Base transition
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  will-change: transform, opacity;
+
+  // Maximize state
+  &.maximized {
+    position: fixed;
+    inset: var(--space-md);
+    z-index: var(--z-modal);
+    transform: none;
+    background: rgba($retro-black, 0.98);
+    backdrop-filter: blur(var(--blur-lg));
+    box-shadow: 
+      0 0 0 100vmax rgba($retro-black, 0.5),
+      0 0 40px rgba($retro-blue, 0.2);
+
+    .widget-content {
+      height: calc(100% - 60px);
+      
+      .widget-scroll-container,
+      .widget-scroll-area {
+        max-height: none;
+        overflow: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      inset: 0;
+      border-radius: 0;
+    }
+  }
+
+  // Minimize state
+  &.minimized:not(.maximized) {
+    .widget-content {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .widget-header {
+      border-bottom: none;
+      
+      .widget-title {
+        opacity: 0.7;
+      }
+    }
+  }
+
+  // State transitions
+  &.collapsing,
+  &.expanding {
+    .widget-content {
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+}
+
+@mixin widget-component {
+  position: relative;
+  transition: var(--transition-all);
+  z-index: var(--z-widget);
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-2);
+  overflow: hidden;
+  
+  &:hover {
+    box-shadow: var(--terminal-glow);
+    border-color: var(--neon-blue);
+  }
+  
+  &.dragging {
+    opacity: 0.7;
+    transform: scale(1.02);
+    cursor: grabbing;
+  }
+
+  .widget-header {
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(var(--surface-2), 0.9);
+    border-bottom: var(--terminal-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-display);
+    height: var(--header-height);
+    
+    h2 {
+      color: var(--neon-blue);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin: 0;
+    }
+    
+    .controls {
+      display: flex;
+      gap: var(--space-xs);
+    }
+  }
+
+  .widget-content {
+    padding: var(--space-md);
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+  }
+}
+
+@mixin widget-content-styles {
+  // Only style the inner content, not the container
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgba($retro-black, 0.95);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  backdrop-filter: blur(var(--blur-md));
+  border: var(--terminal-line);
+
+  // Inner sections should use padding, not margins
+  > * {
+    padding: var(--space-md);
+    border-bottom: var(--terminal-line);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+// Add new systematic interaction mixins
+@mixin interactive-element {
+  cursor: pointer;
+  transition: all var(--animation-speed-base) var(--animation-easing);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glow-primary);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Systematic spacing mixin
+@mixin stack($gap: 'md', $direction: 'vertical') {
+  display: flex;
+  flex-direction: if($direction == 'vertical', column, row);
+  gap: var(--space-#{$gap});
+}
+
+// Add new systematic layout mixins
+@mixin responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--grid-gap);
+}
+
+// Widget State Mixins
+@mixin widget-maximized {
+  position: fixed;
+  inset: var(--space-md);
+  z-index: var(--z-modal);
+  background: rgba(var(--surface-1), 0.8);
+  border-radius: var(--radius-lg);
+  border: var(--terminal-line);
+  box-shadow: var(--terminal-shadow);
+  
+  .widget-content {
+    height: calc(100% - var(--header-height));
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 768px) {
+    inset: 0;
+    border-radius: 0;
+  }
+}
+
+@mixin app-grid-layout {
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "main   panel"
+    "footer footer";
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--surface-0);
+
+  @media (max-width: 768px) {
+    grid-template-areas:
+      "header"
+      "main"
+      "footer";
+    grid-template-columns: 1fr;
+  }
+}
+
+@mixin app-header {
+  grid-area: header;
+  position: relative;
+  z-index: var(--z-header);
+  background: var(--surface-1);
+  border-bottom: var(--terminal-line);
+  padding: var(--space-sm);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
 } 

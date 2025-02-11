@@ -4,6 +4,7 @@ $retro-blue: #00f3ff !default;
 $retro-pink: #ff00ff !default;
 $retro-green: #00ff9d !default;
 $retro-purple: #bd00ff !default;
+$retro-red: #ff0043 !default;
 $crt-glow: rgba(0, 243, 255, 0.15);
 
 // Typography
@@ -77,6 +78,7 @@ body::before {
   --retro-pink: #ff00ff;
   --retro-green: #00ff9d;
   --retro-purple: #bd00ff;
+  --retro-red: #ff0043;
   --crt-glow: rgba(0, 243, 255, 0.15);
 
   // Neutral Palette (for light and dark themes)
@@ -187,6 +189,7 @@ body::before {
   --z-controls: 200;
   --z-sidepanel: 300;
   --z-modal: 400;
+  --z-tooltip: 500;
 }
 
 // Dark Theme (optional, but good practice)
@@ -269,4 +272,34 @@ body {
 
 .side-panel {
   z-index: var(--z-sidepanel);
+}
+// --- Shadows ---
+:root {
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15); 
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.25);
+  
+  // Terminal-specific shadows
+  --terminal-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --terminal-glow: 0 0 20px rgba(var(--retro-blue), 0.2);
+
+  // --- Border Radius ---
+  --radius-sm: var(--border-radius-sm);
+  --radius-md: var(--border-radius-md); 
+  --radius-lg: var(--border-radius-lg);
+  --radius-full: 9999px;
+
+  // --- Blur Effects ---
+  --blur-sm: 4px;
+  --blur-md: 8px;
+  --blur-lg: 16px;
+
+  // --- Z-Index Layers ---
+  --z-base: 1;
+  --z-map: 10;
+  --z-controls: 20;
+  --z-sidepanel: 30;
+  --z-modal: 40;
+  --z-tooltip: 50;
 }

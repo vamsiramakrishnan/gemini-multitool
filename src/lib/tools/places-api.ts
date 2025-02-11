@@ -187,7 +187,10 @@ export async function searchPlaces(query: string, options: SearchPlacesOptions =
                 longitude: place.geometry?.location?.lng() || 0
               },
               userRatings: place.user_ratings_total || 0,
-              photos: place.photos?.map(photo => photo.getUrl({ maxWidth: 800 })) || [],
+              photos: place.photos?.map(photo => photo.getUrl({
+                maxWidth: 400,
+                maxHeight: 300
+              })) || [],
               businessStatus: place.business_status || '',
               types: place.types || [],
               icon: place.icon || ''
@@ -276,14 +279,22 @@ export async function searchNearby(
 
           const widgetData = {
             places: places.map(place => ({
-              ...llmResponse.places[0],
+              id: place.place_id || '',
+              name: place.name || '',
+              rating: place.rating || 0,
+              priceLevel: place.price_level || 0,
+              type: place.types?.[0] || 'place',
+              isOpen: place.opening_hours?.isOpen() || false,
               address: place.vicinity || '',
               location: {
                 latitude: place.geometry?.location?.lat() || 0,
                 longitude: place.geometry?.location?.lng() || 0
               },
               userRatings: place.user_ratings_total || 0,
-              photos: place.photos?.map(photo => photo.getUrl({ maxWidth: 800 })) || [],
+              photos: place.photos?.map(photo => photo.getUrl({
+                maxWidth: 400,
+                maxHeight: 300
+              })) || [],
               businessStatus: place.business_status || '',
               types: place.types || [],
               icon: place.icon || '',

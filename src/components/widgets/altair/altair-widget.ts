@@ -2,13 +2,13 @@ import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import vegaEmbed, { EmbedOptions } from "vega-embed";
 
 // Define valid themes based on Vega-Embed's actual theme options
-type VegaTheme = 
-  | 'dark' 
-  | 'ggplot2' 
-  | 'quartz' 
-  | 'vox' 
-  | 'latimes' 
-  | 'urbaninstitute' 
+type VegaTheme =
+  | 'dark'
+  | 'ggplot2'
+  | 'quartz'
+  | 'vox'
+  | 'latimes'
+  | 'urbaninstitute'
   | 'fivethirtyeight'
   | 'excel'
   | 'googlecharts'
@@ -16,7 +16,8 @@ type VegaTheme =
   | 'carbonwhite'
   | 'carbong10'
   | 'carbong90'
-  | 'carbong100';
+  | 'carbong100'
+  | 'default';
 
 export interface AltairConfig {
   theme?: VegaTheme;
@@ -40,65 +41,39 @@ export class AltairWidget extends BaseWidget<AltairData> {
     this.widgetId = `altair-${Math.random().toString(36).substring(2, 9)}`;
     this.data = {
       title: 'Data Visualization',
-      spec: '{}', // Initialize with empty object JSON string
-      config: {
-        theme: 'dark'
-      },
-      ...data
+      spec: '{}', // Default empty spec
+      ...data,
     };
   }
 
-  async render(data: AltairData): Promise<string> {
+  async render(data: AltairData = this.data): Promise<string> {
     return `
-      <div class="altair-widget">
-        <div class="visualization-container">
-          <div id="${this.widgetId}" class="vega-embed"></div>
-        </div>
+      <div class="altair-widget" id="${this.widgetId}">
+        ${this.createLoadingState()}
       </div>
     `;
   }
 
-  async postRender(element: HTMLElement, data: AltairData): Promise<void> {
+  async postRender(element: HTMLElement, data: AltairData = this.data): Promise<void> {
+    this.container = element.querySelector(`#${this.widgetId}`);
+    if (!this.container) {
+      console.error('Altair container not found');
+      return;
+    }
+
     try {
-      const container = element.querySelector(`#${this.widgetId}`) as HTMLElement;
-      if (!container) {
-        throw new Error('Visualization container not found');
-      }
-
-      // Handle empty or invalid spec
-      if (!data.spec) {
-        container.innerHTML = this.createLoadingState();
-        return;
-      }
-
-      let spec;
-      try {
-        spec = JSON.parse(data.spec);
-      } catch (parseError) {
-        console.error('Failed to parse Altair spec:', parseError);
-        container.innerHTML = this.createErrorState('Invalid visualization specification');
-        return;
-      }
-
-      const config = data.config || {};
-
-      await vegaEmbed(container, spec, {
-        theme: (config.theme || 'dark') as EmbedOptions['theme'],
+      const spec = JSON.parse(data.spec);
+      const embedOptions: EmbedOptions = {
         actions: true,
-        renderer: 'svg',
-        width: config.width,
-        height: config.height,
-        config: {
-          background: config.background,
-          view: {
-            continuousWidth: 400,
-            continuousHeight: 300
-          }
-        },
-        defaultStyle: true,
-        downloadFileName: 'visualization',
-        logLevel: 2
-      });
+        ...(data.config || {}), // Apply user-provided config
+      };
+
+      const result = await vegaEmbed(this.container, spec, embedOptions);
+      // Remove loading state
+      if (this.container) {
+          this.container.innerHTML = ''; // Clear loading state
+          this.container.appendChild(result.view.container()); // Add the Vega chart
+      }
 
     } catch (error) {
       console.error('Failed to render Altair visualization:', error);
@@ -118,15 +93,11 @@ export class AltairWidget extends BaseWidget<AltairData> {
     `;
   }
 
-  // Add a more detailed error state method
   createErrorState(message: string): string {
     return `
       <div class="error-state">
         <span class="material-symbols-outlined">error</span>
-        <div class="error-message">
-          <h4>Visualization Error</h4>
-          <p>${message}</p>
-        </div>
+        <div class="error-message">${message}</div>
       </div>
     `;
   }

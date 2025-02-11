@@ -1,5 +1,5 @@
 @import '../../../styles/shared/mixins';
-@import '../../../styles/shared/design-system';
+@import '../../../styles/shared/widget-base';
 
 // Scrollbar Mixin
 @mixin custom-scrollbar {
@@ -25,511 +25,227 @@
   }
 }
 
+// Base Widget Container
 .widget-base {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  background: rgba($retro-black, 0.85);
-  backdrop-filter: blur(var(--blur-sm));
-  border-radius: var(--radius-md);
-  border: var(--terminal-line);
-  box-shadow: var(--terminal-shadow);
-  overflow: hidden;
-  font-family: var(--font-ui);
-  transition: var(--hover-transition);
-  
-  // Scanlines effect
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--scanlines);
-    pointer-events: none;
-    opacity: 0.1;
-    mix-blend-mode: overlay;
-    z-index: 1;
-  }
+  @include widget-base;
 
-  // CRT glow effect
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    box-shadow: inset 0 0 60px rgba($retro-blue, 0.1);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  // Widget header
+  // Header Section
   .widget-header {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-sm) var(--space-md);
-    background: linear-gradient(
-      180deg,
-      rgba($retro-black, 0.7) 0%,
-      rgba($retro-black, 0.85) 100%
-    );
-    border-bottom: var(--terminal-line);
-    box-shadow: 0 1px 0 rgba($retro-blue, 0.1);
-    backdrop-filter: blur(var(--blur-md));
-    position: relative;
+    @include widget-header;
 
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba($retro-blue, 0.2) 20%,
-        rgba($retro-blue, 0.2) 80%,
-        transparent 100%
-      );
-    }
-
-    .title {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-      color: $retro-blue;
-      font-family: var(--font-display);
-      font-size: var(--font-size-sm);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      text-shadow: 0 0 10px rgba($retro-blue, 0.3);
-
-      .material-symbols-outlined {
-        font-size: var(--font-size-lg);
-      }
-    }
-
-    .widget-controls {
-      display: flex;
-      gap: var(--space-xxs);
-
-      button {
-        width: 24px;
-        height: 24px;
-        border-radius: var(--radius-sm);
-        border: 1px solid rgba($retro-blue, 0.3);
-        background: rgba($retro-black, 0.3);
-        color: $retro-blue;
-        cursor: pointer;
-        transition: var(--hover-transition);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-
-        &::after {
-          content: '';
-          position: absolute;
-          inset: -1px;
-          border: 1px solid currentColor;
-          opacity: 0.2;
-          border-radius: inherit;
-          transition: var(--hover-transition);
-        }
-
-        &:hover {
-          border-color: $retro-pink;
-          color: $retro-pink;
-          box-shadow: var(--terminal-glow);
-
-          &::after {
-            opacity: 0.4;
-            inset: -2px;
-          }
-        }
-
-        .material-symbols-outlined {
-          font-size: 16px;
-        }
-      }
-    }
-  }
-
-  // Widget content
-  .widget-content {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-
-    // Scrollable container
-    .widget-scroll-container {
+    .widget-title-section {
       flex: 1;
-      min-height: 0;
-      overflow: auto;
-      @include custom-scrollbar;
-    }
-
-    // Map container specific styles
-    .map-container {
-      flex: 1;
-      min-height: 400px;
-      position: relative;
-      overflow: hidden;
-
-      // Ensure Google Maps elements are properly sized
-      .gm-style {
-        position: absolute !important;
-        height: 100% !important;
-        width: 100% !important;
-      }
-
-      // Custom map controls
-      .map-controls {
-        position: absolute;
-        top: var(--space-md);
-        right: var(--space-md);
-        z-index: 2;
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-xs);
-
-        button {
-          width: 36px;
-          height: 36px;
-          border-radius: var(--radius-sm);
-          background: rgba($retro-black, 0.85);
-          border: var(--terminal-line);
-          color: $retro-blue;
-          backdrop-filter: blur(var(--blur-sm));
-          transition: var(--transition-all);
-
-          &:hover {
-            color: $retro-pink;
-            border-color: $retro-pink;
-            box-shadow: var(--terminal-glow);
-          }
-        }
-      }
-    }
-  }
-
-  // Expandable sections
-  .widget-section {
-    &.expandable {
-      border-bottom: var(--terminal-line);
-
-      .section-header {
-        padding: var(--space-sm) var(--space-md);
-        background: rgba($retro-black, 0.3);
-        cursor: pointer;
-        transition: var(--transition-all);
-
-        &:hover {
-          background: rgba($retro-black, 0.5);
-        }
-      }
-
-      .section-content {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease;
-
-        &.expanded {
-          max-height: 500px;
-          padding: var(--space-md);
-        }
-      }
-    }
-  }
-
-  // Responsive adjustments
-  .widget-content {
-    &.collapsed {
-      max-height: 60px;
-      overflow: hidden;
-      
-      .collapse-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 40px;
-        background: linear-gradient(
-          to bottom,
-          transparent,
-          rgba($retro-black, 0.9)
-        );
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        padding-bottom: var(--space-xs);
-        
-        .expand-button {
-          padding: var(--space-xxs) var(--space-xs);
-          border-radius: var(--radius-sm);
-          border: 1px solid rgba($retro-blue, 0.3);
-          background: rgba($retro-black, 0.6);
-          color: $retro-blue;
-          font-size: var(--font-size-xs);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          cursor: pointer;
-          transition: var(--hover-transition);
-          backdrop-filter: blur(var(--blur-sm));
-          
-          &:hover {
-            border-color: $retro-pink;
-            color: $retro-pink;
-            box-shadow: var(--terminal-glow);
-          }
-        }
-      }
-    }
-  }
-
-  // States
-  &.maximized {
-    position: fixed;
-    inset: var(--space-md);
-    z-index: var(--z-modal);
-    height: calc(100vh - var(--space-md) * 2);
-
-    .widget-content {
-      flex: 1;
-      min-height: 0;
-    }
-
-    @media (max-width: 640px) {
-      inset: 0;
-      border-radius: 0;
-    }
-  }
-
-  &.minimized:not(.maximized) {
-    .widget-content {
-      display: none;
-    }
-  }
-
-  // Common widget elements
-  .widget-section {
-    padding: var(--space-md);
-    background: rgba($retro-black, 0.3);
-    border: 1px solid rgba($retro-blue, 0.2);
-    border-radius: var(--radius-sm);
-    position: relative;
-    box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border: 1px solid rgba($retro-blue, 0.1);
-      border-radius: inherit;
-    }
-  }
-
-  .widget-card {
-    position: relative;
-    background: var(--surface-1);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--surface-3);
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
-    &.minimized {
-      height: auto;
-      
-      .widget-content {
-        display: none;
-      }
-    }
-
-    &.maximized {
-      position: fixed;
-      top: var(--space-md);
-      left: var(--space-md);
-      right: var(--space-md);
-      bottom: var(--space-md);
-      height: calc(100% - var(--space-md) * 2);
-      width: calc(100% - var(--space-md) * 2);
-      z-index: 1000;
-      box-shadow: var(--shadow-lg);
-    }
-
-    .widget-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-sm) var(--space-md);
-      background: var(--surface-2);
-      border-bottom: 1px solid var(--surface-3);
-      min-height: 48px;
+      min-width: 0;
+      padding-right: var(--space-sm);
 
       .widget-title {
-        font-size: var(--font-size-sm);
-        font-weight: 500;
-        color: var(--text-1);
+        font-size: var(--font-size-lg);
+        font-weight: 600;
+        color: $retro-blue;
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
+    }
 
-      .widget-controls {
-        display: flex;
-        gap: var(--space-2xs);
+    .widget-controls {
+      display: flex;
+      gap: var(--space-2xs);
 
-        button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 28px;
-          height: 28px;
-          padding: 0;
-          border: none;
-          background: transparent;
-          color: var(--text-2);
-          border-radius: var(--radius-sm);
-          cursor: pointer;
-          transition: all 0.2s ease;
+      .control-button {
+        @include retro-button-icon;
+        width: 32px;
+        height: 32px;
+        padding: 0;
 
-          &:hover {
-            background: var(--surface-3);
-            color: var(--text-1);
-          }
+        &.minimize { color: $retro-blue; }
+        &.maximize { color: $retro-green; }
+        &.close { 
+          color: $retro-red;
+          &:hover { @include retro-button-danger; }
+        }
 
-          .material-symbols-outlined {
-            font-size: 20px;
-          }
+        .material-symbols-outlined {
+          font-size: 20px;
         }
       }
     }
+  }
 
-    .widget-content {
+  // Content Section
+  .widget-content {
+    @include widget-content;
+
+    .widget-scroll-area {
       flex: 1;
+      min-height: 0;
       overflow: auto;
+      @include custom-scrollbar;
       padding: var(--space-md);
-      position: relative;
-      
-      &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+
+      > * + * {
+        margin-top: var(--space-md);
       }
-      
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      
-      &::-webkit-scrollbar-thumb {
-        background: var(--surface-3);
-        border-radius: var(--radius-full);
-        
-        &:hover {
-          background: var(--surface-4);
+    }
+
+    &.collapsed {
+      max-height: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  }
+
+  // Loading State
+  &.loading {
+    @include widget-loading;
+  }
+
+  // Empty State
+  &.empty {
+    @include widget-empty;
+  }
+
+  // Error State
+  &.error {
+    @include widget-error;
+  }
+
+  // Widget States
+  &.maximized {
+    position: fixed;
+    inset: var(--space-md);
+    z-index: var(--z-modal);
+    height: auto;
+    max-height: calc(100vh - var(--space-md) * 2);
+
+    @media (max-width: 768px) {
+      inset: 0;
+      border-radius: 0;
+    }
+  }
+
+  &.minimized {
+    .widget-content {
+      display: none;
+    }
+
+    .widget-header {
+      border-bottom: none;
+    }
+  }
+
+  // Transitions
+  &.collapsing,
+  &.expanding {
+    .widget-content {
+      transition: max-height 0.3s var(--ease-out-quad),
+                  padding 0.3s var(--ease-out-quad);
+    }
+  }
+
+  // Responsive Design
+  @container (width < 400px) {
+    .widget-content {
+      padding: var(--space-sm);
+    }
+
+    .widget-header {
+      padding: var(--space-xs) var(--space-sm);
+
+      .widget-controls .control-button {
+        width: 28px;
+        height: 28px;
+
+        .material-symbols-outlined {
+          font-size: 18px;
         }
       }
     }
+  }
+}
 
-    .widget-loading {
-      padding: var(--space-md);
-      
-      .widget-skeleton {
-        background: var(--surface-2);
-        border-radius: var(--radius-sm);
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        
-        &.h-8 { height: 32px; }
-        &.h-4 { height: 16px; }
-        &.w-3\/4 { width: 75%; }
-        &.w-1\/2 { width: 50%; }
-        &.w-1\/4 { width: 25%; }
-        &.mb-2 { margin-bottom: 8px; }
-      }
-    }
+// Widget Content Scrollable Area
+.widget-content-scrollable {
+  @include custom-scrollbar;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-md);
+  
+  > * + * {
+    margin-top: var(--space-md);
+  }
+}
+
+// Widget Card
+.widget-card {
+  @include widget-card;
+  padding: var(--space-md);
+}
+
+// Widget Search
+.widget-search {
+  @include widget-search;
+  margin-bottom: var(--space-md);
+}
+
+// Widget States
+.widget-state {
+  &-loading {
+    @include widget-loading;
   }
 
-  .widget-input {
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid $retro-blue;
-    border-radius: var(--radius-sm);
-    background: rgba($retro-black, 0.6);
-    color: $retro-blue;
-    font-family: var(--font-ui);
-    font-size: var(--font-size-sm);
-    transition: var(--hover-transition);
-    box-shadow: inset 0 1px 3px rgba($retro-black, 0.3);
-
-    &::placeholder {
-      color: rgba($retro-blue, 0.5);
-    }
-
-    &:focus {
-      outline: none;
-      border-color: $retro-pink;
-      box-shadow: var(--terminal-glow),
-                  inset 0 1px 3px rgba($retro-black, 0.3);
-    }
+  &-empty {
+    @include widget-empty;
   }
 
-  .widget-button {
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid $retro-blue;
-    border-radius: var(--radius-sm);
-    background: rgba($retro-black, 0.6);
-    color: $retro-blue;
-    font-family: var(--font-ui);
-    font-size: var(--font-size-sm);
-    cursor: pointer;
-    transition: var(--hover-transition);
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border: 1px solid currentColor;
-      opacity: 0.3;
-      border-radius: inherit;
-      transition: var(--hover-transition);
-    }
-
-    &:hover {
-      border-color: $retro-pink;
-      color: $retro-pink;
-      box-shadow: var(--terminal-glow);
-
-      &::after {
-        opacity: 0.5;
-        inset: -2px;
-      }
-    }
-
-    &:active {
-      transform: scale(var(--active-scale));
-    }
-
-    &.primary {
-      background: rgba($retro-blue, 0.2);
-      border-color: $retro-blue;
-      color: $retro-blue;
-
-      &:hover {
-        background: rgba($retro-pink, 0.2);
-        border-color: $retro-pink;
-        color: $retro-pink;
-      }
-    }
+  &-error {
+    @include widget-error;
   }
+}
+
+// Utility Classes
+.widget-scrollable {
+  @include custom-scrollbar;
+  overflow: auto;
+}
+
+.widget-flex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.widget-grid {
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+
+// Animation Classes
+.widget-animate {
+  &-fade {
+    animation: fade-in var(--animation-speed-base) var(--animation-easing);
+  }
+
+  &-slide {
+    animation: slide-up var(--animation-speed-base) var(--animation-easing);
+  }
+}
+
+// Responsive Text
+.widget-text {
+  &-sm { font-size: clamp(0.75rem, 1.5vw, 0.875rem); }
+  &-base { font-size: clamp(0.875rem, 2vw, 1rem); }
+  &-lg { font-size: clamp(1rem, 2.5vw, 1.25rem); }
+}
+
+// Responsive Spacing
+.widget-space {
+  &-sm { padding: clamp(0.5rem, 2vw, 0.75rem); }
+  &-base { padding: clamp(0.75rem, 3vw, 1.5rem); }
+  &-lg { padding: clamp(1rem, 4vw, 2rem); }
 }
 
 // Loading States with improved aesthetics
@@ -706,13 +422,15 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     .widget-scroll-container {
-      flex: 1;
-      min-height: 0;
-      overflow: auto;
-      @include custom-scrollbar;
-      @include container-padding('md');
+      @include widget-scrollable;
+      
+      > * + * {
+        margin-top: var(--space-md);
+      }
     }
 
     .map-container {
@@ -1107,4 +825,25 @@
     font-size: var(--font-size-sm);
     opacity: 0.8;
   }
+}
+
+// Responsive typography
+.text-responsive {
+  &-sm { font-size: clamp(0.75rem, 1.5vw, 0.875rem); }
+  &-base { font-size: clamp(0.875rem, 2vw, 1rem); }
+  &-lg { font-size: clamp(1rem, 2.5vw, 1.25rem); }
+}
+
+// Responsive spacing
+.space-responsive {
+  &-sm { padding: clamp(0.5rem, 2vw, 0.75rem); }
+  &-base { padding: clamp(0.75rem, 3vw, 1.5rem); }
+  &-lg { padding: clamp(1rem, 4vw, 2rem); }
+}
+
+// Responsive grid
+.grid-responsive {
+  display: grid;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 } 

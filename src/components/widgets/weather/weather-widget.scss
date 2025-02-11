@@ -1,11 +1,127 @@
+@import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
+@import '../../../styles/shared/widget-base';
 
 /* Add your styles for weather widget here */
 .weather-widget {
-  background: rgba($retro-black, 0.85);
-  backdrop-filter: blur(var(--blur-sm));
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  @include widget-base;
+
+  .weather-header {
+    @include widget-header;
+  }
+
+  .weather-content {
+    @include widget-content;
+  }
+
+  // Weather-specific styles
+  .temperature-section {
+    @include widget-card;
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+
+    .weather-icon {
+      @include retro-icon-container;
+      width: 96px;
+      height: 96px;
+      
+      .material-symbols-outlined {
+        font-size: 48px;
+        color: $retro-blue;
+        text-shadow: 0 0 10px rgba($retro-blue, 0.4);
+      }
+    }
+
+    .temperature-info {
+      .weather-temp {
+        @include retro-text-glow($retro-blue);
+        font-size: 4rem;
+        font-weight: 700;
+      }
+
+      .weather-condition {
+        @include retro-text-glow($retro-pink);
+        font-size: var(--font-size-lg);
+        text-transform: uppercase;
+      }
+
+      .weather-location {
+        @include retro-badge;
+      }
+    }
+  }
+
+  .weather-stats {
+    @include widget-grid(200px);
+    padding: var(--space-lg);
+
+    .stat-item {
+      @include widget-grid-item;
+      @include retro-glow-hover;
+
+      .stat-icon {
+        @include retro-icon-with-text;
+      }
+
+      .stat-value {
+        @include retro-text-glow($retro-blue);
+        font-size: var(--font-size-xl);
+      }
+
+      .stat-label {
+        @include retro-text-secondary;
+      }
+    }
+  }
+
+  .sun-times {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+
+    .time-card {
+      @include widget-card;
+      @include retro-glow-hover;
+
+      &.sunrise .time-icon {
+        @include retro-icon-container($retro-green);
+      }
+
+      &.sunset .time-icon {
+        @include retro-icon-container($retro-pink);
+      }
+
+      .time-value {
+        @include retro-text-glow($retro-blue);
+      }
+
+      .time-label {
+        @include retro-text-secondary;
+      }
+    }
+  }
+
+  // States
+  &.loading {
+    @include widget-loading;
+  }
+
+  &.empty {
+    @include widget-empty;
+  }
+
+  &.error {
+    @include widget-error;
+  }
+
+  .weather-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
   font-family: var(--font-ui);
   border: var(--terminal-line);
   box-shadow: var(--terminal-shadow);

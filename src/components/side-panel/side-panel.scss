@@ -1,271 +1,40 @@
 @import '../../styles/shared/mixins';
-@import '../../styles/shared/design-system';
+@import '../../styles/shared/layout-mixins';
 
 .side-panel {
-  position: fixed;
+  @include panel-base;
   right: 0;
   top: 0;
   bottom: 0;
-  width: 400px;
-  height: 100vh;
-  transform: translate3d(100%, 0, 0);
-  will-change: transform;
-  transition: 
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.2s ease;
-  z-index: 1000;
-  isolation: isolate;
+  width: var(--panel-width);
+  transform: translateX(100%);
   
   &.open {
-    transform: translate3d(0, 0, 0);
+    transform: translateX(0);
   }
 
-  background: linear-gradient(
-    160deg,
-    rgba($retro-black, 0.95) 0%,
-    rgba(darken($retro-black, 5%), 0.98) 100%
-  );
-  backdrop-filter: blur(24px);
-  border-right: 1px solid $retro-blue;
-  box-shadow: 
-    16px 0 40px -16px rgba($retro-blue, 0.3),
-    0 0 0 1px rgba($retro-blue, 0.1) inset;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    z-index: -1;
-  }
-
-  .top, .input-container {
-    backdrop-filter: none;
-    background: rgba($retro-black, 0.95);
-  }
-
-  .react-select {
-    background: var(--Neutral-20);
-    color: var(--Neutral-90);
-    width: 193px;
-    height: 30px;
-
-    .react-select__single-value {
-      color: var(--Neutral-90);
-    }
-
-    .react-select__menu {
-      background: var(--Neutral-20);
-      color: var(--Neutral-90);
-    }
-
-    .react-select__option {
-    }
-    .react-select__value-container {
-    }
-    .react-select__indicators {
-    }
-    .react-select__option:hover,
-    .react-select__option:focus,
-    .react-select_option:focus-within {
-      background: var(--Neutral-30);
-    }
-    .react-select__option--is-focused: {
-      background: var(--Neutral-30);
-    }
-
-    &__control {
-      background: rgba(var(--surface-3), 0.6) !important;
-      border: 1px solid rgba(var(--primary-400), 0.15) !important;
-    }
+  .panel-header {
+    padding: var(--space-md);
+    border-bottom: var(--terminal-line);
     
-    &__menu {
-      @include glass-morphism-heavy;
-    }
-  }
-
-  .top {
-    border-bottom: 1px solid $retro-blue;
-    padding: 16px 25px;
-
     h2 {
-      color: $retro-blue;
-      font-family: $font-display;
-      font-size: 1.25rem;
-      font-weight: 500;
-      line-height: 1.4;
-      letter-spacing: -0.01em;
+      color: var(--retro-blue);
+      font-size: var(--font-size-lg);
       margin: 0;
-      text-shadow: 0 0 8px rgba($retro-blue, 0.4);
     }
   }
 
-  &:not(.open) {
-    opacity: 0.7;
-    pointer-events: none;
-    
-    .side-panel-container {
-      opacity: 0;
-      display: none;
-      transition: all 0.2s ease-in allow-discrete;
-      transition-delay: 0.1s;
-    }
-
-    .indicators .streaming-indicator {
-      width: 30px;
-      opacity: 0;
-    }
-
-    .input-container {
-      opacity: 0;
-      display: none;
-      transition: all 0.2s ease-in allow-discrete;
-    }
-  }
-
-  .indicators {
-    display: flex;
-    padding: 24px 25px;
-    justify-content: flex-end;
-    gap: 21px;
-    .streaming-indicator {
-      user-select: none;
-      border-radius: 4px;
-      border: 1px solid $retro-blue;
-      background: rgba($retro-black, 0.8);
-      display: flex;
-      width: 136px;
-      height: 30px;
-      padding-left: 4px;
-      justify-content: center;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      text-align: center;
-      font-family: $font-ui;
-      font-size: 14px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: normal;
-      transition: width 0.2s ease-in;
-      color: $retro-green;
-
-      &.connected {
-        box-shadow: 0 0 12px rgba($retro-green, 0.3);
-      }
-    }
-    transition: opacity 0.3s ease;
-  }
-
-  .side-panel-container {
-    height: calc(100vh - 200px);
-    overflow-y: auto;
-    overflow-x: hidden;
+  .panel-content {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    transform: translateZ(0);
-    will-change: scroll-position;
-    contain: strict;
-    
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background: $retro-blue;
-      border-radius: 3px;
-    }
-
-    .logger-list {
-      transform: translateZ(0);
-      will-change: transform;
-      contain: layout style paint;
-    }
-  }
-
-  .input-container {
-    padding: 16px 25px;
-    height: 50px;
-    flex-grow: 0;
-    flex-shrink: 0;
     overflow: hidden;
-    border-color: rgba(var(--primary-400), 0.1);
-    transition: opacity 0.3s ease;
-
-    .input-content {
-      position: relative;
-      background: rgba($retro-black, 0.7);
-      border: 1px solid $retro-blue;
-      border-radius: var(--radius-lg);
-      height: 22px;
-      padding: 11px 18px;
-      transition: all 0.2s ease;
-
-      &:focus-within {
-        background: rgba($retro-black, 0.8);
-        border-color: rgba($retro-blue, 0.2);
-        box-shadow: 0 0 0 3px rgba($retro-blue, 0.2);
-      }
-
-      .send-button {
-        position: absolute;
-        top: 50%;
-        right: 0;
-        transform: translate(0, -50%);
-        background: none;
-        border: 0;
-        color: var(--Neutral-20);
-        cursor: pointer;
-        transition: color 0.1s ease-in;
-        z-index: 2;
-
-        &:hover {
-          color: var(--Neutral-60);
-        }
-      }
-
-      .input-area {
-        background: none;
-        font-family: system-ui, -apple-system, sans-serif;
-        font-size: 0.9375rem;
-        line-height: 1.5;
-        color: var(--text-primary);
-        field-sizing: content;
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 2;
-        display: inline-block;
-        width: calc(100% - 72px);
-        max-height: 20px;
-        outline: none;
-        --webkit-box-flex: 1;
-        flex: 1;
-        word-break: break-word;
-        overflow: auto;
-        padding: 14px 18px;
-        border: 0;
-        resize: none;
-      }
-
-      .input-content-placeholder {
-        position: absolute;
-        left: 0;
-        top: 0;
-        display: flex;
-        align-items: center;
-        z-index: 1;
-        height: 100%;
-        width: 100%;
-        pointer-events: none;
-        user-select: none;
-        padding: 0px 18px;
-        white-space: pre-wrap;
-        color: var(--text-tertiary);
-        font-size: 0.9375rem;
-      }
-    }
+  }
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: var(--panel-width);
   }
 }
 
@@ -300,54 +69,18 @@
 }
 
 .panel-toggle {
-  position: fixed;
+  @include panel-toggle-button;
   right: 20px;
-  bottom: 20px;
-  z-index: 2001;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba($retro-black, 0.9);
-  border: 1px solid $retro-blue;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba($retro-blue, 0.3);
-  
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 25px rgba($retro-blue, 0.5);
-  }
+  bottom: 80px;
   
   &.open {
-    right: 420px; // Adjust based on panel width
-  }
-}
-
-@media (max-width: 768px) {
-  .side-panel {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 90%;
-    max-width: 400px;
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    &.open {
-      transform: translateX(0);
-    }
+    right: calc(var(--panel-width) + 20px);
   }
 
-  .panel-toggle {
-    right: 20px;
-    bottom: 100px; // Above control tray
-    
+  @media (max-width: 768px) {
+    bottom: 100px;
     &.open {
-      right: calc(100% - 60px);
+      right: calc(90% + 20px);
     }
   }
 }

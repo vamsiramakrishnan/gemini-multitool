@@ -20,7 +20,8 @@ export interface NearbyPlacesData extends BaseWidgetData {
 }
 
 export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
-  protected data: NearbyPlacesData;
+  private mapInitialized = false;
+  private readonly mapId: string;
 
   constructor(data?: NearbyPlacesData) {
     super('Nearby Places');
@@ -29,6 +30,7 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
       places: [],
       ...data
     };
+    this.mapId = `map-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   async render(data: NearbyPlacesData = this.data): Promise<string> {
@@ -40,30 +42,217 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
       return this.renderEmptyState();
     }
 
+    setTimeout(() => this.initializeMap(), 0);
+
     return `
-      <div class="nearby-places-widget space-y-6 p-4">
-        <!-- Map View -->
-        <div class="card bg-base-200 shadow-lg">
-          <div class="card-body p-4">
-            <div id="map-${this.getMapId()}" class="w-full h-[300px] rounded-lg"></div>
+      <div class="nearby-places-widget">
+        <div class="nearby-places-main">
+          <div class="search-section">
+            <div class="search-container">
+              <span class="material-symbols-outlined search-icon">search</span>
+              <input type="text" placeholder="Search nearby places..." />
+            </div>
+            <div class="filters">
+              ${this.renderFilters()}
+            </div>
+          </div>
+
+          <div class="map-section">
+            <div id="${this.mapId}" class="map-container"></div>
+          </div>
+
+          <div class="places-grid">
+            ${data.places.map(place => this.renderPlaceCard(place)).join('')}
+          </div>
+
+          <div class="places-stats">
+            ${this.renderStats()}
           </div>
         </div>
-
-        <!-- Places List -->
-        <div class="grid grid-cols-1 gap-4">
-          ${data.places.map((place, index) => this.renderPlaceCard(place, index)).join('')}
-        </div>
-
-        ${this.renderMapScript(data.places)}
       </div>
     `;
   }
 
-  private getMapId(): string {
-    return `map-${Math.random().toString(36).substr(2, 9)}`;
+  private renderFilters(): string {
+    const filters = ['Restaurant', 'Cafe', 'Shopping', 'Entertainment', 'Services'];
+    return `
+      <div class="filter-tags">
+        ${filters.map(filter => `
+          <button class="filter-tag">
+            <span class="material-symbols-outlined">${this.getFilterIcon(filter)}</span>
+            ${filter}
+          </button>
+        `).join('')}
+      </div>
+    `;
   }
 
-  private renderPlaceCard(place: Place, index: number): string {
+  private calculateAverageRating(): number {
+    const places = this.data.places || [];
+    const ratings = places
+      .map(p => p.rating)
+      .filter((r): r is number => r !== undefined && !isNaN(r));
+    
+    if (ratings.length === 0) return 0;
+    
+    const sum = ratings.reduce((acc, curr) => acc + curr, 0);
+    return sum / ratings.length;
+  }
+
+  private renderStats(): string {
+    const totalPlaces = this.data.places?.length || 0;
+    const avgRating = this.calculateAverageRating();
+    const openNow = this.data.places?.filter(p => p.businessStatus === 'OPERATIONAL').length || 0;
+    
+    return `
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-symbols-outlined">place</span>
+          Total Places
+        </div>
+        <div class="stat-value">${totalPlaces}</div>
+        <div class="stat-label">Found Nearby</div>
+      </div>
+      
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-symbols-outlined">star</span>
+          Average Rating
+        </div>
+        <div class="stat-value">${avgRating.toFixed(1)}</div>
+        <div class="stat-label">Out of 5.0</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-symbols-outlined">storefront</span>
+          Open Now
+        </div>
+        <div class="stat-value">${openNow}</div>
+        <div class="stat-label">Places</div>
+      </div>
+    `;
+  }
+
+  private getFilterIcon(filter: string): string {
+    const icons: Record<string, string> = {
+      'Restaurant': 'restaurant',
+      'Cafe': 'coffee',
+      'Shopping': 'shopping_bag',
+      'Entertainment': 'movie',
+      'Services': 'miscellaneous_services'
+    };
+    return icons[filter] || 'place';
+  }
+
+  private initializeMap(): void {
+    if (this.mapInitialized || !window.google?.maps) return;
+
+    const mapElement = document.getElementById(this.mapId);
+    if (!mapElement) return;
+
+    // Add retro styling
+    const retroStyle = [
+      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+      {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "geometry",
+        stylers: [{ color: "#263c3f" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#6b9a76" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#38414e" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#212a37" }],
+      },
+      {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#9ca5b3" }],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#17263c" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#515c6d" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#17263c" }],
+      },
+    ];
+
+    const map = new google.maps.Map(mapElement, {
+      center: { lat: this.data.places?.[0]?.latitude || 0, lng: this.data.places?.[0]?.longitude || 0 },
+      zoom: 14,
+      disableDefaultUI: true,
+      mapTypeControl: false,
+      streetViewControl: false,
+      styles: retroStyle,
+    });
+
+    // Add custom styled markers for each place
+    this.data.places?.forEach(place => {
+      if (place.latitude && place.longitude) {
+        const marker = new google.maps.Marker({
+          position: { lat: place.latitude, lng: place.longitude },
+          map: map,
+          title: place.name,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#00f3ff', // retro blue
+            fillOpacity: 0.8,
+            strokeColor: '#00f3ff',
+            strokeWeight: 2,
+          }
+        });
+
+        // Add click listener to marker
+        marker.addListener('click', () => {
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div style="color: #000; padding: 8px;">
+                <h3 style="margin: 0 0 4px;">${place.name}</h3>
+                <p style="margin: 0;">${place.address}</p>
+              </div>
+            `
+          });
+          infoWindow.open(map, marker);
+        });
+      }
+    });
+
+    this.mapInitialized = true;
+  }
+
+  private renderPlaceCard(place: Place): string {
     const { name, address, rating, userRatings, priceLevel, photos, businessStatus, types } = place;
     const mainPhotoUrl = photos && photos.length > 0 ? photos[0] : null;
     
@@ -102,37 +291,6 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
           </div>
         </div>
       </div>
-    `;
-  }
-
-  private renderMapScript(places: Place[]): string {
-    const mapId = this.getMapId();
-    return `
-      <script>
-        function initMap() {
-          const map = new google.maps.Map(document.getElementById('${mapId}'), {
-            center: { lat: ${places[0]?.latitude || 0}, lng: ${places[0]?.longitude || 0} },
-            zoom: 14,
-            disableDefaultUI: true,
-            mapTypeControl: false,
-            streetViewControl: false,
-          });
-
-          ${places.map(place => `
-            new google.maps.Marker({
-              position: { lat: ${place.latitude}, lng: ${place.longitude} },
-              map: map,
-              title: '${place.name}'
-            });
-          `).join('')}
-        }
-        
-        if (window.google && window.google.maps) {
-          initMap();
-        } else {
-          window.initMap = initMap;
-        }
-      </script>
     `;
   }
 
@@ -219,5 +377,9 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
         </div>
       </div>
     `;
+  }
+
+  destroy(): void {
+    this.mapInitialized = false;
   }
 } 

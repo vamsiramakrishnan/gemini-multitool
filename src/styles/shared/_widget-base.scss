@@ -1,0 +1,278 @@
+// Widget Base Styles
+@mixin widget-base {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba($retro-black, 0.95);
+  backdrop-filter: blur(var(--blur-md));
+  border: var(--terminal-line);
+  box-shadow: var(--terminal-shadow);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+
+  // Scanlines effect
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--scanlines);
+    pointer-events: none;
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+    z-index: 1;
+  }
+
+  // CRT glow effect
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 60px rgba($retro-blue, 0.1);
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+// Widget Header
+@mixin widget-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba($retro-black, 0.7);
+  border-bottom: var(--terminal-line);
+  box-shadow: 0 1px 0 rgba($retro-blue, 0.1);
+
+  .widget-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    color: $retro-blue;
+    text-shadow: 0 0 10px rgba($retro-blue, 0.3);
+  }
+
+  .widget-controls {
+    display: flex;
+    gap: var(--space-xs);
+  }
+}
+
+// Widget Content
+@mixin widget-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+// Widget Loading State
+@mixin widget-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: rgba($retro-black, 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba($retro-blue, 0.1);
+    border-top-color: $retro-blue;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    color: $retro-blue;
+    margin-top: var(--space-md);
+    text-shadow: 0 0 10px rgba($retro-blue, 0.3);
+  }
+}
+
+// Widget Empty State
+@mixin widget-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: var(--space-xl);
+  text-align: center;
+  
+  .material-symbols-outlined {
+    font-size: 48px;
+    color: $retro-blue;
+    margin-bottom: var(--space-md);
+  }
+  
+  h3 {
+    color: $retro-blue;
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-sm);
+    text-shadow: 0 0 5px rgba($retro-blue, 0.2);
+  }
+  
+  p {
+    color: rgba($retro-blue, 0.7);
+    font-size: var(--font-size-sm);
+  }
+}
+
+// Widget Error State
+@mixin widget-error {
+  @include widget-empty;
+  
+  .material-symbols-outlined {
+    color: $retro-red;
+  }
+  
+  h3 {
+    color: $retro-red;
+    text-shadow: 0 0 5px rgba($retro-red, 0.2);
+  }
+}
+
+// Widget Card
+@mixin widget-card {
+  background: rgba($retro-black, 0.3);
+  border: 1px solid rgba($retro-blue, 0.2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: var(--hover-transition);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: $retro-pink;
+    box-shadow: var(--terminal-glow);
+  }
+}
+
+// Widget Search Input
+@mixin widget-search {
+  position: relative;
+  
+  input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    padding-left: calc(var(--space-md) + 24px);
+    background: rgba($retro-black, 0.3);
+    border: 1px solid rgba($retro-blue, 0.3);
+    border-radius: var(--radius-sm);
+    color: $retro-blue;
+    font-family: var(--font-ui);
+    transition: var(--hover-transition);
+
+    &::placeholder {
+      color: rgba($retro-blue, 0.5);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $retro-pink;
+      box-shadow: var(--terminal-glow);
+    }
+  }
+
+  .search-icon {
+    position: absolute;
+    left: var(--space-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba($retro-blue, 0.7);
+    font-size: 20px;
+  }
+}
+
+// Retro Icon Container
+@mixin retro-icon-container($color: $retro-blue) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $color;
+  border-radius: var(--radius-sm);
+  background: rgba($retro-black, 0.3);
+  box-shadow: 0 0 20px rgba($color, 0.2);
+
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid $color;
+    border-radius: inherit;
+  }
+  
+  &::before { opacity: 0.3; }
+  &::after { opacity: 0.1; inset: -2px; }
+}
+
+// Retro Text Glow
+@mixin retro-text-glow($color: $retro-blue) {
+  color: $color;
+  text-shadow: 0 0 10px rgba($color, 0.4);
+}
+
+// Retro Badge
+@mixin retro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba($retro-black, 0.3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba($retro-blue, 0.3);
+  color: rgba($retro-blue, 0.8);
+  font-size: var(--font-size-sm);
+  box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
+}
+
+// Retro Icon with Text
+@mixin retro-icon-with-text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: rgba($retro-blue, 0.7);
+
+  .material-symbols-outlined {
+    font-size: 20px;
+    color: $retro-blue;
+  }
+}
+
+// Retro Text Secondary
+@mixin retro-text-secondary {
+  font-size: var(--font-size-xs);
+  color: rgba($retro-blue, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// Retro Glow Hover
+@mixin retro-glow-hover {
+  &:hover {
+    border-color: $retro-pink;
+    transform: translateY(-2px);
+    box-shadow: var(--terminal-glow);
+  }
+}
+
+// Widget Grid Layout
+@mixin widget-grid($min-width: 280px) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, $min-width), 1fr));
+  gap: var(--space-md);
+}
+
+// Widget Grid Item
+@mixin widget-grid-item {
+  @include widget-card;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+} 

@@ -36,6 +36,7 @@ import { ChatWidgetComponent } from './components/widgets/chat/ChatWidgetCompone
 import { useLayout } from './contexts/LayoutContext';
 import VideoStream from "./components/video-stream/VideoStream";
 import { LayoutProvider } from './contexts/LayoutContext';
+import { WidgetRegistry, WidgetType } from './components/widgets/registry';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
@@ -215,33 +216,27 @@ function AppContent() {
   }
 
   return (
-    <div className={cn("app-layout", { "panel-open": panelOpen, "chat-open": chatWidgetVisible })}>
-      <SidePanel />
-      
-      <div className="main-content">
-        <TabsContainer
+    <div className="app">
+      {/* Main workspace area */}
+      <div className="workspace">
+        {/* Only render TabsContainer here */}
+        <TabsContainer 
           activeTabId={activeTabId}
           onTabChange={setActiveTab}
         />
       </div>
 
-      {/* Video Stream */}
-      <div className="video-stream-container">
-        <VideoStream stream={videoStream} />
+      {/* Side Panel */}
+      <SidePanel videoStream={videoStream} />
+
+      {/* Bottom control bar */}
+      <div className="workspace-controls">
+        <ControlTray
+          videoRef={videoRef}
+          supportsVideo={true}
+          onVideoStreamChange={setVideoStream}
+        />
       </div>
-
-      {/* Chat Widget */}
-      {chatWidgetVisible && (
-        <div className="chat-widget-container">
-          <ChatWidgetComponent />
-        </div>
-      )}
-
-      <ControlTray
-        videoRef={videoRef}
-        supportsVideo={true}
-        onVideoStreamChange={setVideoStream}
-      />
     </div>
   );
 }

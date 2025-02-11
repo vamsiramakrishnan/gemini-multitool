@@ -1,8 +1,6 @@
 import { withWidget } from '../withWidget';
 import { AltairWidget as AltairWidgetClass } from './altair-widget';
-import type { AltairData } from './altair-widget';
-
-export type AltairWidgetProps = AltairData;
+import type { AltairWidgetProps } from './altair-widget';
 
 export const AltairWidget = withWidget<AltairWidgetProps>(
   AltairWidgetClass,

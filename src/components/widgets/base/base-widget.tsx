@@ -10,6 +10,9 @@ export interface BaseWidgetData {
 export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
   protected data: T;
   protected element: HTMLElement | null = null;
+  protected currentState: 'maximize' | 'minimize' | 'restore' = 'maximize';
+  protected contentHeight: number = 0;
+  private isTransitioning = false;
 
   constructor(title = 'Widget') {
     this.data = { title } as T;
@@ -21,23 +24,33 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
   }
 
   async render(data: T = this.data): Promise<string> {
-    // Update internal data when rendering
     this.data = { ...this.data, ...data };
     return `
-      <div class="widget-card">
+      <div class="widget-base">
+        <div class="widget-header">
+          <h2 class="widget-title">${this.data.title}</h2>
+          ${this.renderControls()}
+        </div>
         <div class="widget-content">
-          ${this.createLoadingState()}
+          <div class="widget-scroll-container">
+            ${await this.renderContent()}
+          </div>
         </div>
       </div>
     `;
   }
 
-  createLoadingState(): string {
+  protected async renderContent(): Promise<string> {
+    return this.createLoadingState();
+  }
+
+  protected createLoadingState(): string {
     return `
       <div class="widget-loading">
-        <div class="widget-skeleton h-8 w-3/4 mb-2"></div>
-        <div class="widget-skeleton h-4 w-1/2 mb-2"></div>
-        <div class="widget-skeleton h-4 w-1/4"></div>
+        <div class="loading-indicator">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">Loading...</span>
+        </div>
       </div>
     `;
   }
@@ -84,10 +97,17 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
     `;
   }
 
-  async postRender(element: HTMLElement, data: T): Promise<void> {
+  async postRender(element: HTMLElement): Promise<void> {
     this.element = element;
-    // Update internal data during post-render
-    this.data = { ...this.data, ...data };
+    
+    // Bind control events
+    const minimizeBtn = element.querySelector('.minimize-btn');
+    const maximizeBtn = element.querySelector('.maximize-btn');
+    
+    minimizeBtn?.addEventListener('click', () => this.handleStateChange('minimize'));
+    maximizeBtn?.addEventListener('click', () => {
+      this.handleStateChange(this.isMaximized ? 'restore' : 'maximize');
+    });
   }
 
   destroy(): void {
@@ -309,9 +329,86 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
 
   createResponsiveGrid(items: string[], minWidth = '300px'): string {
     return `
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" 
-           style="grid-template-columns: repeat(auto-fit, minmax(${minWidth}, 1fr));">
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, ${minWidth}), 1fr));">
         ${items.join('')}
+      </div>
+    `;
+  }
+
+  protected createScrollableContent(content: string): string {
+    return `
+      <div class="widget-content-scrollable">
+        ${content}
+      </div>
+    `;
+  }
+
+  // Add responsive text helpers
+  protected createResponsiveText(text: string, size: 'sm' | 'base' | 'lg' = 'base'): string {
+    const sizes = {
+      sm: 'clamp(0.75rem, 1.5vw, 0.875rem)',
+      base: 'clamp(0.875rem, 2vw, 1rem)',
+      lg: 'clamp(1rem, 2.5vw, 1.25rem)'
+    };
+
+    return `<span style="font-size: ${sizes[size]}">${text}</span>`;
+  }
+
+  protected handleStateChange(state: 'maximize' | 'minimize' | 'restore'): void {
+    if (!this.element) return;
+
+    const widget = this.element.closest('.widget-base');
+    if (!widget) return;
+
+    // Prevent multiple rapid state changes
+    if (this.isTransitioning) return;
+    this.isTransitioning = true;
+
+    // Add transition class
+    widget.classList.add(state === 'minimize' ? 'collapsing' : 'expanding');
+
+    // Update state classes
+    requestAnimationFrame(() => {
+      if (state === 'minimize') {
+        widget.classList.add('minimized');
+        widget.classList.remove('maximized');
+      } else if (state === 'maximize') {
+        widget.classList.add('maximized');
+        widget.classList.remove('minimized');
+      } else {
+        widget.classList.remove('maximized', 'minimized');
+      }
+
+      // Remove transition class after animation
+      setTimeout(() => {
+        widget.classList.remove('collapsing', 'expanding');
+        this.isTransitioning = false;
+      }, 300);
+    });
+  }
+
+  // Add getter for state
+  get isMinimized(): boolean {
+    return this.currentState === 'minimize';
+  }
+
+  get isMaximized(): boolean {
+    return this.currentState === 'maximize';
+  }
+
+  protected renderControls(): string {
+    return `
+      <div class="widget-controls">
+        <button class="minimize-btn" onclick="this.closest('.widget-base').querySelector('.widget-content').classList.toggle('minimized')">
+          <span class="material-symbols-outlined">
+            ${this.isMinimized ? 'expand_more' : 'expand_less'}
+          </span>
+        </button>
+        <button class="maximize-btn" onclick="this.closest('.widget-base').classList.toggle('maximized')">
+          <span class="material-symbols-outlined">
+            ${this.isMaximized ? 'close_fullscreen' : 'open_in_full'}
+          </span>
+        </button>
       </div>
     `;
   }
@@ -319,9 +416,6 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
 
 // Extend BaseWidget to include state and controls
 export abstract class StatefulBaseWidget<T extends BaseWidgetData = BaseWidgetData> extends BaseWidget<T> {
-  protected isMaximized: boolean = false;
-  protected isMinimized: boolean = false;
-
   async render(data: T = this.data): Promise<string> {
     return `
       <div class="widget-card">

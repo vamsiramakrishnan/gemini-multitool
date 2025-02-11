@@ -1,0 +1,23 @@
+:root {
+  // Layout
+  --header-height: 60px;
+  --panel-width: 400px;
+  --control-tray-height: 64px;
+  --footer-height: 40px;
+  
+  // Container
+  --container-max-width: 1440px;
+  --container-padding-sm: var(--space-sm);
+  --container-padding-md: var(--space-md);
+  --container-padding-lg: var(--space-lg);
+  
+  // Panel Spacing
+  --panel-spacing: 20px;
+  --panel-toggle-size: 44px;
+  
+  // Breakpoints
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+} 

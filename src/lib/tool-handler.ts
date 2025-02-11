@@ -16,6 +16,7 @@ import { BaseWidgetData } from '../components/widgets/base/base-widget';
 import type { AltairData } from '../components/widgets/altair/altair-widget';
 import type { WidgetType } from './widget-manager';
 import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
+import { WidgetRegistry } from '../components/widgets/registry';
 
 interface SearchWidgetData extends BaseWidgetData {
   groundingMetadata: GroundingMetadata;
@@ -121,68 +122,48 @@ export class ToolHandler {
     this.widgetManager.destroyAllWidgets();
   }
 
-  async handleToolCall(toolCall: { functionCalls: ToolCall[] }): Promise<ToolResponse[]> {
-    console.log('ToolHandler: Handling tool call with active tab:', this.activeTabId);
-    const functionCalls = toolCall.functionCalls;
-    
-    // Process all calls concurrently
-    const functionResponses = await Promise.all(functionCalls.map(async (call) => {
+  async handleToolCall(toolCall: { functionCalls: Array<{ name: string; args: any }> }) {
+    return Promise.all(toolCall.functionCalls.map(async (call) => {
       try {
-        this.activeToolCalls.set(call.id, {
-          name: call.name,
-          startTime: Date.now(),
-          status: 'running'
-        });
-
-        const handler = this.toolHandlers[call.name];
-        if (!handler) {
-          console.warn('No handler found for tool', call.name);
-          return this.formatToolError(call.id, call.name, new Error('Tool handler not found'));
+        const widgetType = this.mapToolToWidgetType(call.name);
+        const WidgetComponent = WidgetRegistry[widgetType];
+        
+        if (!WidgetComponent) {
+          throw new Error(`Widget component not found for type: ${widgetType}`);
         }
 
-        // Pass the active tab ID to the handler
-        console.log(`ToolHandler: Calling handler for ${call.name} with tabId:`, this.activeTabId);
-        const result = await handler({ 
-          ...call.args, 
-          _targetTabId: this.activeTabId // Use a distinct property name
-        });
+        // Process the tool call with the correct widget type
+        const result = await this.processToolCall(call, widgetType);
         return this.formatToolResponse(call.id, call.name, result);
-      } catch (error: any) {
-        return this.formatToolError(call.id, call.name, error);
-      } finally {
-        this.activeToolCalls.delete(call.id);
+      } catch (error) {
+        console.error(`Error handling tool call ${call.name}:`, error);
+        return this.formatToolError(call.id, call.name, error as Error);
       }
     }));
+  }
 
-    // Handle code execution widget updates
-    const codeExecCalls = functionCalls.filter(call => call.name === 'code_execution');
-    for (const call of codeExecCalls) {
-      const response = functionResponses.find(r => r.id === call.id);
-      if (response) {
-        const widgetData = {
-          language: call.args.language || 'python',
-          code: call.args.code,
-          output: response.response.error || 
-                 response.response.result?.object_value?.output || 
-                 response.response.result?.object_value?.result || '',
-          outcome: response.response.error ? 'error' : 'success'
-        };
-
-        // Create widget with active tab ID
-        const existingWidget = Array.from(this.widgetManager.getWidgets().values())
-          .find((w: { id: string }) => w.id === call.id);
-        if (existingWidget) {
-          this.widgetManager.renderWidget(existingWidget.id, widgetData);
-        } else {
-          this.widgetManager.createWidget('code_execution', {
-            ...widgetData,
-            title: `Code Execution ${call.id.slice(0, 6)}`
-          }, this.activeTabId);
-        }
-      }
+  private async processToolCall(call: { name: string; args: any }, widgetType: WidgetType) {
+    // Handle the specific tool call based on widget type
+    switch (widgetType) {
+      case 'weather':
+        return this.handleWeather(call.args);
+      case 'stock':
+        return this.handleStockPrice(call.args);
+      case 'map':
+        return this.handleDirections(call.args);
+      case 'places':
+        return this.handlePlacesSearch(call.args);
+      case 'nearby_places':
+        return this.handleNearbySearch(call.args);
+      case 'google_search':
+        return this.handleSearch(call.args);
+      case 'altair':
+        return this.handleAltair(call.args);
+      case 'code_execution':
+        return this.handleCodeExecution(call.args);
+      default:
+        throw new Error(`Unhandled widget type: ${widgetType}`);
     }
-
-    return functionResponses;
   }
 
   formatToolResponse(id: string, name: string, result: any): ToolResponse {
@@ -340,18 +321,24 @@ export class ToolHandler {
     }
   }
 
-  private mapToolToWidgetType(toolName: ToolName): WidgetType {
-    const mapping: Record<ToolName, WidgetType> = {
-      get_weather: 'weather',
-      get_stock_price: 'stock',
-      get_directions: 'map',
-      search_places: 'places',
-      search_nearby: 'nearby_places',
-      google_search: 'google_search',
-      render_altair: 'altair',
-      code_execution: 'code_execution'
+  private mapToolToWidgetType(toolName: string): WidgetType {
+    const mapping: Record<string, WidgetType> = {
+      'get_weather': 'weather',
+      'get_stock_price': 'stock',
+      'get_directions': 'map',
+      'search_places': 'places',
+      'search_nearby': 'nearby_places',
+      'google_search': 'google_search',
+      'render_altair': 'altair',
+      'code_execution': 'code_execution'
     };
-    return mapping[toolName];
+
+    const widgetType = mapping[toolName];
+    if (!widgetType) {
+      throw new Error(`Unknown tool name: ${toolName}`);
+    }
+
+    return widgetType;
   }
 
   private getWidgetTitle(toolName: ToolName, result: any): string {
@@ -443,49 +430,62 @@ export class ToolHandler {
   async handlePlacesSearch(args: any) {
     return this.handleWithStatus('search_places', args,
       async () => {
-        const response = await searchPlaces(args.query, {
-          location: args.location,
-          radius: args.radius,
-          pageToken: args.pageToken
-        });
+        try {
+          const response = await searchPlaces(args.query, {
+            maxResults: args.maxResults,
+            language: args.languageCode
+          });
 
-        if (response.error) {
-          throw new Error(response.error);
+          if (response.error) {
+            throw new Error(response.error);
+          }
+
+          // Return the widgetData directly since it already has the correct structure
+          return response.widgetData;
+
+        } catch (error) {
+          console.error('Error in places search:', error);
+          throw error; // Let handleWithStatus handle the error
         }
-
-        // Create widget with full data, and use activeTabId
-        await this.widgetManager.createWidget('places', {
-          title: 'Search Results',
-          ...response.widgetData
-        }, this.activeTabId); // Pass activeTabId here
-
-        // Return simplified response for Gemini
-        return response.llmResponse;
       }
     );
   }
 
   async handleNearbySearch(args: any) {
     return this.handleWithStatus('search_nearby', args,
-      async () => { // Added async
-        const response = await searchNearby(args.location, { // Await the response
+      async () => {
+        // Check if widget already exists for this search
+        const existingWidget = Array.from(this.widgetManager.getWidgets().values())
+          .find(entry => 
+            entry.widget instanceof NearbyPlacesWidget && 
+            entry.tabId === this.activeTabId
+          );
+
+        const response = await searchNearby(args.location, {
           radius: args.radius,
           type: args.type,
           maxResults: args.maxResults,
           language: args.languageCode
         });
 
-        if (response.error) { // Check for error
+        if (response.error) {
           throw new Error(response.error);
         }
 
-        // Create widget with full data and activeTabId
-        await this.widgetManager.createWidget('nearby_places', {
-          title: 'Nearby Places', // More descriptive title
-          ...response.widgetData,
-        }, this.activeTabId); // Pass activeTabId
+        // Update existing widget or create new one
+        if (existingWidget) {
+          await this.widgetManager.renderWidget(existingWidget.id, {
+            title: 'Nearby Places',
+            ...response.widgetData
+          });
+        } else {
+          await this.widgetManager.createWidget('nearby_places', {
+            title: 'Nearby Places',
+            ...response.widgetData
+          }, this.activeTabId);
+        }
 
-        return response.llmResponse; // Return simplified response
+        return response.llmResponse;
       }
     );
   }

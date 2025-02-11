@@ -1,58 +1,29 @@
 @import '../../styles/shared/mixins';
-@import '../../styles/shared/design-system';
+@import '../../styles/shared/layout-mixins';
 
 .action-button {
-  @include button-base;
-  background: rgba($retro-black, 0.6);
-  border: 1px solid $retro-blue;
-  color: $retro-blue;
-  font-family: var(--font-ui);
-  font-size: var(--font-size-lg);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(var(--blur-sm));
-  transition: var(--hover-transition);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xs) var(--space-sm);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--terminal-glow);
-    border-color: $retro-pink;
-    color: $retro-pink;
-  }
-
-  &:active {
-    transform: scale(var(--active-scale));
-  }
-
+  @include retro-button-icon;
+  
   &.connected {
-    background: rgba($retro-black, 0.8);
-    color: $retro-green;
-    border-color: $retro-green;
-    box-shadow: 0 0 15px rgba($retro-green, 0.3);
-
-    &:hover {
-      box-shadow: 0 0 20px rgba($retro-green, 0.4);
-    }
+    @include retro-button-success;
   }
 
-  &.disabled {
-    background: rgba($retro-black, 0.4);
-    border-color: rgba($retro-blue, 0.2);
-    color: rgba($retro-blue, 0.4);
-    cursor: not-allowed;
+  &.error {
+    @include retro-button-danger;
+  }
+
+  &.loading {
+    pointer-events: none;
+    position: relative;
     
-    &:hover {
-      transform: none;
-      box-shadow: none;
+    .loading-indicator {
+      position: absolute;
+      inset: 4px;
+      border: 2px solid rgba($retro-blue, 0.2);
+      border-top-color: $retro-blue;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
-  }
-
-  .material-symbols-outlined {
-    font-size: 24px;
-    transition: var(--transition-all);
   }
 }
 
@@ -70,223 +41,75 @@
 }
 
 .mic-button {
-  background: $retro-pink;
-  color: $retro-black;
-  border: none;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    background: $retro-pink;
-    opacity: 0;
-    border-radius: inherit;
-    transition: var(--transition-all);
-  }
-
-  &:hover {
-    background: $retro-pink;
-    
-    &::before {
-      opacity: 0.2;
-      inset: -8px;
-    }
-  }
-
-  &.active {
-    animation: pulse 2s infinite;
-  }
-
-  &.disabled {
-    background: rgba($retro-black, 0.4);
-    &::before {
-      display: none;
-    }
-  }
-}
-
-.connect-toggle {
-  @include button-base;
-  background: rgba($retro-black, 0.6);
-  border: 1px solid $retro-blue;
-  color: $retro-blue;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-sm);
-  transition: var(--hover-transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--terminal-glow);
-    border-color: $retro-pink;
-    color: $retro-pink;
-  }
-
-  &:active {
-    transform: scale(var(--active-scale));
-  }
-
-  &.connected {
-    background: rgba($retro-black, 0.8);
-    color: $retro-green;
-    border-color: $retro-green;
-    box-shadow: 0 0 15px rgba($retro-green, 0.3);
-
-    &:hover {
-      box-shadow: 0 0 20px rgba($retro-green, 0.4);
-    }
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px $retro-blue;
-  }
-}
-
-.control-tray {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba($retro-black, 0.85);
-  backdrop-filter: blur(var(--blur-sm));
-  padding: var(--space-md);
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--space-xs);
-  z-index: var(--z-controls);
-  border-top: var(--terminal-line);
-  font-family: var(--font-ui);
-  box-shadow: var(--terminal-shadow);
-
+  @include retro-button-icon;
+  
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--scanlines);
-    pointer-events: none;
-    opacity: 0.1;
-    mix-blend-mode: overlay;
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
+  
+  &:hover::before {
+    opacity: 0.2;
+  }
+  
+  &.active {
+    animation: pulse 2s infinite;
+  }
+  
+  &.muted {
+    @include retro-button-danger;
+  }
+}
 
-  .actions-nav {
+.connect-toggle {
+  @include retro-button-primary;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &.connected {
+    @include retro-button-success;
+  }
+}
+
+.control-tray {
+  @include control-tray-base;
+
+  .controls-group {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-
-    &.disabled {
-      opacity: 0.5;
-      pointer-events: none;
+    gap: var(--space-sm);
+    
+    &.left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
     }
-
-    .action-button {
-      position: relative;
-      background: none;
-      border: none;
-      color: var(--text);
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
+    
+    &.center {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover:not(.disabled) {
-        background: var(--hover);
-      }
-
-      &.active {
-        background: var(--primary);
-        color: white;
-      }
-
-      &.disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      &.error {
-        color: var(--error);
-        animation: shake 0.5s ease;
-      }
-
-      &.loading {
-        pointer-events: none;
-        
-        .loading-indicator {
-          position: absolute;
-          inset: 4px;
-          border: 2px solid var(--text-secondary);
-          border-top-color: var(--primary);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-      }
-
-      &.mic-button {
-        &.muted {
-          color: var(--error);
-        }
-      }
-
-      &.no-action {
-        pointer-events: none;
-      }
-
-      &.outlined {
-        border: 1px solid var(--border);
-      }
-
-      .material-symbols-outlined {
-        font-size: 24px;
-
-        &.filled {
-          font-variation-settings: 'FILL' 1;
-        }
-      }
+      gap: var(--space-sm);
     }
-
-    .layout-controls {
+    
+    &.right {
       display: flex;
       align-items: center;
-      gap: var(--space-xxs);
-      margin-left: var(--space-xs);
-      padding-left: var(--space-xs);
-      border-left: var(--terminal-line);
-
-      button {
-        background: none;
-        border: var(--terminal-line);
-        color: $retro-blue;
-        width: 32px;
-        height: 32px;
-        border-radius: var(--radius-sm);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: var(--hover-transition);
-
-        &:hover {
-          color: $retro-pink;
-          border-color: $retro-pink;
-          box-shadow: var(--terminal-glow);
-        }
-      }
+      gap: var(--space-sm);
     }
   }
 
   .connection-container {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--space-xs);
 
     .connection-button-container {
       position: relative;
@@ -304,18 +127,83 @@
       color: $retro-green;
     }
   }
+
+  .actions-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+
+    &.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .action-button {
+      @include retro-button-icon;
+
+      &.active {
+        @include retro-button-primary;
+      }
+
+      &.error {
+        @include retro-button-danger;
+        animation: shake 0.5s ease;
+      }
+
+      &.loading {
+        pointer-events: none;
+        position: relative;
+        .loading-indicator {
+          position: absolute;
+          inset: 4px;
+          border: 2px solid var(--text-secondary);
+          border-top-color: var(--primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+      }
+
+      &.mic-button {
+        &.muted {
+          @include retro-button-danger;
+        }
+      }
+
+      &.no-action {
+        pointer-events: none;
+      }
+
+      &.outlined {
+        border: 1px solid var(--border);
+      }
+
+      .material-symbols-outlined {
+        font-size: 24px;
+        &.filled {
+          font-variation-settings: 'FILL' 1;
+        }
+      }
+    }
+
+    .layout-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xxs);
+      margin-left: var(--space-xs);
+      padding-left: var(--space-xs);
+      border-left: var(--terminal-line);
+
+      button {
+        @include retro-button-icon;
+      }
+    }
+  }
 }
 
 @keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba($retro-pink, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba($retro-pink, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba($retro-pink, 0);
-  }
+  0% { box-shadow: 0 0 0 0 rgba($retro-pink, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba($retro-pink, 0); }
+  100% { box-shadow: 0 0 0 0 rgba($retro-pink, 0); }
 }
 
 @keyframes subtle-pulse {
@@ -348,5 +236,20 @@
   }
   75% {
     transform: translateX(5px);
+  }
+}
+
+// Media Queries
+@media (max-width: 768px) {
+  .control-tray {
+    padding: var(--space-xs) var(--space-sm);
+    
+    .controls-group {
+      gap: var(--space-xs);
+    }
+
+    .actions-nav {
+      gap: var(--space-xs);
+    }
   }
 }

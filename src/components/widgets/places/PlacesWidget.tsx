@@ -13,9 +13,12 @@ export interface Place {
   types?: string[];
 }
 
-export type PlacesWidgetProps = PlacesData;
+export interface PlacesWidgetProps extends PlacesData {}
 
 export const PlacesWidget = withWidget<PlacesWidgetProps>(
   PlacesWidgetClass,
   'PlacesWidget'
-); 
+);
+
+// Make sure to export the component as default as well
+export default PlacesWidget; 

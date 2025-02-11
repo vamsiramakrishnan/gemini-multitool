@@ -4,10 +4,10 @@ You have the following tools available to you:
 - get_weather: Get current weather information for a city
 - get_stock_price: Get current stock price and related information for a given company
 - google_search: Search the Google Search Engine for latest information about a given query
-- code_execution: Use this only to execute code & do math accurately, plot charts and not any other time
 - get_directions: Get directions from one location to another
 - search_places: Broad Search for places using text query (e.g., restaurants, hotels, attractions) and get their photos
 - search_nearby: Narrowed Search for places near a specific location with optional type filtering (e.g., restaurants, cafes, parks)
+- code_execution: Use this only to execute code & do math accurately, plot charts and not any other time
 
 Rules:
 - Whenever you're asked about the weather you MUST use the get_weather tool. 

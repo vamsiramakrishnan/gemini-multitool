@@ -1,7 +1,14 @@
+@import '../../../styles/shared/mixins';
+@import '../../../styles/shared/design-system';
+
 .code-execution-widget {
-  padding: 1rem;
-  background: var(--Neutral-5);
-  border-radius: var(--radius-lg);
+  @include widget-content-styles;
+
+  .code-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
   
   .code-section,
   .execution-result {

@@ -101,42 +101,86 @@ export class WidgetManager extends EventEmitter {
     data: T, 
     tabId?: string
   ): Promise<string> {
-    // Use provided tabId, current tab, or default tab in that order
     const targetTabId = tabId || this.currentTabId || this.defaultTabId;
-    console.log('Creating widget:', { type, data, targetTabId });
     
+    // Check for existing widget
+    const existingWidget = Array.from(this.activeWidgets.entries())
+      .find(([_, entry]) => 
+        entry.widget.constructor.name === this.widgetRegistry[type].name &&
+        entry.tabId === targetTabId
+      );
+
+    if (existingWidget) {
+      await this.renderWidget(existingWidget[0], data);
+      return existingWidget[0];
+    }
+
+    // Get widget class
     const WidgetClass = this.widgetRegistry[type];
     if (!WidgetClass) {
       throw new Error(`No widget registered for type: ${type}`);
     }
 
+    // Create new widget instance
     const widget = new WidgetClass(data);
-    const id = `${type}-${Date.now()}`;
+    const id = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Ensure widget has the correct tabId
+    // Pre-render content
+    const content = await widget.render(data);
+    
+    // Emit creation event first
+    this.emit('widgetCreated', {
+      id,
+      type,
+      data,
+      tabId: targetTabId,
+      content // Pass rendered content
+    });
+
+    // Store widget entry
     const widgetEntry: WidgetEntry = {
       widget,
       container: null,
       id,
       tabId: targetTabId
     };
-
     this.activeWidgets.set(id, widgetEntry);
-    console.log('Widget created:', { id, tabId: targetTabId });
 
-    // Cache the initial widget content
-    const content = await widget.render(data);
+    // Cache content for later use
     this.cacheWidgetContent(id, content);
 
-    // Emit widget created event with tabId and data
-    this.emit('widgetCreated', {
-      id,
-      type,
-      data,
-      tabId: targetTabId
-    });
-
     return id;
+  }
+
+  private cacheWidgetContent(id: string, content: string) {
+    this.widgetCache.set(id, {
+      content,
+      timestamp: Date.now()
+    });
+  }
+
+  async renderWidget<T extends BaseWidgetData>(id: string, data: T): Promise<void> {
+    const activeWidget = this.activeWidgets.get(id);
+    if (!activeWidget?.widget) return;
+
+    try {
+      // Get container
+      const container = document.querySelector(`[data-widget-id="${id}"]`);
+      if (!container) {
+        // Store rendered content in cache if container not ready
+        const content = await activeWidget.widget.render(data);
+        this.cacheWidgetContent(id, content);
+        return;
+      }
+
+      activeWidget.container = container as HTMLElement;
+      const content = await activeWidget.widget.render(data);
+      container.innerHTML = content;
+      await activeWidget.widget.postRender(container as HTMLElement, data);
+
+    } catch (error) {
+      console.error(`Error rendering widget ${id}:`, error);
+    }
   }
 
   getWidgetData(): Record<string, any> {
@@ -145,47 +189,6 @@ export class WidgetManager extends EventEmitter {
       data[id] = entry.widget.getData();
     });
     return data;
-  }
-
-  private cacheWidgetContent(widgetId: string, content: string) {
-    this.widgetCache.set(widgetId, {
-      content,
-      timestamp: Date.now()
-    });
-  }
-
-  async renderWidget<T extends BaseWidgetData>(id: string, data: T): Promise<void> {
-    console.log('Rendering widget:', { id, data });
-    
-    const activeWidget = this.activeWidgets.get(id);
-    if (!activeWidget?.widget) {
-      console.error(`Widget ${id} not found`);
-      return;
-    }
-
-    try {
-      const container = activeWidget.container;
-      if (!container) {
-        throw new Error('Widget container not found');
-      }
-
-      container.innerHTML = '';
-      const content = await activeWidget.widget.render(data);
-      container.innerHTML = content;
-      await activeWidget.widget.postRender(container, data);
-      
-      console.log('Widget rendered successfully:', id);
-    } catch (error) {
-      console.error(`Error rendering widget ${id}:`, error);
-      if (activeWidget.container) {
-        activeWidget.container.innerHTML = `
-          <div class="error-state">
-            <span class="material-symbols-outlined">error</span>
-            <div class="error-message">Error rendering widget: ${error instanceof Error ? error.message : 'Unknown error'}</div>
-          </div>
-        `;
-      }
-    }
   }
 
   destroyWidget(widgetId: string) {

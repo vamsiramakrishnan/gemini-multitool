@@ -1,17 +1,28 @@
 // Accessibility Enhancements
 
-// Focus Management (clear visual indication for keyboard users)
+// Focus Management
 :focus-visible {
-  outline: 2px solid var(--retro-blue); // Use retro color
+  outline: 2px solid var(--color-primary-100);
   outline-offset: 2px;
-  border-radius: 4px; // Match border-radius
+  border-radius: var(--radius-sm);
+  box-shadow: var(--glow-primary);
 }
 
-// Reduced Motion (respect user preference for reduced motion)
+// Screen Reader Only
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+// Reduced Motion
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -19,9 +30,10 @@
   }
 }
 
-// High Contrast Mode (Windows High Contrast Mode)
+// High Contrast Mode
 @media (forced-colors: active) {
   .interactive-element {
-    border: 1px solid ButtonText; // Use system color
+    border: 1px solid ButtonText;
+    forced-color-adjust: none;
   }
 } 
