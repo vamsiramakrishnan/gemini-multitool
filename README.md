@@ -12,7 +12,7 @@ Watch the demo of the Multimodal Live API [here](https://www.youtube.com/watch?v
 
 To get started, [create a free Gemini API key](https://aistudio.google.com/apikey) and add it to the `.env` file. Then:
 
-```
+```bash
 $ npm install && npm start
 ```
 
@@ -22,26 +22,110 @@ We have provided several example applications on other branches of this reposito
 - [demos/GenWeather](https://github.com/google-gemini/multimodal-live-api-web-console/tree/demos/genweather)
 - [demos/GenList](https://github.com/google-gemini/multimodal-live-api-web-console/tree/demos/genlist)
 
-## Widgets
+## Architecture
 
-This application includes a variety of widgets to display different types of data. Here's a list of available widgets:
+This section describes the key architectural components and their interactions.
 
-*   **Chat Widget:** Provides a chat interface for interacting with an AI assistant.
-*   **CodeExecution Widget:** Allows execution of code snippets (Python, JavaScript, JSON) and displays results with syntax highlighting.
-*   **Search Widget:** Allows users to search for information and displays grounded search results.
-*   **Weather Widget:** Displays current weather information.
-*   **Stock Widget:** Shows real-time stock prices and related data.
-*   **Map Widget:** Integrates with Google Maps to display locations and directions.
-*   **Places Widget:** Displays information about specific places, including name, address, and ratings.
-*   **Nearby Places Widget:** Finds and displays information about places near a given location.
-*   **Altair Widget:** Renders graphs using Vega-Embed based on JSON input.
-*   **Image Widget:** Displays images.
-*   **Document Widget:** Displays documents.
+### Core Components
 
-## Example Usage
+1. **Client (App)**
+   - Handles WebSocket communication
+   - Manages user media streams
+   - Coordinates widget rendering
 
+2. **Tool Handler**
+   - Processes tool calls from Gemini API
+   - Routes requests to appropriate widgets
+   - Manages tool execution state
+
+3. **Widget Manager**
+   - Creates and manages widget instances
+   - Handles widget lifecycle
+   - Coordinates widget layout
+
+4. **Base Widget**
+   - Provides common widget functionality
+   - Implements responsive design
+   - Handles state management
+
+### Component Interactions
+
+#### Calling Widgets from Tool Handler
+
+```
++---------------------+     +---------------------+     +---------------------+     +---------------------+
+|   Client (App)    | --> |   ToolHandler       | --> |   WidgetManager     | --> |   Specific Widget   |
++---------------------+     +---------------------+     +---------------------+     +---------------------+
+|                     |     |                     |     |                     |     | (e.g., WeatherWidget)|
+|  Receives          |     |  - handleToolCall() |     |  - createWidget()   |     |  - render()         |
+|  'toolcall' event  |     |  - processToolCall()|     |  - renderWidget()   |     |  - postRender()     |
+|  from WebSocket    |     |  - mapToolTo...()   |     |                     |     |                     |
+|                     |     |  - getWidgetTitle() |     |                     |     |                     |
+|                     |     |  - handleWithStatus()|     |                     |     |                     |
++---------------------+     +---------------------+     +---------------------+     +---------------------+
+```
+
+#### Voice Input to Tool Execution
+
+```
++----------+     +-------------+     +---------------------+     +---------------------+     +--------+
+|  User    | --> | Microphone  | --> |  LiveAPIClient      | --> |   ToolHandler       | --> | Action |
+| (Voice)  |     | (Audio      |     | (WebSocket)         |     |                     |     |        |
+|          |     |  Recorder)  |     |                     |     |                     |     |        |
++----------+     +-------------+     +---------------------+     +---------------------+     +--------+
+                                    | - Sends audio data  |
+                                    | - Receives 'tool-   |
+                                    |   call' event       |
+                                    +---------------------+
+```
+
+#### Responsive Widget Layout
+
+```
++---------------------+     +-------------------------------------+
+|   BaseWidget        | --> |  Responsive Helper Functions         |
++---------------------+     +-------------------------------------+
+| - render()          |     | - createResponsiveColumns()         |
+| - postRender()      |     | - createResponsiveGrid()            |
+| - create...State()  |     | - createResponsiveText()            |
+| - setupDraggable()  |     | - createInfoCard()                  |
+| - setupResizable()  |     | - createScrollableContent()         |
++---------------------+     +-------------------------------------+
+        ^
+        | Inherits
++---------------------+
+| Specific Widget     |
+| (e.g., MapWidget)   |
++---------------------+
+```
+
+## Available Widgets
+
+The application includes a variety of widgets to display different types of data:
+
+### Interactive Widgets
+- **Chat Widget**: Real-time chat interface with AI assistant
+- **CodeExecution Widget**: Code execution environment with syntax highlighting
+- **Search Widget**: Google Search-powered information retrieval
+
+### Data Visualization Widgets
+- **Weather Widget**: Real-time weather information and forecasts
+- **Stock Widget**: Live stock market data and trends
+- **Altair Widget**: Dynamic data visualization using Vega-Embed
+
+### Location & Navigation Widgets
+- **Map Widget**: Google Maps integration with directions
+- **Places Widget**: Location details with ratings and photos
+- **Nearby Places Widget**: Location-based place discovery
+
+### Media Widgets
+- **Image Widget**: Image display with zoom and pan
+- **Document Widget**: Document viewer with search
+
+## Widget Usage Examples
+
+### Code Execution Widget
 ```typescript
-// Example of using the CodeExecutionWidget
 <WidgetItem
   item={{
     id: 'code-1',
@@ -54,113 +138,48 @@ This application includes a variety of widgets to display different types of dat
     outcome: 'success' // or 'error'
   }}
 />
-
-// Example of using the MapWidget
-// <WidgetItem item={{ id: 'map-1', type: 'map' }} widgetData={{ origin: 'London', destination: 'Paris' }} />
 ```
 
-## Example
-
-Below is an example of an entire application that will use Google Search grounding and then render graphs using [vega-embed](https://github.com/vega/vega-embed).  To use this component, simply import it and include it in your application's JSX, like so: `<Altair />`
-
+### Map Widget
 ```typescript
+<WidgetItem 
+  item={{ 
+    id: 'map-1', 
+    type: 'map' 
+  }} 
+  widgetData={{ 
+    origin: 'London',
+    destination: 'Paris' 
+  }} 
+/>
+```
+
+### Altair Visualization Widget
+```typescript
+// Import required dependencies
 import { type FunctionDeclaration, SchemaType } from "@google/generative-ai";
-import { useEffect, useRef, useState, memo } from "react";
+import { useEffect, useRef, useState } from "react";
 import vegaEmbed from "vega-embed";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
 
-export const declaration: FunctionDeclaration = {
-  name: "render_altair",
-  description: "Displays an altair graph in json format.",
-  parameters: {
-    type: SchemaType.OBJECT,
-    properties: {
-      json_graph: {
-        type: SchemaType.STRING,
-        description:
-          "JSON STRING representation of the graph to render. Must be a string, not a json object",
-      },
-    },
-    required: ["json_graph"],
-  },
-};
-
-export function Altair() {
-  const [jsonString, setJSONString] = useState<string>("");
-  const { client, setConfig } = useLiveAPIContext();
-
-  useEffect(() => {
-    setConfig({
-      model: "models/gemini-2.0-flash-exp",
-      systemInstruction: {
-        parts: [
-          {
-            text: 'You are my helpful assistant. Any time I ask you for a graph call the "render_altair" function I have provided you. Dont ask for additional information just make your best judgement.',
-          },
-        ],
-      },
-      tools: [{ googleSearch: {} }, { functionDeclarations: [declaration] }],
-    });
-  }, [setConfig]);
-
-  useEffect(() => {
-    const onToolCall = (toolCall: ToolCall) => {
-      console.log(`got toolcall`, toolCall);
-      const fc = toolCall.functionCalls.find(
-        (fc) => fc.name === declaration.name
-      );
-      if (fc) {
-        const str = (fc.args as any).json_graph;
-        setJSONString(str);
-      }
-    };
-    client.on("toolcall", onToolCall);
-    return () => {
-      client.off("toolcall", onToolCall);
-    };
-  }, [client]);
-
-  const embedRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (embedRef.current && jsonString) {
-      vegaEmbed(embedRef.current, JSON.parse(jsonString));
-    }
-  }, [embedRef, jsonString]);
-  return <div className="vega-embed" ref={embedRef} />;
-}
+// Use the widget
+<Altair />
 ```
 
-## development
+## Development
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-Project consists of:
 
-- an Event-emitting websocket-client to ease communication between the websocket and the front-end
-- communication layer for processing audio in and out
-- a boilerplate view for starting to build your apps and view logs
-- styling using SCSS with reusable mixins for consistent design.
+### Available Scripts
 
-## Available Scripts
+- `npm start`: Run in development mode at [http://localhost:3000](http://localhost:3000)
+- `npm run build`: Build production-ready app in `build` folder
 
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Project Structure
+- `src/components/widgets/`: Widget implementations
+- `src/lib/tools/`: API integrations and tools
+- `src/contexts/`: React contexts for state management
+- `src/styles/`: SCSS modules and design system
 
 _This is an experiment showcasing the Multimodal Live API, not an official Google product. We'll do our best to support and maintain this experiment but your mileage may vary. We encourage open sourcing projects as a way of learning from each other. Please respect our and other creators' rights, including copyright and trademark rights when present, when sharing these works and creating derivative work. If you want more info on Google's policy, you can find that [here](https://developers.google.com/terms/site-policies)._
+
