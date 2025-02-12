@@ -1,10 +1,34 @@
 @import '../../styles/shared/mixins';
 @import '../../styles/shared/design-system';
 
-// Scrollbar Mixin
+// Mixins
+@mixin neon-glow($color, $intensity: 1) {
+  box-shadow: 
+    0 0 5px rgba($color, 0.2 * $intensity),
+    0 0 10px rgba($color, 0.1 * $intensity),
+    0 0 20px rgba($color, 0.05 * $intensity);
+}
+
+@mixin terminal-scanline {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 0, 0, 0.05) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.1;
+    animation: scanline 10s linear infinite;
+  }
+}
+
 @mixin custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: var(--surface-3) transparent;
+  scrollbar-color: rgba(var(--primary-rgb), 0.3) transparent;
   
   &::-webkit-scrollbar {
     width: 6px;
@@ -16,19 +40,23 @@
   }
   
   &::-webkit-scrollbar-thumb {
-    background: var(--surface-3);
+    background: rgba(var(--primary-rgb), 0.3);
     border-radius: var(--radius-full);
     
     &:hover {
-      background: var(--surface-2);
+      background: rgba(var(--primary-rgb), 0.5);
     }
   }
 }
 
 // Enhanced visual hierarchy variables
 :root {
-  --tab-container-elevation: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --tab-active-elevation: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --tab-container-elevation: 
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(var(--primary-rgb), 0.1);
+  --tab-active-elevation: 
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(var(--primary-rgb), 0.2);
   --tab-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --tab-height: clamp(2.75rem, 6vh, 3.75rem);
   --tab-font-size: clamp(0.875rem, 1.75vw, 1rem);
@@ -44,17 +72,27 @@
   width: 100%;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(
-    145deg,
-    var(--surface-1) 0%,
-    var(--surface-0) 100%
-  );
+  background: var(--terminal-darker);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  backdrop-filter: blur(12px);
-  border: var(--terminal-line);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
   box-shadow: var(--tab-container-elevation);
   transform: translateZ(0);
   will-change: transform;
+  @include terminal-scanline;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(
+        circle at top right,
+        rgba(var(--primary-rgb), 0.1),
+        transparent 70%
+      );
+    pointer-events: none;
+    opacity: 0.5;
+  }
 
   .tabs-header {
     flex-shrink: 0;
@@ -62,22 +100,18 @@
     display: flex;
     align-items: center;
     padding: var(--tab-padding);
-    border-bottom: 2px solid var(--surface-3);
-    background: linear-gradient(
-      90deg,
-      var(--surface-2) 0%,
-      var(--surface-1) 100%
-    );
+    background: var(--terminal-dark);
+    border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
+    position: relative;
+    z-index: 2;
+    @include neon-glow(var(--primary-500), 0.5);
     
-    // Horizontal scroll snap
+    &::-webkit-scrollbar { display: none; }
     scroll-snap-type: x mandatory;
     scroll-padding: var(--tab-padding);
-    
-    // Enhanced scrolling behavior
     scroll-behavior: smooth;
     
     .tab {
@@ -91,9 +125,8 @@
       max-width: calc(var(--tab-min-width) * 1.5);
       height: calc(var(--tab-height) * 0.8);
       padding: calc(var(--tab-padding) * 0.75) var(--tab-padding);
-      background: color-mix(in srgb, var(--surface-2) 80%, transparent);
-      backdrop-filter: blur(4px);
-      border: 1px solid var(--surface-3);
+      background: rgba(var(--surface-2-rgb), 0.1);
+      border: 1px solid rgba(var(--primary-rgb), 0.2);
       color: var(--text-secondary);
       font-size: var(--tab-font-size);
       font-family: var(--font-display);
@@ -107,7 +140,7 @@
       &::after {
         content: '';
         position: absolute;
-        bottom: -2px;
+        bottom: -1px;
         left: 0;
         width: 100%;
         height: 2px;
@@ -117,11 +150,12 @@
       }
       
       &:hover {
-        background: var(--surface-2);
+        background: rgba(var(--primary-rgb), 0.1);
         transform: translateY(-2px);
+        @include neon-glow(var(--primary-500), 0.5);
         
         .tab-title {
-          color: var(--text-primary);
+          color: var(--primary-300);
         }
         
         &::after {
@@ -130,9 +164,9 @@
       }
       
       &.active {
-        background: var(--surface-1);
-        border-color: var(--primary-400);
-        box-shadow: var(--tab-active-elevation);
+        background: rgba(var(--primary-rgb), 0.15);
+        border-color: rgba(var(--primary-rgb), 0.3);
+        @include neon-glow(var(--primary-500));
         transform: translateY(-2px);
         
         &::after {
@@ -140,9 +174,10 @@
         }
         
         .tab-title {
-          color: var(--primary-400);
+          color: var(--primary-300);
           font-weight: 600;
           letter-spacing: -0.01em;
+          text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
         }
         
         .material-symbols-outlined {
@@ -155,6 +190,7 @@
         font-size: var(--tab-icon-size);
         flex-shrink: 0;
         transition: var(--tab-transition);
+        color: var(--text-secondary);
       }
 
       .tab-title {
@@ -167,19 +203,6 @@
         color: var(--text-secondary);
         letter-spacing: -0.02em;
         transition: var(--tab-transition);
-        
-        // Add subtle text shadow for depth
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-      }
-      
-      &:hover .tab-title {
-        color: var(--text-primary);
-      }
-      
-      &.active .tab-title {
-        color: var(--retro-blue);
-        font-weight: 600;
-        text-shadow: var(--terminal-glow);
       }
 
       .remove-tab {
@@ -189,8 +212,8 @@
         width: calc(var(--tab-icon-size) * 1.2);
         height: calc(var(--tab-icon-size) * 1.2);
         padding: 0;
-        border: 1px solid var(--surface-3);
-        background: var(--surface-2);
+        background: rgba(var(--surface-2-rgb), 0.1);
+        border: 1px solid rgba(var(--primary-rgb), 0.2);
         color: var(--text-secondary);
         border-radius: var(--radius-sm);
         cursor: pointer;
@@ -199,17 +222,16 @@
         opacity: 0.6;
 
         &:hover {
-          background: var(--Red-900);
-          color: var(--Red-100);
-          border-color: var(--Red-700);
+          background: rgba(var(--error-rgb), 0.2);
+          color: var(--error-300);
+          border-color: rgba(var(--error-rgb), 0.3);
           transform: translateY(-1px);
-          box-shadow: 0 0 8px rgba(var(--Red-500), 0.3);
+          @include neon-glow(var(--error-500));
           opacity: 1;
         }
 
         &:active {
           transform: translateY(0);
-          opacity: 0.9;
         }
 
         .material-symbols-outlined {
@@ -221,16 +243,15 @@
     .add-tab {
       position: sticky;
       right: var(--tab-padding);
-      background: color-mix(in srgb, var(--surface-2) 90%, transparent);
-      backdrop-filter: blur(4px);
-      border: 1px dashed var(--surface-3);
+      background: rgba(var(--surface-2-rgb), 0.1);
+      border: 1px solid rgba(var(--primary-rgb), 0.2);
       transition: var(--tab-transition);
       
       &:hover {
-        background: var(--surface-2);
-        border-style: solid;
-        border-color: var(--retro-green);
+        background: rgba(var(--retro-green-rgb), 0.1);
+        border-color: rgba(var(--retro-green-rgb), 0.3);
         transform: translateY(-2px);
+        @include neon-glow(var(--retro-green));
         
         .material-symbols-outlined {
           color: var(--retro-green);
@@ -239,12 +260,13 @@
       }
       
       &:active {
-        transform: scale(0.95);
+        transform: translateY(0);
       }
       
       .material-symbols-outlined {
         font-size: var(--tab-icon-size);
         transition: var(--tab-transition);
+        color: var(--text-secondary);
       }
     }
   }
@@ -256,6 +278,11 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background: linear-gradient(
+      180deg,
+      var(--terminal-darker) 0%,
+      var(--terminal-dark) 100%
+    );
     
     .widgets-container {
       flex: 1;
@@ -270,7 +297,6 @@
       @include custom-scrollbar;
       scroll-padding: var(--space-md);
       scroll-behavior: smooth;
-      gap: clamp(var(--space-sm), 3vw, var(--space-lg));
       
       @media (max-width: 1200px) {
         grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
@@ -283,7 +309,6 @@
         gap: var(--space-sm);
       }
       
-      // Enhanced empty state
       .empty-state {
         grid-column: 1 / -1;
         min-height: 60vh;
@@ -293,30 +318,22 @@
         justify-content: center;
         text-align: center;
         padding: var(--space-xl);
-        opacity: 0.8;
-        transition: var(--tab-transition);
-        
-        &:hover {
-          opacity: 1;
-        }
         
         .empty-icon {
           font-size: clamp(48px, 8vw, 80px);
-          color: var(--text-secondary);
+          color: var(--primary-400);
           margin-bottom: var(--space-lg);
           transition: var(--tab-transition);
-          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+          text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+          animation: pulse 2s infinite;
         }
         
         h3 {
           font-size: clamp(var(--font-size-lg), 3vw, var(--font-size-2xl));
-          color: var(--text-primary);
+          color: var(--primary-300);
           margin-bottom: var(--space-sm);
           font-family: var(--font-display);
-          background: linear-gradient(120deg, var(--primary-400), var(--retro-blue));
-          -webkit-background-clip: text;
-          color: transparent;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
         }
         
         p {
@@ -325,6 +342,79 @@
           max-width: min(600px, 90%);
           margin-bottom: var(--space-lg);
           line-height: 1.6;
+          font-family: var(--font-mono);
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes scanline {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+// Reduced Motion
+@media (prefers-reduced-motion: reduce) {
+  .tabs-container {
+    .tab,
+    .add-tab,
+    .remove-tab {
+      transition: none !important;
+    }
+    
+    &::after {
+      animation: none !important;
+    }
+  }
+}
+
+// Mobile Optimizations
+@media (max-width: 768px) {
+  .tabs-container {
+    border-radius: 0;
+    
+    .tabs-header {
+      .tab {
+        min-width: 100px;
+        max-width: 150px;
+        
+        .remove-tab {
+          opacity: 1;
+          visibility: visible;
+        }
+      }
+    }
+  }
+}
+
+// Touch Device Optimizations
+@media (pointer: coarse) {
+  .tabs-container {
+    .tabs-header {
+      .tab, 
+      .add-tab {
+        min-height: 48px;
+        
+        .remove-tab {
+          min-width: 48px;
+          min-height: 48px;
         }
       }
     }
@@ -360,23 +450,6 @@
   animation: tabAppear 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-// Enhanced touch interactions
-@media (pointer: coarse) {
-  .tabs-container {
-    .tabs-header {
-      .tab, .add-tab {
-        min-height: 48px;
-        
-        .remove-tab {
-          opacity: 1;
-          min-width: 48px;
-          min-height: 48px;
-        }
-      }
-    }
-  }
-}
-
 // Container queries for ultra-responsive layouts
 @container (max-width: 600px) {
   .tabs-container {
@@ -385,20 +458,6 @@
     --tab-icon-size: 16px;
     --tab-padding: var(--space-xs);
     --tab-min-width: 80px;
-  }
-}
-
-// Media query for smaller screens
-@media (max-width: 768px) {
-  .tabs-container {
-    border-radius: 0;
-    
-    .tabs-header {
-      .tab {
-        min-width: 100px;
-        max-width: 150px;
-      }
-    }
   }
 }
 
@@ -411,15 +470,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: .5;
   }
 }
 
@@ -469,63 +519,9 @@
   }
 }
 
-// Update the tabs container layout
-.tabs-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  
-  .tab-content {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-    overflow: hidden;
-    
-    .widgets-container {
-      height: 100%;
-      overflow-y: auto;
-      padding: var(--space-md);
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: var(--space-md);
-      
-      @include custom-scrollbar;
-    }
-  }
-}
-
 // Remove duplicate layout definitions
 .app-layout {
   display: none;
-}
-
-// Update the tabs container layout
-.tabs-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  
-  .tab-content {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-    overflow: hidden;
-    
-    .widgets-container {
-      height: 100%;
-      overflow-y: auto;
-      padding: var(--space-md);
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: var(--space-md);
-      
-      @include custom-scrollbar;
-    }
-  }
 }
 
 // Add responsive adjustments for tab title

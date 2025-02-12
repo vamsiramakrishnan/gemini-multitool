@@ -5,7 +5,6 @@ import { MapWidget } from '../components/widgets/map/map-widget';
 import { PlacesWidget } from '../components/widgets/places/places-widget';
 import { NearbyPlacesWidget } from '../components/widgets/nearby-places/nearby-places-widget';
 import { SearchWidget } from '../components/widgets/search/search-widget';
-import { ChatWidget } from '../components/widgets/chat/chat-widget';
 import { EventEmitter } from 'eventemitter3';
 import { AltairWidget } from '../components/widgets/altair/altair-widget';
 import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
@@ -18,7 +17,6 @@ export type WidgetType =
   | 'places'
   | 'nearby_places'
   | 'google_search'
-  | 'chat'
   | 'altair'
   | 'get_directions'
   | 'get_weather'
@@ -64,7 +62,6 @@ export class WidgetManager extends EventEmitter {
     places: PlacesWidget,
     nearby_places: NearbyPlacesWidget,
     google_search: SearchWidget,
-    chat: ChatWidget,
     altair: AltairWidget,
     get_directions: MapWidget,
     get_weather: WeatherWidget,
@@ -297,7 +294,6 @@ export class WidgetManager extends EventEmitter {
       places: 'Places',
       nearby_places: 'Nearby Places',
       google_search: 'Search Results',
-      chat: 'Chat',
       altair: 'Visualization',
       get_directions: 'Directions',
       get_weather: 'Weather',

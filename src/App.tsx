@@ -32,11 +32,12 @@ import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/ad
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { Item, WidgetState } from './types/widget';
 import { Onboarding } from './components/onboarding/Onboarding';
-import { ChatWidgetComponent } from './components/widgets/chat/ChatWidgetComponent';
+import { ChatWidgetComponent } from './components/chat/ChatWidgetComponent';
 import { useLayout } from './contexts/LayoutContext';
 import VideoStream from "./components/video-stream/VideoStream";
 import { LayoutProvider } from './contexts/LayoutContext';
 import { WidgetRegistry, WidgetType } from './components/widgets/registry';
+import { ChatProvider, useChat } from './contexts/ChatContext';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
@@ -66,7 +67,7 @@ function AppContent() {
   const toolHandlerRef = useRef<ToolHandler | null>(null);
   const widgetsContainerRef = useRef<HTMLDivElement>(null);
   const { panelOpen, setPanelOpen, mode, setMode } = useLayout();
-  const [chatWidgetVisible, setChatWidgetVisible] = useState(false);
+  const { isVisible: chatVisible } = useChat();
 
   // Get current tab's widgets and states
   const activeTab = useActiveTab();
@@ -216,26 +217,36 @@ function AppContent() {
   }
 
   return (
-    <div className="app">
+    <div className={cn("app", { "chat-visible": chatVisible })}>
       {/* Main workspace area */}
-      <div className="workspace">
-        {/* Only render TabsContainer here */}
-        <TabsContainer 
-          activeTabId={activeTabId}
-          onTabChange={setActiveTab}
-        />
+      <div className="workspace-wrapper">
+        <div className={cn("workspace", { "chat-visible": chatVisible })}>
+          {/* Tabs Container */}
+          <TabsContainer 
+            activeTabId={activeTabId}
+            onTabChange={setActiveTab}
+          />
+        </div>
+
+        {/* Bottom control bar */}
+        <div className="workspace-controls">
+          <ControlTray
+            videoRef={videoRef}
+            supportsVideo={true}
+            onVideoStreamChange={setVideoStream}
+          />
+        </div>
       </div>
 
-      {/* Side Panel */}
-      <SidePanel videoStream={videoStream} />
+      {/* Side panel layer */}
+      <div className="app-layers">
+        {/* Side Panel */}
+        <SidePanel videoStream={videoStream} />
+      </div>
 
-      {/* Bottom control bar */}
-      <div className="workspace-controls">
-        <ControlTray
-          videoRef={videoRef}
-          supportsVideo={true}
-          onVideoStreamChange={setVideoStream}
-        />
+      {/* Chat layer */}
+      <div className={cn("chat-layer", { "has-chat": chatVisible })}>
+        <ChatWidgetComponent />
       </div>
     </div>
   );
@@ -243,6 +254,7 @@ function AppContent() {
 
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const widgetManager = useRef(new WidgetManager()).current;
   
   // Check if user has seen onboarding
   useEffect(() => {
@@ -257,22 +269,18 @@ function App() {
     setShowOnboarding(false);
   };
 
-  const widgetManager = new WidgetManager();
-
   return (
-    <>
-      {showOnboarding ? (
-        <Onboarding onComplete={handleOnboardingComplete} />
-      ) : (
-        <div className="App">
-          <LayoutProvider>
-            <RootProvider url={uri} apiKey={API_KEY} widgetManager={widgetManager}>
-              <AppContent />
-            </RootProvider>
-          </LayoutProvider>
-        </div>
-      )}
-    </>
+    <RootProvider url={uri} apiKey={API_KEY} widgetManager={widgetManager}>
+      <LayoutProvider>
+        <ChatProvider>
+          {showOnboarding ? (
+            <Onboarding onComplete={handleOnboardingComplete} />
+          ) : (
+            <AppContent />
+          )}
+        </ChatProvider>
+      </LayoutProvider>
+    </RootProvider>
   );
 }
 

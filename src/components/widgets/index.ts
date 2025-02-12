@@ -4,7 +4,7 @@ export * from './stock/StockWidget';
 export * from './map/MapWidget';
 export * from './places/PlacesWidget';
 export * from './search/SearchWidget';
-export * from './chat/ChatWidgetComponent';
+export * from '../chat/ChatWidgetComponent';
 export * from './altair/Altair';
 export * from './code-execution/CodeExecutionWidget';
 export * from './nearby-places/NearbyPlacesWidget';

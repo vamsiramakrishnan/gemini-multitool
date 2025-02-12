@@ -1,13 +1,51 @@
 @import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
 
+// Mixins for retrofuturistic effects
+@mixin neon-glow($color, $intensity: 1) {
+  box-shadow: 
+    0 0 5px rgba($color, 0.2 * $intensity),
+    0 0 10px rgba($color, 0.1 * $intensity),
+    0 0 20px rgba($color, 0.05 * $intensity);
+}
+
+@mixin terminal-scanline {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 0, 0, 0.05) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.1;
+    animation: scanline 10s linear infinite;
+  }
+}
+
 // Enhanced visual hierarchy variables
 :root {
-  --widget-elevation-1: 0 2px 4px rgba(0, 0, 0, 0.05);
-  --widget-elevation-2: 0 4px 8px rgba(0, 0, 0, 0.1);
-  --widget-elevation-3: 0 8px 16px rgba(0, 0, 0, 0.15);
+  --widget-elevation-1: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(var(--primary-rgb), 0.05);
+  --widget-elevation-2: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(var(--primary-rgb), 0.1);
+  --widget-elevation-3: 
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(var(--primary-rgb), 0.15);
   --widget-header-height: clamp(48px, 8vh, 64px);
   --widget-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Enhanced responsive scaling
+  --widget-title-size: clamp(1rem, 2.5vw, 1.25rem);
+  --widget-text-size: clamp(0.875rem, 2vw, 1rem);
+  --widget-icon-size: clamp(20px, 2.5vw, 24px);
+  --widget-padding: clamp(1rem, 3vw, 1.5rem);
+  --widget-gap: clamp(0.5rem, 2vw, 1rem);
 }
 
 // Base widget styles with improved visual hierarchy
@@ -15,23 +53,31 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--surface-1);
-  border: 1px solid var(--surface-2);
+  background: var(--terminal-darker);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
   border-radius: var(--radius-lg);
   overflow: hidden;
   height: fit-content;
   min-height: clamp(250px, 50vh, 400px);
-  transition: var(--transition-all);
+  transition: all 0.3s var(--ease-out-quad);
   box-shadow: var(--widget-elevation-1);
   transform-origin: center center;
   will-change: transform, box-shadow;
-  
-  // Enhanced responsive scaling
-  --widget-title-size: clamp(1rem, 2.5vw, 1.5rem);
-  --widget-text-size: clamp(0.875rem, 2vw, 1rem);
-  --widget-icon-size: clamp(20px, 2.5vw, 28px);
-  --widget-padding: clamp(1rem, 3vw, 1.5rem);
-  --widget-gap: clamp(0.5rem, 2vw, 1rem);
+  @include terminal-scanline;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(
+        circle at top right,
+        rgba(var(--primary-rgb), 0.1),
+        transparent 70%
+      );
+    pointer-events: none;
+    opacity: 0.5;
+  }
 
   .widget-header {
     flex-shrink: 0;
@@ -39,15 +85,12 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--widget-padding);
-    background: linear-gradient(
-      90deg,
-      var(--surface-2) 0%,
-      var(--surface-1) 100%
-    );
-    backdrop-filter: blur(8px);
-    border-bottom: 2px solid var(--surface-3);
-    z-index: 1;
+    background: var(--terminal-dark);
+    border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
+    z-index: 2;
     height: var(--widget-header-height);
+    position: relative;
+    @include neon-glow(var(--primary-500), 0.5);
 
     .widget-title-section {
       flex: 1;
@@ -58,18 +101,19 @@
         font-family: var(--font-display);
         font-size: var(--widget-title-size);
         font-weight: 600;
-        color: var(--text-primary);
+        color: var(--primary-300);
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
         letter-spacing: -0.02em;
         line-height: 1.2;
         transition: var(--widget-transition);
       }
 
       .widget-subtitle {
+        font-family: var(--font-mono);
         font-size: 0.875em;
         color: var(--text-secondary);
         margin-top: var(--space-xxs);
@@ -85,6 +129,8 @@
       display: flex;
       gap: var(--widget-gap);
       flex-shrink: 0;
+      position: relative;
+      z-index: 3;
 
       .control-button {
         display: flex;
@@ -93,8 +139,8 @@
         width: calc(var(--widget-icon-size) * 1.5);
         height: calc(var(--widget-icon-size) * 1.5);
         padding: 0;
-        border: 1px solid var(--surface-3);
-        background: var(--surface-2);
+        background: rgba(var(--surface-2-rgb), 0.1);
+        border: 1px solid rgba(var(--primary-rgb), 0.2);
         color: var(--text-secondary);
         border-radius: var(--radius-sm);
         cursor: pointer;
@@ -102,12 +148,12 @@
         transform-origin: center center;
 
         &:hover {
-          transform: scale(1.1);
-          box-shadow: var(--widget-elevation-2);
+          transform: translateY(-1px);
+          @include neon-glow(var(--primary-500));
         }
 
         &:active {
-          transform: scale(0.95);
+          transform: translateY(0);
         }
 
         .material-symbols-outlined {
@@ -115,19 +161,28 @@
         }
 
         &.minimize { 
-          --button-color: var(--Blue-400);
-          &:hover { background: color-mix(in srgb, var(--button-color) 15%, transparent); }
+          --button-color: var(--primary-400);
+          &:hover { 
+            background: rgba(var(--primary-rgb), 0.2);
+            color: var(--primary-300);
+          }
         }
+        
         &.maximize { 
           --button-color: var(--retro-green);
-          &:hover { background: color-mix(in srgb, var(--button-color) 15%, transparent); }
-        }
-        &.close { 
-          --button-color: var(--Red-400);
           &:hover { 
-            background: var(--Red-900);
-            color: var(--Red-100);
-            box-shadow: 0 0 12px rgba(var(--Red-500), 0.3);
+            background: rgba(var(--retro-green-rgb), 0.2);
+            color: var(--retro-green);
+            @include neon-glow(var(--retro-green));
+          }
+        }
+        
+        &.close { 
+          --button-color: var(--error-500);
+          &:hover { 
+            background: rgba(var(--error-rgb), 0.2);
+            color: var(--error-300);
+            @include neon-glow(var(--error-500));
           }
         }
       }
@@ -142,6 +197,11 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
+    background: linear-gradient(
+      180deg,
+      var(--terminal-darker) 0%,
+      var(--terminal-dark) 100%
+    );
 
     .widget-scroll-area {
       flex: 1;
@@ -150,32 +210,27 @@
       -webkit-overflow-scrolling: touch;
       padding: var(--widget-padding);
       @include custom-scrollbar;
-      
-      // Enhanced typography scale
+      font-family: var(--font-mono);
       font-size: var(--widget-text-size);
       line-height: 1.6;
+      color: var(--text-secondary);
       
-      // Improve touch scrolling
-      @media (pointer: coarse) {
-        padding-right: calc(var(--widget-padding) + 12px);
-      }
-      
-      // Responsive spacing between children
       > * + * {
         margin-top: var(--widget-gap);
       }
 
-      // Responsive headings within content
       h1, h2, h3, h4 {
         font-family: var(--font-display);
         line-height: 1.2;
         margin-bottom: var(--widget-gap);
+        color: var(--primary-300);
+        text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
       }
 
-      h1 { font-size: calc(var(--widget-title-size) * 1.75); margin-bottom: 1em; }
-      h2 { font-size: calc(var(--widget-title-size) * 1.5); margin-bottom: 0.875em; }
-      h3 { font-size: calc(var(--widget-title-size) * 1.25); margin-bottom: 0.75em; }
-      h4 { font-size: var(--widget-title-size); margin-bottom: 0.625em; }
+      h1 { font-size: calc(var(--widget-title-size) * 1.75); }
+      h2 { font-size: calc(var(--widget-title-size) * 1.5); }
+      h3 { font-size: calc(var(--widget-title-size) * 1.25); }
+      h4 { font-size: var(--widget-title-size); }
       
       p { 
         line-height: 1.6;
@@ -193,10 +248,25 @@
     max-height: none;
     display: flex;
     flex-direction: column;
-    background: var(--surface-1);
+    background: var(--terminal-darker);
     backdrop-filter: blur(16px);
     transform: none !important;
     box-shadow: var(--widget-elevation-3);
+    animation: maximizeWidget 0.3s var(--ease-out-quad);
+
+    .widget-header {
+      background: var(--terminal-dark);
+      border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
+      @include neon-glow(var(--primary-500));
+
+      .widget-controls {
+        .control-button {
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+        }
+      }
+    }
 
     .widget-content {
       flex: 1;
@@ -226,52 +296,71 @@
   }
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--widget-elevation-3);
+    transform: translateY(-2px);
+    box-shadow: var(--widget-elevation-2);
+    @include neon-glow(var(--primary-500), 0.7);
 
     .widget-title-section {
       .widget-title {
-        color: var(--primary-400);
+        color: var(--primary-300);
       }
       .widget-subtitle {
         opacity: 1;
       }
     }
-  }
 
-  // Container queries for ultra-responsive layouts
-  @container (width < 400px) {
+    .widget-controls .control-button {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
+// Animations
+@keyframes maximizeWidget {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scanline {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+// Container queries for ultra-responsive layouts
+@container (width < 400px) {
+  .widget-wrapper {
     --widget-padding: var(--space-sm);
     --widget-gap: var(--space-xs);
     --widget-title-size: var(--font-size-sm);
     --widget-text-size: var(--font-size-xs);
     --widget-icon-size: 16px;
   }
-
-  animation: widgetAppear 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-// Animations
-@keyframes glow {
-  0%, 100% {
-    box-shadow: var(--terminal-glow);
-  }
-  50% {
-    box-shadow: 
-      0 0 30px rgba(var(--retro-blue), 0.3),
-      0 0 60px rgba(var(--retro-blue), 0.15);
-  }
-}
-
-// Enhanced animations
-@keyframes widgetAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .widget-wrapper {
+    transition: none !important;
+    animation: none !important;
+    
+    &::after {
+      animation: none !important;
+    }
+    
+    .widget-controls .control-button {
+      transition: none !important;
+    }
   }
 }
 

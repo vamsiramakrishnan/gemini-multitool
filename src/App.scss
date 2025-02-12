@@ -1,5 +1,7 @@
 // Import shared styles
 @import './styles/shared/_index';
+@import './styles/shared/mixins';
+@import './styles/shared/design-system';
 
 // Define mixins first
 @mixin custom-scrollbar {
@@ -22,6 +24,30 @@
     &:hover {
       background: var(--surface-2);
     }
+  }
+}
+
+@mixin neon-glow($color, $intensity: 1) {
+  box-shadow: 
+    0 0 5px rgba($color, 0.2 * $intensity),
+    0 0 10px rgba($color, 0.1 * $intensity),
+    0 0 20px rgba($color, 0.05 * $intensity);
+}
+
+@mixin terminal-scanline {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 0, 0, 0.05) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.1;
+    animation: scanline 10s linear infinite;
   }
 }
 
@@ -161,13 +187,15 @@
   --transition-all: all 0.3s var(--ease-out-quad);
   --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
-  /* Z-index */
+  /* Z-index Stack (from bottom to top) */
   --z-base: 1;
   --z-map: 100;
-  --z-controls: 200;
-  --z-sidepanel: 300;
-  --z-modal: 400;
-  --z-overlay: 500;
+  --z-tabs: 200;
+  --z-controls: 300;
+  --z-sidepanel: 400;
+  --z-chat: 1000;
+  --z-modal: 1100;
+  --z-overlay: 1200;
 
   --text: white;
   --gray-200: #b4b8bb;
@@ -222,8 +250,10 @@
 
   // Layout spacing
   --content-padding-right: 80px;
-  --panel-width: 400px;
-  --panel-spacing: 20px;
+  --panel-width: clamp(300px, 25vw, 400px);
+  --panel-spacing: var(--space-md);
+  --header-height: clamp(3rem, 8vh, 4rem);
+  --app-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -644,94 +674,188 @@ body {
   }
 }
 
+// Root level stacking context and layout
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
   background: var(--surface-0);
-  
+  position: relative;
+  isolation: isolate;
+
+  // Create a wrapper for workspace content
+  .workspace-wrapper {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+    isolation: isolate;
+  }
+
   .workspace {
     flex: 1;
-    min-height: 0; // Important for Firefox
+    min-height: 0;
     display: flex;
     position: relative;
     overflow: hidden;
+    transition: all 0.3s var(--ease-out-quad);
     
     &.panel-open {
       margin-right: var(--panel-width);
-      transition: margin-right 0.3s var(--ease-out-quad);
       
       @media (max-width: 768px) {
         margin-right: 0;
-      }
-    }
-  }
-  
-  .workspace-content {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    
-    .widgets-container {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding: var(--space-md);
-      padding-right: calc(var(--space-xl) + var(--panel-spacing));
-      display: grid;
-      gap: var(--space-md);
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-      align-content: start;
-      @include custom-scrollbar;
-      
-      @media (max-width: 768px) {
-        padding: var(--space-sm);
-        grid-template-columns: 1fr;
+        filter: brightness(0.8);
+        pointer-events: none;
       }
     }
   }
 }
 
-// Update side panel positioning
-.side-panel {
+// Side panel layer
+.app-layers {
   position: fixed;
-  right: var(--space-xl);
-  top: 0;
-  bottom: 0;
-  width: 400px;
-  z-index: var(--z-sidepanel);
-  transform: translateX(100%);
+  inset: var(--header-height) 0 0 0;
+  pointer-events: none;
+  z-index: 100;
   
-  &.open {
-    transform: translateX(0);
+  > * {
+    pointer-events: all;
   }
-  
-  @media (max-width: 768px) {
+
+  // Side panel
+  .side-panel {
+    position: absolute;
+    top: 0;
     right: 0;
-  }
-}
-
-// Update panel toggle button position
-.panel-toggle {
-  position: fixed;
-  right: calc(var(--space-xl) + 20px);
-  bottom: 80px;
-  z-index: calc(var(--z-sidepanel) + 1);
-  
-  &.open {
-    right: calc(420px + var(--space-xl));
-  }
-  
-  @media (max-width: 768px) {
-    right: 20px;
+    height: 100%;
+    width: var(--panel-width);
+    background: var(--terminal-dark);
+    border-left: 1px solid rgba(var(--primary-rgb), 0.2);
+    transform: translateX(100%);
+    transition: transform var(--app-transition);
+    @include neon-glow(var(--primary-500), 0.3);
     
     &.open {
-      right: calc(90% + 20px);
+      transform: translateX(0);
+      
+      .panel-toggle {
+        transform: translateX(-100%) rotate(180deg);
+        opacity: 1;
+        
+        &:hover {
+          transform: translateX(-100%) rotate(180deg) translateY(-2px);
+        }
+      }
     }
+    
+    .panel-toggle {
+      position: absolute;
+      top: var(--space-lg);
+      left: 0;
+      transform: translateX(-100%);
+      background: rgba(var(--surface-2-rgb), 0.1);
+      border: 1px solid rgba(var(--primary-rgb), 0.2);
+      color: var(--text-secondary);
+      padding: var(--space-sm);
+      cursor: pointer;
+      transition: all var(--app-transition);
+      opacity: 0.8;
+      
+      &:hover {
+        background: rgba(var(--primary-rgb), 0.1);
+        transform: translateX(-100%) translateY(-2px);
+        @include neon-glow(var(--primary-500), 0.5);
+        opacity: 1;
+        
+        .material-symbols-outlined {
+          color: var(--primary-300);
+        }
+      }
+      
+      &:active {
+        transform: translateX(-100%) translateY(0);
+      }
+      
+      .material-symbols-outlined {
+        font-size: 24px;
+        transition: var(--app-transition);
+      }
+    }
+    
+    .panel-content {
+      height: 100%;
+      overflow-y: auto;
+      padding: var(--space-md);
+    }
+  }
+
+  // Panel toggle button
+  .panel-toggle {
+    position: absolute;
+    right: calc(var(--space-xl) + 20px);
+    bottom: 80px;
+    pointer-events: all;
+    background: var(--surface-2);
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm);
+    cursor: pointer;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s var(--ease-out-quad);
+    
+    &:hover {
+      background: var(--surface-3);
+      transform: translateY(-1px);
+    }
+    
+    &.open {
+      right: calc(var(--panel-width) + var(--space-xl));
+    }
+    
+    .material-symbols-outlined {
+      font-size: 20px;
+      transition: transform 0.3s ease;
+    }
+    
+    &.open .material-symbols-outlined {
+      transform: rotate(180deg);
+    }
+    
+    @media (max-width: 768px) {
+      right: 20px;
+      
+      &.open {
+        right: calc(90% + 20px);
+      }
+    }
+  }
+}
+
+// Chat layer - separate from side panel layer
+.chat-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-chat);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+
+  &.has-chat {
+    pointer-events: all;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .chat-widget {
+    pointer-events: all;
   }
 }
 
@@ -986,4 +1110,248 @@ code, pre {
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   color: var(--retro-green); // Consistent code color
+}
+
+// Add persistent chat container
+.persistent-chat-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-chat);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.has-chat {
+    pointer-events: all;
+    
+    &::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 0;
+    }
+  }
+
+  // Ensure chat widget is above the overlay
+  .chat-widget {
+    position: relative;
+    z-index: 1;
+    pointer-events: all;
+    margin: auto;
+  }
+}
+
+// Update tabs container to work with chat layer
+.tabs-container {
+  position: relative;
+  z-index: var(--z-tabs);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .tab-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+}
+
+// Update workspace styling
+.workspace {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  
+  &.chat-visible {
+    // Optional: Add slight blur/dim effect when chat is open
+    .workspace-content {
+      filter: blur(2px);
+      opacity: 0.7;
+      transition: all 0.3s ease;
+    }
+  }
+}
+
+// Update control tray positioning
+.control-tray {
+  position: relative;
+  z-index: var(--z-controls);
+  
+  &.chat-visible {
+    opacity: 0.7;
+    pointer-events: none;
+    filter: grayscale(0.5);
+  }
+}
+
+// Ensure proper stacking of components
+.app {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+
+  // Stack order from bottom to top:
+  // 1. Workspace/Tabs
+  // 2. Control Tray
+  // 3. Side Panel
+  // 4. Chat Layer
+  // 5. Modals
+  
+  .workspace-content {
+    z-index: var(--z-base);
+  }
+  
+  .side-panel {
+    z-index: var(--z-sidepanel);
+  }
+}
+
+// App Container
+.app-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+  background: var(--terminal-darker);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(
+        circle at top right,
+        rgba(var(--primary-rgb), 0.1),
+        transparent 70%
+      ),
+      radial-gradient(
+        circle at bottom left,
+        rgba(var(--retro-green-rgb), 0.05),
+        transparent 50%
+      );
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  
+  @include terminal-scanline;
+}
+
+// App Header
+.app-header {
+  height: var(--header-height);
+  padding: 0 var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--terminal-dark);
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
+  position: relative;
+  z-index: 10;
+  @include neon-glow(var(--primary-500), 0.5);
+  
+  .app-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--primary-300);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
+    
+    .material-symbols-outlined {
+      font-size: 1.5em;
+    }
+  }
+  
+  .app-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-left: auto;
+  }
+}
+
+// Workspace Wrapper
+.workspace-wrapper {
+  height: calc(100vh - var(--header-height));
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  
+  .workspace {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+      180deg,
+      var(--terminal-darker) 0%,
+      var(--terminal-dark) 100%
+    );
+  }
+}
+
+// Animations
+@keyframes scanline {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+// Mobile Optimizations
+@media (max-width: 768px) {
+  :root {
+    --panel-width: min(100vw - 48px, 300px);
+  }
+  
+  .app-header {
+    padding: 0 var(--space-sm);
+    
+    .app-logo {
+      font-size: var(--font-size-base);
+    }
+  }
+  
+  .side-panel {
+    &.open {
+      ~ .workspace {
+        filter: brightness(0.7) blur(2px);
+      }
+    }
+    
+    .panel-toggle {
+      top: var(--space-md);
+      padding: var(--space-xs);
+      
+      .material-symbols-outlined {
+        font-size: 20px;
+      }
+    }
+  }
+}
+
+// Reduced Motion
+@media (prefers-reduced-motion: reduce) {
+  .app-container,
+  .side-panel,
+  .chat-layer {
+    &::after,
+    &::before {
+      animation: none !important;
+    }
+  }
+  
+  * {
+    transition-duration: 0ms !important;
+  }
 }

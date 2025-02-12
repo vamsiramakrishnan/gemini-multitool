@@ -6,7 +6,7 @@ import { StockWidget } from '../stock/StockWidget';
 import { MapWidget } from '../map/MapWidget';
 import { PlacesWidget } from '../places/PlacesWidget';
 import { SearchWidget } from '../search/SearchWidget';
-import { ChatWidgetComponent } from '../chat/ChatWidgetComponent';
+import { ChatWidgetComponent } from '../../chat/ChatWidgetComponent';
 import { AltairWidget } from '../altair/Altair';
 import { CodeExecutionWidget } from '../code-execution/CodeExecutionWidget';
 import { NearbyPlacesWidget } from "../nearby-places/NearbyPlacesWidget";

@@ -3,18 +3,22 @@
 
 .action-button {
   @include retro-button-icon;
+  transition: all 0.2s ease-in-out;
   
   &.connected {
     @include retro-button-success;
+    box-shadow: 0 0 8px rgba($retro-green, 0.3);
   }
 
   &.error {
     @include retro-button-danger;
+    box-shadow: 0 0 8px rgba($retro-red, 0.3);
   }
 
   &.loading {
     pointer-events: none;
     position: relative;
+    backdrop-filter: blur(2px);
     
     .loading-indicator {
       position: absolute;
@@ -22,7 +26,7 @@
       border: 2px solid rgba($retro-blue, 0.2);
       border-top-color: $retro-blue;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     }
   }
 }
@@ -42,25 +46,29 @@
 
 .mic-button {
   @include retro-button-icon;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
   
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     opacity: 0;
+    background: radial-gradient(circle, rgba($retro-pink, 0.2) 0%, rgba($retro-pink, 0) 70%);
     transition: opacity 0.3s ease;
   }
   
   &:hover::before {
-    opacity: 0.2;
+    opacity: 0.4;
   }
   
   &.active {
     animation: pulse 2s infinite;
+    transform: scale(1.05);
   }
   
   &.muted {
     @include retro-button-danger;
+    box-shadow: 0 0 12px rgba($retro-red, 0.3);
   }
 }
 
@@ -71,48 +79,96 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+  order: -1;
   
   &.connected {
-    @include retro-button-success;
+    @include retro-button-danger;
+    background: rgba($retro-red, 0.9);
+    
+    &:hover {
+      background: rgba($retro-red, 1);
+      transform: scale(1.05);
+      box-shadow: 0 0 16px rgba($retro-red, 0.4);
+    }
+    
+    .material-symbols-outlined {
+      animation: pulse 2s infinite;
+      color: white;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    }
+  }
+  
+  &:not(.connected) {
+    &:hover {
+      background: rgba($retro-green, 0.9);
+      transform: scale(1.05);
+      box-shadow: 0 0 16px rgba($retro-green, 0.4);
+    }
   }
 }
 
 .control-tray {
   @include control-tray-base;
-
+  position: relative;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba($retro-blue, 0.1);
+  padding: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  
+  &.chat-visible {
+    opacity: 0.7;
+    pointer-events: none;
+    filter: grayscale(0.5);
+  }
+  
   .controls-group {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: var(--space-md);
+    padding: var(--space-xs);
     
     &.left {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
+      min-width: 200px;
+      justify-content: flex-start;
+      
+      .action-button {
+        margin-right: var(--space-xs);
+      }
     }
     
     &.center {
-      flex: 1;
-      display: flex;
-      align-items: center;
+      flex: 2;
       justify-content: center;
-      gap: var(--space-sm);
+      gap: var(--space-md);
+      
+      .action-button {
+        margin: 0 var(--space-xxs);
+      }
     }
     
     &.right {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
+      min-width: 200px;
+      justify-content: flex-end;
+      
+      .action-button {
+        margin-left: var(--space-xs);
+      }
     }
   }
 
   .connection-container {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
+    padding: var(--space-xxs) var(--space-xs);
 
     .connection-button-container {
-      position: relative;
+      margin-right: var(--space-xs);
     }
 
     .text-indicator {
@@ -121,17 +177,23 @@
       font-size: var(--font-size-sm);
       min-width: 80px;
       transition: var(--transition-all);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      text-shadow: 0 0 8px rgba($retro-blue, 0.2);
     }
 
     &.connected .text-indicator {
       color: $retro-green;
+      text-shadow: 0 0 8px rgba($retro-green, 0.2);
     }
   }
 
   .actions-nav {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
+    padding: var(--space-xxs) var(--space-xs);
+    flex: 1;
 
     &.disabled {
       opacity: 0.5;
@@ -139,7 +201,17 @@
     }
 
     .action-button {
-      @include retro-button-icon;
+      position: relative;
+      width: 42px;
+      height: 42px;
+      
+      &:hover {
+        transform: translateY(-1px);
+      }
+      
+      &:active {
+        transform: translateY(1px);
+      }
 
       &.active {
         @include retro-button-primary;
@@ -184,26 +256,19 @@
         }
       }
     }
-
-    .layout-controls {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xxs);
-      margin-left: var(--space-xs);
-      padding-left: var(--space-xs);
-      border-left: var(--terminal-line);
-
-      button {
-        @include retro-button-icon;
-      }
-    }
   }
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba($retro-pink, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba($retro-pink, 0); }
-  100% { box-shadow: 0 0 0 0 rgba($retro-pink, 0); }
+  0% { 
+    box-shadow: 0 0 0 0 rgba($retro-pink, 0.6);
+  }
+  70% { 
+    box-shadow: 0 0 0 15px rgba($retro-pink, 0);
+  }
+  100% { 
+    box-shadow: 0 0 0 0 rgba($retro-pink, 0);
+  }
 }
 
 @keyframes subtle-pulse {
@@ -212,8 +277,9 @@
     opacity: 1;
   }
   50% { 
-    transform: scale(1.05);
-    opacity: 0.9;
+    transform: scale(1.02);
+    opacity: 0.95;
+    box-shadow: 0 0 12px rgba($retro-blue, 0.2);
   }
 }
 
@@ -239,15 +305,41 @@
   }
 }
 
-// Media Queries
 @media (max-width: 768px) {
   .control-tray {
-    padding: var(--space-xs) var(--space-sm);
+    padding: var(--space-xs);
     
     .controls-group {
       gap: var(--space-xs);
+      
+      &.left, &.right {
+        min-width: auto;
+      }
+      
+      &.center {
+        gap: var(--space-xs);
+      }
     }
 
+    .actions-nav {
+      gap: var(--space-xxs);
+      
+      .action-button {
+        width: 38px;
+        height: 38px;
+      }
+    }
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .control-tray {
+    .controls-group {
+      &.left, &.right {
+        min-width: 160px;
+      }
+    }
+    
     .actions-nav {
       gap: var(--space-xs);
     }
