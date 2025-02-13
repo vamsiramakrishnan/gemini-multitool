@@ -41,7 +41,6 @@ export class AltairWidget extends BaseWidget<AltairData> {
   constructor(data?: AltairData) {
     super('Visualization');
     this.widgetId = `altair-${Math.random().toString(36).substring(2, 9)}`;
-    console.log('[AltairWidget] Initialized with ID:', this.widgetId);
     if (data) {
       this.validateAndLogSpec(data);
     }
@@ -56,20 +55,12 @@ export class AltairWidget extends BaseWidget<AltairData> {
     console.group('[AltairWidget] Data Validation');
     try {
       const spec = JSON.parse(data.spec);
-      console.log('Parsed Spec:', spec);
-      
+
       // Check if it's a valid Vega-Lite spec
       if (spec.$schema) {
-        console.log('Schema Version:', spec.$schema);
       } else {
-        console.warn('No $schema field found in spec');
       }
-
-      // Log important spec properties
-      console.log('Mark Type:', spec.mark);
-      console.log('Encodings:', spec.encoding);
-      console.log('Data:', spec.data);
-      
+  
       // Basic structure validation
       if (!spec.mark) console.warn('No mark type specified');
       if (!spec.encoding) console.warn('No encodings specified');
@@ -83,7 +74,6 @@ export class AltairWidget extends BaseWidget<AltairData> {
   }
 
   async render(data: AltairData = this.data): Promise<string> {
-    console.log('[AltairWidget] Rendering with data:', data);
     return `
       <div class="altair-widget" id="${this.widgetId}">
         <div class="chart-container">
@@ -95,8 +85,6 @@ export class AltairWidget extends BaseWidget<AltairData> {
 
   async postRender(element: HTMLElement, data: AltairData = this.data): Promise<void> {
     console.group('[AltairWidget] Post-render');
-    console.log('Element exists:', !!element);
-    console.log('Container ID:', this.widgetId);
     this.validateAndLogSpec(data);
 
     this.container = element.querySelector(`#${this.widgetId}`);
@@ -112,17 +100,14 @@ export class AltairWidget extends BaseWidget<AltairData> {
         actions: true,
         ...(data.config || {}),
       };
-      console.log('Embed options:', embedOptions);
 
       const result = await vegaEmbed(this.container, spec, embedOptions);
-      console.log('Vega embed successful:', result);
 
       if (this.container) {
         this.container.innerHTML = '';
         const viewContainer = result.view.container();
         if (viewContainer) {
           this.container.appendChild(viewContainer);
-          console.log('Chart container appended');
         }
       }
 

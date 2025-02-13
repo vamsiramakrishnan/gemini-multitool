@@ -17,10 +17,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import cn from 'classnames';
 import { RiSidebarFoldLine, RiSidebarUnfoldLine } from 'react-icons/ri';
-import Select from 'react-select';
 import { useLiveAPIContext } from '../../contexts/LiveAPIContext';
 import { useLoggerStore } from '../../lib/store-logger';
-import Logger, { LoggerFilterType } from '../logger/Logger';
+import Logger from '../logger/Logger';
 import VideoStream from '../video-stream/VideoStream';
 import './side-panel.scss';
 import { useLayout } from '../../contexts/LayoutContext';
@@ -30,12 +29,6 @@ interface SidePanelProps {
   videoStream: MediaStream | null;
 }
 
-const filterOptions = [
-  { value: 'conversations', label: 'Conversations' },
-  { value: 'tools', label: 'Tool Use' },
-  { value: 'none', label: 'All' },
-];
-
 export default function SidePanel({ videoStream }: SidePanelProps) {
   const { connected, client } = useLiveAPIContext();
   const { panelOpen, setPanelOpen } = useLayout();
@@ -44,7 +37,6 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
   const { log, logs } = useLoggerStore();
 
   const [textInput, setTextInput] = useState('');
-  const [selectedOption, setSelectedOption] = useState<{ value: string; label: string } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Scroll to bottom of logger when new logs arrive
@@ -84,7 +76,6 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
 
   return (
     <>
-      {/* Panel Toggle Button - Move outside the side panel container */}
       <button
         className={cn('panel-toggle', { open: panelOpen })}
         onClick={() => setPanelOpen(!panelOpen)}
@@ -100,6 +91,9 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
       <div className={cn('side-panel', { open: panelOpen })}>
         <div className="panel-header">
           <h2>Activity Panel</h2>
+          <div className={cn('streaming-indicator', { connected })}>
+            {connected ? '🔵 Streaming' : '⏸️ Paused'}
+          </div>
         </div>
 
         <div className="panel-content">
@@ -108,51 +102,8 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
           </div>
 
           <div className="logger-section">
-            <div className="logger-header">
-              <div className="filters">
-                <Select
-                  className="react-select"
-                  classNamePrefix="react-select"
-                  styles={{
-                    control: (baseStyles) => ({
-                      ...baseStyles,
-                      backgroundColor: 'var(--retro-black)',
-                      border: '1px solid var(--retro-blue)',
-                      color: 'var(--retro-green)',
-                      height: '30px',
-                      minHeight: 'unset',
-                    }),
-                    singleValue: (styles) => ({
-                      ...styles,
-                      color: 'var(--retro-green)',
-                    }),
-                    menu: (styles) => ({
-                      ...styles,
-                      backgroundColor: 'var(--retro-black)',
-                      color: 'var(--retro-green)',
-                    }),
-                    option: (styles, { isFocused, isSelected }) => ({
-                      ...styles,
-                      backgroundColor: isFocused
-                        ? 'rgba(var(--retro-blue), 0.2)'
-                        : isSelected
-                          ? 'rgba(var(--retro-blue), 0.1)'
-                          : 'transparent',
-                      color: isSelected ? 'var(--retro-blue)' : 'var(--retro-green)',
-                    }),
-                  }}
-                  defaultValue={selectedOption}
-                  options={filterOptions}
-                  onChange={(e) => setSelectedOption(e)}
-                  isSearchable={false}
-                />
-                <div className={cn('streaming-indicator', { connected })}>
-                  {connected ? '🔵 Streaming' : '⏸️ Paused'}
-                </div>
-              </div>
-            </div>
             <div className="logger-content" ref={loggerRef}>
-              <Logger filter={(selectedOption?.value as LoggerFilterType) || 'none'} />
+              <Logger />
             </div>
           </div>
 

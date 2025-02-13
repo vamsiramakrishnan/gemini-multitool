@@ -21,10 +21,6 @@ export function TabsContainer({
 
   // Debug logging
   useEffect(() => {
-    console.log('Current tab:', activeTabId);
-    console.log('Available widgets:', widgets);
-    console.log('Widget states:', widgetStates);
-    console.log('Widget data:', widgetData);
   }, [activeTabId, widgets, widgetStates, widgetData]);
 
   // Handle tab removal

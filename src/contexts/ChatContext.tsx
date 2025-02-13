@@ -23,7 +23,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [shouldCleanup, setShouldCleanup] = useState(false);
   const { client } = useLiveAPIContext();
   
-  // Audio handling refs
   const currentMessageId = useRef<string | null>(null);
   const currentAudioChunks = useRef<Uint8Array[]>([]);
 
@@ -77,58 +76,109 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [client]);
 
-  // Handle API responses including audio
-  useEffect(() => {
-    if (!client) return;
+  const handleContent = useCallback((content: any) => {
+    if (content.modelTurn?.parts) {
+      const textContent = content.modelTurn.parts
+        .filter((part: any) => part.text)
+        .map((part: any) => part.text)
+        .join('');
+      
+      if (textContent) {
+        setMessages(prev => {
+          // Only create a new message if we don't have a current message ID
+          if (!currentMessageId.current) {
+            const messageId = Date.now().toString();
+            currentMessageId.current = messageId;
+            return [...prev, {
+              role: 'assistant',
+              content: textContent,
+              timestamp: new Date(),
+              id: messageId,
+              isCollectingAudio: false
+            }];
+          }
 
-    const handleContent = (content: any) => {
-      if (content.modelTurn?.parts) {
-        const textContent = content.modelTurn.parts
-          .filter((part: any) => part.text)
-          .map((part: any) => part.text)
-          .join('');
-        
-        if (textContent) {
-          const messageId = Date.now().toString();
-          currentMessageId.current = messageId;
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: textContent,
-            timestamp: new Date(),
-            id: messageId
-          }]);
-        }
+          // Update existing message with new content
+          return prev.map(msg => {
+            if (msg.id === currentMessageId.current) {
+              return {
+                ...msg,
+                content: msg.content === 'Audio message' ? textContent : msg.content + textContent
+              };
+            }
+            return msg;
+          });
+        });
       }
-    };
+    }
+  }, []);
 
-    const handleAudio = (data: ArrayBuffer) => {
-      console.log('Received audio chunk:', data.byteLength, 'bytes');
+  const handleAudio = useCallback((data: ArrayBuffer) => {
+    const chunk = new Uint8Array(data);
+    console.log(`Received audio chunk of size: ${chunk.length} bytes`);
+    currentAudioChunks.current.push(chunk);
+    
+    setMessages(prev => {
+      // Create message ID if it doesn't exist yet
       if (!currentMessageId.current) {
-        // Create a new message for audio-only response
         const messageId = Date.now().toString();
         currentMessageId.current = messageId;
-        console.log('Created new message for audio:', messageId);
-        setMessages(prev => [...prev, {
+        console.log('Creating new message for audio:', messageId);
+        return [...prev, {
           role: 'assistant',
-          content: '',  // Empty content for audio-only message
+          content: 'Audio message',
           timestamp: new Date(),
-          id: messageId
-        }]);
+          id: messageId,
+          isCollectingAudio: true
+        }];
       }
-      currentAudioChunks.current.push(new Uint8Array(data));
-      console.log('Total audio chunks:', currentAudioChunks.current.length);
-    };
 
-    const handleTurnComplete = () => {
-      console.log('Turn complete, processing audio...');
-      if (!currentMessageId.current || currentAudioChunks.current.length === 0) {
-        console.log('No audio to process');
+      // Update existing message to show collecting state
+      return prev.map(msg => {
+        if (msg.id === currentMessageId.current) {
+          return {
+            ...msg,
+            isCollectingAudio: true
+          };
+        }
+        return msg;
+      });
+    });
+  }, []);
+
+  const handleTurnComplete = useCallback(() => {
+    console.log('Turn complete, processing audio...');
+    console.log('Audio chunks collected:', currentAudioChunks.current.length);
+    console.log('Current message ID:', currentMessageId.current);
+    
+    if (currentAudioChunks.current.length === 0) {
+      console.log('No audio to process');
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === currentMessageId.current) {
+          return { ...msg, isCollectingAudio: false };
+        }
+        return msg;
+      }));
+      currentMessageId.current = null;
+      return;
+    }
+
+    // Store message ID before processing to prevent it from being lost
+    const messageId = currentMessageId.current;
+    if (!messageId) {
+      console.error('No message ID available for audio attachment');
+      return;
+    }
+
+    try {
+      const totalLength = currentAudioChunks.current.reduce((acc, chunk) => acc + chunk.length, 0);
+      console.log('Total audio length:', totalLength, 'bytes');
+      
+      if (totalLength === 0) {
+        console.log('No audio data to process');
         return;
       }
 
-      // Combine all audio chunks
-      const totalLength = currentAudioChunks.current.reduce((acc, chunk) => acc + chunk.length, 0);
-      console.log('Total audio length:', totalLength, 'bytes');
       const combinedArray = new Uint8Array(totalLength);
       let offset = 0;
       currentAudioChunks.current.forEach(chunk => {
@@ -141,23 +191,23 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const view = new DataView(wavHeader);
       
       // "RIFF" chunk descriptor
-      view.setUint32(0, 0x52494646, false);  // "RIFF"
-      view.setUint32(4, 36 + combinedArray.length, true);  // File size
-      view.setUint32(8, 0x57415645, false);  // "WAVE"
+      view.setUint32(0, 0x52494646, false);  // "RIFF" in big-endian
+      view.setUint32(4, 36 + combinedArray.length, true);  // File size in little-endian
+      view.setUint32(8, 0x57415645, false);  // "WAVE" in big-endian
       
       // "fmt " sub-chunk
-      view.setUint32(12, 0x666D7420, false);  // "fmt "
-      view.setUint32(16, 16, true);  // Subchunk1Size (16 for PCM)
-      view.setUint16(20, 1, true);  // AudioFormat (1 for PCM)
-      view.setUint16(22, 1, true);  // NumChannels (1 for mono)
-      view.setUint32(24, 24000, true);  // SampleRate (24000Hz)
-      view.setUint32(28, 24000 * 2, true);  // ByteRate
-      view.setUint16(32, 2, true);  // BlockAlign
-      view.setUint16(34, 16, true);  // BitsPerSample (16 bits)
+      view.setUint32(12, 0x666D7420, false);  // "fmt " in big-endian
+      view.setUint32(16, 16, true);  // Subchunk1Size (16 for PCM) in little-endian
+      view.setUint16(20, 1, true);  // AudioFormat (1 for PCM) in little-endian
+      view.setUint16(22, 1, true);  // NumChannels (1 for mono) in little-endian
+      view.setUint32(24, 24000, true);  // SampleRate (24000Hz) in little-endian
+      view.setUint32(28, 24000 * 2, true);  // ByteRate in little-endian
+      view.setUint16(32, 2, true);  // BlockAlign in little-endian
+      view.setUint16(34, 16, true);  // BitsPerSample (16 bits) in little-endian
       
       // "data" sub-chunk
-      view.setUint32(36, 0x64617461, false);  // "data"
-      view.setUint32(40, combinedArray.length, true);  // Subchunk2Size
+      view.setUint32(36, 0x64617461, false);  // "data" in big-endian
+      view.setUint32(40, combinedArray.length, true);  // Subchunk2Size in little-endian
       
       // Combine WAV header with audio data
       const audioBlob = new Blob([wavHeader, combinedArray], { 
@@ -167,24 +217,52 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const audioUrl = URL.createObjectURL(audioBlob);
       console.log('Created audio URL:', audioUrl);
 
-      // Update message with audio URL
+      // Update message with audio URL using the stored messageId
+      setMessages(prev => {
+        const newMessages = prev.map(msg => {
+          if (msg.id === messageId) {
+            console.log('Attaching audio to message:', msg.id);
+            return { 
+              ...msg, 
+              audioUrl,
+              isCollectingAudio: false,
+              // Keep existing content if it's not just "Audio message"
+              content: msg.content === 'Audio message' ? 'Voice message' : msg.content
+            };
+          }
+          return msg;
+        });
+
+        // Verify if message was found and updated
+        if (!newMessages.some(msg => msg.id === messageId)) {
+          console.error('Could not find message to attach audio:', messageId);
+        }
+
+        return newMessages;
+      });
+    } catch (error) {
+      console.error('Error processing audio:', error);
+      // Update message to show error state
       setMessages(prev => prev.map(msg => {
-        if (msg.id === currentMessageId.current) {
-          console.log('Updating message with audio:', msg.id);
+        if (msg.id === messageId) {
           return { 
             ...msg, 
-            audioUrl,
-            content: msg.content || 'Audio message'
+            isCollectingAudio: false,
+            content: 'Error processing audio message'
           };
         }
         return msg;
       }));
-
-      // Reset for next message
+    } finally {
+      // Clean up after processing
       currentAudioChunks.current = [];
       currentMessageId.current = null;
       console.log('Audio processing complete');
-    };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!client) return;
 
     client
       .on('content', handleContent)
@@ -197,7 +275,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .off('audio', handleAudio)
         .off('turncomplete', handleTurnComplete);
     };
-  }, [client]);
+  }, [client, handleTurnComplete]);
 
   // Handle cleanup when chat is hidden
   useEffect(() => {
