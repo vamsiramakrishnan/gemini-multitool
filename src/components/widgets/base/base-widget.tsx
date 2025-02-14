@@ -4,6 +4,8 @@ import { useState } from 'react';
 export interface BaseWidgetData {
   title?: string;
   description?: string;
+  position?: { x: number; y: number };
+  size?: { width: number; height: number };
   [key: string]: any;  // Allow additional properties
 }
 
@@ -13,9 +15,11 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
   protected currentState: 'maximize' | 'minimize' | 'restore' = 'maximize';
   protected contentHeight: number = 0;
   private isTransitioning = false;
+  private isDragging = false;
+  private isResizing = false;
 
-  constructor(title = 'Widget') {
-    this.data = { title } as T;
+  constructor(data: T) {
+    this.data = data;
   }
 
   // Public method to access widget data
@@ -25,10 +29,16 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
 
   async render(data: T = this.data): Promise<string> {
     this.data = { ...this.data, ...data };
+    const { position, size } = this.data;
+    const style = `
+      ${position ? `left: ${position.x}px; top: ${position.y}px;` : ''}
+      ${size ? `width: ${size.width}px; height: ${size.height}px;` : ''}
+    `;
+
     return `
-      <div class="widget-base">
-        <div class="widget-header">
-          <h2 class="widget-title">${this.data.title}</h2>
+      <div class="widget-base" style="${style}" data-draggable="true" data-resizable="true">
+        <div class="widget-header" data-drag-handle="true">
+          <h2 class="widget-title">${this.data.title || 'Widget'}</h2>
           ${this.renderControls()}
         </div>
         <div class="widget-content">
@@ -36,6 +46,7 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
             ${await this.renderContent()}
           </div>
         </div>
+        <div class="widget-resize-handle" data-resize-handle="true"></div>
       </div>
     `;
   }
@@ -99,6 +110,9 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
 
   async postRender(element: HTMLElement): Promise<void> {
     this.element = element;
+    this.setupDraggable();
+    this.setupResizable();
+    this.setupCloseHandler();
     
     // Bind control events
     const minimizeBtn = element.querySelector('.minimize-btn');
@@ -409,8 +423,133 @@ export abstract class BaseWidget<T extends BaseWidgetData = BaseWidgetData> {
             ${this.isMaximized ? 'close_fullscreen' : 'open_in_full'}
           </span>
         </button>
+        <button class="close-btn" onclick="this.closest('.widget-base').dispatchEvent(new CustomEvent('widget:close'))">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
     `;
+  }
+
+  private setupDraggable(): void {
+    if (!this.element) return;
+
+    const dragHandle = this.element.querySelector('[data-drag-handle="true"]');
+    if (!dragHandle) return;
+
+    let startX: number, startY: number;
+    let initialX: number, initialY: number;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (!this.element || this.isMaximized) return;
+      
+      this.isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = this.element.getBoundingClientRect();
+      initialX = rect.left;
+      initialY = rect.top;
+
+      document.addEventListener('mousemove', onMouseMove as EventListener);
+      document.addEventListener('mouseup', onMouseUp as EventListener);
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!this.isDragging || !this.element) return;
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      const newX = initialX + deltaX;
+      const newY = initialY + deltaY;
+
+      this.element.style.left = `${newX}px`;
+      this.element.style.top = `${newY}px`;
+
+      // Emit position update event
+      const event = new CustomEvent('widget:position', {
+        detail: { x: newX, y: newY }
+      });
+      this.element.dispatchEvent(event);
+    };
+
+    const onMouseUp = () => {
+      this.isDragging = false;
+      document.removeEventListener('mousemove', onMouseMove as EventListener);
+      document.removeEventListener('mouseup', onMouseUp as EventListener);
+    };
+
+    dragHandle.addEventListener('mousedown', onMouseDown as EventListener);
+  }
+
+  private setupResizable(): void {
+    if (!this.element) return;
+
+    const resizeHandle = this.element.querySelector('[data-resize-handle="true"]');
+    if (!resizeHandle) return;
+
+    let startX: number, startY: number;
+    let initialWidth: number, initialHeight: number;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (!this.element || this.isMaximized) return;
+
+      this.isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const rect = this.element.getBoundingClientRect();
+      initialWidth = rect.width;
+      initialHeight = rect.height;
+
+      document.addEventListener('mousemove', onMouseMove as EventListener);
+      document.addEventListener('mouseup', onMouseUp as EventListener);
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!this.isResizing || !this.element) return;
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      const newWidth = Math.max(200, initialWidth + deltaX);
+      const newHeight = Math.max(150, initialHeight + deltaY);
+
+      this.element.style.width = `${newWidth}px`;
+      this.element.style.height = `${newHeight}px`;
+
+      // Emit size update event
+      const event = new CustomEvent('widget:resize', {
+        detail: { width: newWidth, height: newHeight }
+      });
+      this.element.dispatchEvent(event);
+    };
+
+    const onMouseUp = () => {
+      this.isResizing = false;
+      document.removeEventListener('mousemove', onMouseMove as EventListener);
+      document.removeEventListener('mouseup', onMouseUp as EventListener);
+    };
+
+    resizeHandle.addEventListener('mousedown', onMouseDown as EventListener);
+  }
+
+  private setupCloseHandler(): void {
+    if (!this.element) return;
+
+    this.element.addEventListener('widget:close', () => {
+      // Add a fade-out animation
+      this.element?.classList.add('widget-closing');
+      
+      // Wait for animation to complete before dispatching destroy event
+      setTimeout(() => {
+        const event = new CustomEvent('widget:destroy', {
+          bubbles: true,
+          detail: { id: this.element?.getAttribute('data-widget-id') }
+        });
+        this.element?.dispatchEvent(event);
+      }, 300); // Match this with CSS animation duration
+    });
   }
 }
 

@@ -1,9 +1,19 @@
 @import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
+@import '../../../styles/shared/_layout-mixins';
+@import '../../../styles/shared/_animations';
+@import '../../../styles/shared/_widget-base';
 
 /* Add your styles for places widget here */ 
 .places-widget {
+  @include widget-base;
   @include widget-content-styles;
+  @include crt-glow($retro-blue);
+  @include scanlines;
+  @include crt-texture;
+
+  container-name: places-widget;
+  container-type: inline-size;
 
   .places-content {
     flex: 1;
@@ -32,110 +42,76 @@
   }
 
   .places-header {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-sm) var(--space-md);
-    background: rgba($retro-black, 0.7);
+    @include widget-header;
+    @include cyber-header;
+    padding: var(--space-md);
     border-bottom: var(--terminal-line);
-    box-shadow: 0 1px 0 rgba($retro-blue, 0.1);
-    transition: padding 0.2s ease-in-out;
+    background: rgba($retro-black, 0.7);
 
     .search-container {
-      flex: 1;
-      margin-right: var(--space-md);
+      @include cyber-input;
       position: relative;
-      transition: display 0.2s ease-in-out;
+      margin-bottom: var(--space-md);
 
       input {
         width: 100%;
-        padding: var(--space-sm) var(--space-md);
-        padding-left: calc(var(--space-md) + 24px); // Space for icon
-        background: rgba($retro-black, 0.3);
-        border: 1px solid rgba($retro-blue, 0.3);
-        border-radius: var(--radius-sm);
-        color: $retro-blue;
-        font-family: var(--font-ui);
-        transition: var(--hover-transition);
-
-        &::placeholder {
-          color: rgba($retro-blue, 0.5);
-        }
-
+        padding-left: calc(var(--space-md) + 24px);
+        
         &:focus {
-          outline: none;
-          border-color: $retro-pink;
-          box-shadow: var(--terminal-glow);
+          @include holographic-focus;
         }
       }
 
       .search-icon {
+        @include retro-icon-container($retro-blue);
         position: absolute;
         left: var(--space-sm);
         top: 50%;
         transform: translateY(-50%);
-        color: $retro-blue;
-        font-size: 20px;
       }
     }
 
     .filter-controls {
-      display: flex;
+      @include responsive-grid(120px);
       gap: var(--space-xs);
-      transition: justify-content 0.2s ease-in-out;
 
       button {
         @include retro-button;
-        padding: var(--space-xs) var(--space-sm);
+        @include holographic-hover($retro-blue);
         
-        .material-symbols-outlined {
-          font-size: 18px;
+        &.active {
+          @include neon-panel($retro-pink, 'dashed');
         }
       }
     }
   }
 
   .places-main {
-    position: relative;
-    background: rgba($retro-black, 0.95);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    backdrop-filter: blur(var(--blur-md));
-    border: var(--terminal-line);
-
+    @include widget-content;
+    @include crt-screen-border;
+    
     .map-section {
       height: 300px;
       border-bottom: var(--terminal-line);
       position: relative;
       overflow: hidden;
 
-      .map-container {
-        height: 100%;
-        width: 100%;
-        background: rgba($retro-black, 0.3);
-      }
+      @include holographic-grid($retro-blue);
     }
 
     .places-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: var(--space-md);
+      @include responsive-grid(280px);
       padding: var(--space-lg);
       background: rgba($retro-black, 0.3);
-      border-bottom: var(--terminal-line);
-      
+
       .place-card {
-        @include card-base;
-        transition: var(--hover-transition);
-        border: 1px solid rgba($retro-blue, 0.2);
-        overflow: hidden;
-
+        @include widget-card;
+        @include retro-glow-hover;
+        @include neon-panel($retro-blue);
+        
         &:hover {
-          transform: translateY(-2px);
-          border-color: $retro-pink;
-          box-shadow: var(--terminal-glow);
-
+          @include holographic-hover($retro-pink);
+          
           .place-photo img {
             transform: scale(1.05);
           }
@@ -143,247 +119,103 @@
 
         .place-photo {
           position: relative;
-          width: 100%;
           height: 200px;
           overflow: hidden;
-          background: rgba($retro-black, 0.3);
 
           img {
+            @include data-stream-animation;
             width: 100%;
             height: 100%;
             object-fit: cover;
             transition: transform 0.3s ease-in-out;
           }
 
-          .rating-badge,
-          .status-badge {
-            position: absolute;
-            padding: var(--space-xs) var(--space-sm);
-            background: rgba($retro-black, 0.85);
-            backdrop-filter: blur(var(--blur-sm));
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-            font-size: var(--font-size-sm);
-          }
-
           .rating-badge {
+            @include cyber-badge($retro-blue);
+            position: absolute;
             top: var(--space-sm);
             right: var(--space-sm);
-            color: $retro-blue;
-            border: 1px solid rgba($retro-blue, 0.3);
-
-            .material-symbols-outlined {
-              color: $retro-pink;
-              font-size: 16px;
-            }
-
-            .user-ratings {
-              font-size: var(--font-size-xs);
-              opacity: 0.7;
-            }
           }
 
           .status-badge {
+            @include cyber-badge($retro-green);
+            position: absolute;
             bottom: var(--space-sm);
             left: var(--space-sm);
             
-            &.open {
-              color: $retro-green;
-              border: 1px solid rgba($retro-green, 0.3);
-            }
-            
             &.closed {
-              color: $retro-red;
-              border: 1px solid rgba($retro-red, 0.3);
-            }
-
-            .material-symbols-outlined {
-              font-size: 16px;
+              @include cyber-badge($retro-red);
             }
           }
         }
 
         .place-details {
           padding: var(--space-md);
-          background: rgba($retro-black, 0.3);
 
-          .place-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--space-sm);
-
-            .place-name {
-              font-family: var(--font-display);
-              font-size: var(--font-size-lg);
-              color: $retro-blue;
-              margin: 0;
-              text-shadow: 0 0 10px rgba($retro-blue, 0.3);
-            }
-
-            .place-type {
-              width: 36px;
-              height: 36px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              background: rgba($retro-black, 0.3);
-              border: 1px solid rgba($retro-blue, 0.3);
-              border-radius: var(--radius-sm);
-              color: $retro-blue;
-            }
+          .place-name {
+            @include cyber-heading(4);
+            @include neon-text-glow($retro-blue);
+            font-size: var(--font-size-lg);
           }
 
-          .place-info {
-            margin-bottom: var(--space-md);
+          .place-address {
+            @include retro-icon-with-text;
+            margin: var(--space-sm) 0;
+            font-size: var(--font-size-sm);
+          }
 
-            .place-address {
-              display: flex;
-              align-items: center;
-              gap: var(--space-xs);
-              color: rgba($retro-blue, 0.8);
-              font-size: var(--font-size-sm);
-              margin-bottom: var(--space-sm);
+          .place-categories {
+            @include stack('xs', 'horizontal');
+            flex-wrap: wrap;
 
-              .material-symbols-outlined {
-                font-size: 18px;
-                color: $retro-pink;
-              }
-            }
-
-            .place-categories {
-              display: flex;
-              flex-wrap: wrap;
-              gap: var(--space-xs);
-
-              .category-tag {
-                padding: var(--space-2xs) var(--space-xs);
-                background: rgba($retro-black, 0.3);
-                border: 1px solid rgba($retro-blue, 0.2);
-                border-radius: var(--radius-sm);
-                color: rgba($retro-blue, 0.7);
-                font-size: var(--font-size-xs);
-                transition: var(--hover-transition);
-
-                &:hover {
-                  border-color: $retro-pink;
-                  color: $retro-pink;
-                }
+            .category-tag {
+              @include cyber-badge($retro-blue);
+              
+              &:hover {
+                @include holographic-hover($retro-pink);
               }
             }
           }
 
           .place-actions {
-            display: flex;
-            gap: var(--space-sm);
+            @include stack('sm', 'horizontal');
+            margin-top: var(--space-md);
 
-            .action-button {
+            button {
               @include retro-button;
               flex: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: var(--space-xs);
-              font-size: var(--font-size-sm);
-
-              .material-symbols-outlined {
-                font-size: 18px;
-              }
 
               &.directions {
                 @include retro-button-primary;
-              }
-
-              &.details {
-                @include retro-button-base;
-                background: rgba($retro-black, 0.3);
-                border-color: rgba($retro-blue, 0.3);
-                color: $retro-blue;
-                
-                &:hover {
-                  border-color: $retro-pink;
-                  color: $retro-pink;
-                  background: rgba($retro-black, 0.4);
-                }
               }
             }
           }
         }
       }
     }
-
-    .places-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--space-md);
-      padding: var(--space-lg);
-      background: rgba($retro-black, 0.3);
-
-      .stat-item {
-        padding: var(--space-md);
-        background: rgba($retro-black, 0.4);
-        border-radius: var(--radius-sm);
-        border: 1px solid rgba($retro-blue, 0.2);
-        transition: var(--hover-transition);
-        position: relative;
-        box-shadow: inset 0 0 20px rgba($retro-black, 0.3);
-
-        &:hover {
-          border-color: $retro-pink;
-          transform: translateY(-2px);
-          box-shadow: var(--terminal-glow);
-        }
-
-        // ... rest of stat-item styles ...
-      }
-    }
   }
 
   // Loading state
-  .places-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba($retro-blue, 0.1);
-      border-top-color: $retro-blue;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+  &.loading {
+    @include widget-loading;
   }
 
   // Empty state
-  .places-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    padding: var(--space-xl);
-    text-align: center;
-    
-    .material-symbols-outlined {
-      font-size: 48px;
-      color: $retro-blue;
-      margin-bottom: var(--space-md);
-    }
-    
-    h3 {
-      color: $retro-blue;
-      font-size: var(--font-size-lg);
-      margin-bottom: var(--space-sm);
-      text-shadow: 0 0 5px rgba($retro-blue, 0.2);
-    }
-    
-    p {
-      color: rgba($retro-blue, 0.7);
-      font-size: var(--font-size-sm);
+  &.empty {
+    @include widget-empty;
+  }
+
+  // Error state
+  &.error {
+    @include widget-error;
+  }
+
+  // Responsive styles
+  @container places-widget (max-width: 600px) {
+    .places-header {
+      .filter-controls {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   }
 

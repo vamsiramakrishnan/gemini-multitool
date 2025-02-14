@@ -12,6 +12,19 @@
   justify-content: center;
 }
 
+@mixin flex-center-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-row-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+}
+
 // Input & Control Mixins (refined for retro style)
 @mixin input-base {
   width: 100%;
@@ -263,8 +276,52 @@
   z-index: var(--z-controls);
 }
 
-@mixin flex-center-between {
+// Add this with other layout utilities
+@mixin grid-container {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--panel-width)), 1fr));
+  align-content: start;
+  
+  @include respond-to('md') {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Add mobile layout stack pattern
+@mixin mobile-layout-stack {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-md);
+  
+  > * {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+  }
+  
+  .map-main {
+    order: -1;
+    height: 60vh;
+  }
+}
+
+// Add panel collapse behavior
+@mixin collapsed-panel {
+  width: 60px;
+  transition: all var(--animation-speed-base) var(--animation-easing);
+  overflow: hidden;
+  
+  &:hover {
+    width: var(--panel-width);
+    overflow: visible;
+  }
+  
+  .route-header {
+    padding: var(--space-sm);
+    
+    .route-title {
+      display: none;
+    }
+  }
 } 

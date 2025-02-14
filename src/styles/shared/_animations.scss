@@ -1,6 +1,145 @@
+// Base Animation Variables
+:root {
+  --animation-speed-fast: 0.2s;
+  --animation-speed-base: 0.3s;
+  --animation-speed-slow: 0.5s;
+  --animation-speed-slower: 0.8s;
+  --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+// Core Animation Mixins - Define these first
+@mixin animate($animation, $duration: var(--animation-speed-base), $timing: var(--animation-easing)) {
+  animation: $animation $duration $timing;
+}
+
+@mixin hover-lift($scale: 1.02, $y: -4px) {
+  transition: transform var(--animation-speed-fast) var(--animation-bounce);
+  
+  &:hover {
+    transform: translateY($y) scale($scale);
+  }
+}
+
+@mixin pulse-animation {
+  animation: pulse var(--animation-speed-slow) infinite;
+  animation-timing-function: var(--animation-easing);
+}
+
+@mixin glitch-effect {
+  position: relative;
+  
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    clip: rect(0, 0, 0, 0);
+  }
+  
+  &::before {
+    left: 2px;
+    text-shadow: 2px 0 $retro-pink;
+    animation: glitch-anim-1 2s infinite linear alternate-reverse;
+  }
+  
+  &::after {
+    left: -2px;
+    text-shadow: -2px 0 $retro-blue;
+    animation: glitch-anim-2 3s infinite linear alternate-reverse;
+  }
+}
+
+@mixin scanning-effect {
+  position: relative;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba($retro-blue, 0.2),
+      transparent
+    );
+    animation: hologram-scan 2s linear infinite;
+  }
+}
+
+@mixin data-stream-animation {
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      rgba($retro-blue, 0) 0%,
+      rgba($retro-blue, 0.1) 50%,
+      rgba($retro-blue, 0) 100%
+    );
+    animation: data-stream 2s infinite linear;
+    transform: rotate(15deg);
+  }
+}
+
+@mixin matrix-glitch {
+  animation: matrix-glitch 0.3s infinite;
+}
+
+@mixin terminal-flicker {
+  animation: terminal-flicker 0.1s infinite alternate;
+}
+
+// Animation Keyframes
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { 
+    opacity: 0;
+    backdrop-filter: blur(8px);
+  }
+  to { 
+    opacity: 1;
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+    backdrop-filter: blur(8px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes fade-in-down {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px);
+    backdrop-filter: blur(8px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+    backdrop-filter: blur(0);
+  }
 }
 
 @keyframes slide-up {
@@ -20,41 +159,240 @@
 }
 
 @keyframes spin {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
+@keyframes spin-pulse {
+  0% { 
+    transform: rotate(0deg) scale(1);
+    opacity: 0.7;
+  }
+  50% { 
+    transform: rotate(180deg) scale(1.1);
+    opacity: 1;
+  }
+  100% { 
+    transform: rotate(360deg) scale(1);
+    opacity: 0.7;
+  }
+}
+
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.05); opacity: 0.8; }
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.7;
+    box-shadow: 0 0 0 0 rgba($retro-blue, 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 1;
+    box-shadow: 0 0 20px 10px rgba($retro-blue, 0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.5;
+    text-shadow: 0 0 5px rgba($retro-blue, 0.5);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 20px rgba($retro-blue, 1);
+  }
 }
 
 @keyframes shimmer {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  0% {
+    background-position: -200% center;
+    opacity: 0.5;
+  }
+  100% {
+    background-position: 200% center;
+    opacity: 1;
+  }
 }
 
+@keyframes matrix-rain {
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    background-position: 0% 100%;
+    opacity: 0.3;
+  }
+}
+
+@keyframes glitch-text {
+  0% {
+    text-shadow: 0.05em 0 0 rgba($retro-pink, 0.75),
+                -0.05em -0.025em 0 rgba($retro-blue, 0.75),
+                -0.025em 0.05em 0 rgba($retro-green, 0.75);
+  }
+  14% {
+    text-shadow: 0.05em 0 0 rgba($retro-pink, 0.75),
+                -0.05em -0.025em 0 rgba($retro-blue, 0.75),
+                -0.025em 0.05em 0 rgba($retro-green, 0.75);
+  }
+  15% {
+    text-shadow: -0.05em -0.025em 0 rgba($retro-pink, 0.75),
+                0.025em 0.025em 0 rgba($retro-blue, 0.75),
+                -0.05em -0.05em 0 rgba($retro-green, 0.75);
+  }
+  49% {
+    text-shadow: -0.05em -0.025em 0 rgba($retro-pink, 0.75),
+                0.025em 0.025em 0 rgba($retro-blue, 0.75),
+                -0.05em -0.05em 0 rgba($retro-green, 0.75);
+  }
+  50% {
+    text-shadow: 0.025em 0.05em 0 rgba($retro-pink, 0.75),
+                0.05em 0 0 rgba($retro-blue, 0.75),
+                0 -0.05em 0 rgba($retro-green, 0.75);
+  }
+  99% {
+    text-shadow: 0.025em 0.05em 0 rgba($retro-pink, 0.75),
+                0.05em 0 0 rgba($retro-blue, 0.75),
+                0 -0.05em 0 rgba($retro-green, 0.75);
+  }
+  100% {
+    text-shadow: -0.025em 0 0 rgba($retro-pink, 0.75),
+                -0.025em -0.025em 0 rgba($retro-blue, 0.75),
+                -0.025em -0.05em 0 rgba($retro-green, 0.75);
+  }
+}
+
+@keyframes hologram-flicker {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+  25%, 75% { opacity: 0.9; }
+}
+
+@keyframes hologram-scan {
+  0% {
+    background-position: 0% 0%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    background-position: 0% 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes data-stream {
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    background-position: 100% 100%;
+    opacity: 0.3;
+  }
+}
+
+@keyframes terminal-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes terminal-type {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes terminal-flicker {
+  0% { opacity: 0.9; }
+  100% { opacity: 1; }
+}
+
+@keyframes glitch-anim-1 {
+  0% { clip: rect(20px, 9999px, 51px, 0); }
+  100% { clip: rect(63px, 9999px, 42px, 0); }
+}
+
+@keyframes glitch-anim-2 {
+  0% { clip: rect(29px, 9999px, 94px, 0); }
+  100% { clip: rect(86px, 9999px, 73px, 0); }
+}
+
+// Animation Classes
 .interactive-element {
-  transition: var(--hover-transition);
+  transition: all var(--animation-speed-base) var(--animation-easing);
   
   &:hover {
-    transform: translateY(-2px);
+    @include hover-lift;
   }
   
   &:active {
-    transform: scale(var(--active-scale));
+    transform: scale(0.98);
   }
   
   &:focus-visible {
-    animation: focus-ring 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    @include animate(pulse-glow, var(--animation-speed-slower), infinite);
   }
 }
 
 .animate {
   &-fade-in {
-    animation: fade-in var(--animation-speed-base) var(--animation-easing);
+    @include animate(fade-in);
+  }
+  
+  &-fade-in-up {
+    @include animate(fade-in-up);
+  }
+  
+  &-fade-in-down {
+    @include animate(fade-in-down);
   }
   
   &-slide-up {
-    animation: slide-up var(--animation-speed-base) var(--animation-easing);
+    @include animate(slide-up);
+  }
+  
+  &-pulse {
+    @include animate(pulse, var(--animation-speed-slow));
+  }
+  
+  &-spin {
+    @include animate(spin, var(--animation-speed-slow), linear);
+  }
+  
+  &-glitch {
+    @include glitch-effect;
+  }
+  
+  &-scan {
+    @include scanning-effect;
+  }
+}
+
+// Loading States
+.loading {
+  &-spinner {
+    @include animate(spin-pulse, var(--animation-speed-slower), infinite);
+  }
+  
+  &-pulse {
+    @include animate(pulse, var(--animation-speed-slow), infinite);
+  }
+  
+  &-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba($retro-blue, 0.2),
+      transparent
+    );
+    background-size: 200% 100%;
+    @include animate(shimmer, var(--animation-speed-slower), infinite);
   }
 } 

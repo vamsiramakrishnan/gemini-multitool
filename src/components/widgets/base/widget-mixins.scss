@@ -1,0 +1,22 @@
+// Create a new file for shared widget mixins
+@use '../../../styles/shared/abstracts/variables' as vars;
+@use '../../../styles/shared/abstracts/effects' as fx;
+@use '../../../styles/shared/base/typography' as type;
+
+@mixin interactive-element {
+  cursor: pointer;
+  transition: all var(--animation-speed-base) var(--animation-easing);
+  // ... rest of mixin
+}
+
+@mixin scanlines {
+  @include fx.scanlines-overlay;
+}
+
+@mixin retro-box-shadow($type: 'glow') {
+  @if $type == 'glow' {
+    box-shadow: 0 0 20px rgba(vars.$retro-blue, 0.3);
+  } @else if $type == 'heavy' {
+    box-shadow: 0 4px 30px rgba(vars.$retro-pink, 0.4);
+  }
+} 

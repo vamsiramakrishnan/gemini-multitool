@@ -4,13 +4,19 @@
 :root {
   --fluid-min-width: 320;   // Minimum viewport width
   --fluid-max-width: 1440;  // Maximum viewport width
-  --fluid-min-size: 14;    // Minimum font size (px)
-  --fluid-max-size: 18;    // Maximum font size (px)
+  --fluid-text-ratio: 1.2; // Ratio between min/max sizes
+  --fluid-text-min: 14;     // Minimum font size (px)
+  --fluid-text-max: 18;     // Maximum font size (px)
+
+  @media (min-width: 640px) {
+    --fluid-text-min: 16;
+    --fluid-text-max: 20;
+  }
 
   // Calculate fluid font size
   --fluid-size: calc(
-    var(--fluid-min-size) * 1px +
-    (var(--fluid-max-size) - var(--fluid-min-size)) *
+    var(--fluid-text-min) * 1px +
+    (var(--fluid-text-max) - var(--fluid-text-min)) *
     (100vw - var(--fluid-min-width) * 1px) /
     (var(--fluid-max-width) - var(--fluid-min-width))
   );
@@ -33,4 +39,62 @@ body {
   }
 
   // Add more container queries as needed for different breakpoints
+}
+
+// Container query helper
+@mixin container-query($name, $condition) {
+  container-name: $name;
+  container-type: inline-size;
+  
+  @container #{$name} (#{$condition}) {
+    @content;
+  }
+}
+
+// Add these at the bottom
+.retro-responsive {
+  &-hide {
+    &--mobile {
+      @media (max-width: 640px) {
+        display: none !important;
+      }
+    }
+    
+    &--desktop {
+      @media (min-width: 641px) {
+        display: none !important;
+      }
+    }
+  }
+  
+  &-text {
+    &--sm {
+      font-size: var(--fluid-size) !important;
+    }
+    
+    &--lg {
+      font-size: calc(var(--fluid-size) * 1.2) !important;
+    }
+  }
+}
+
+// Add this with other responsive mixins
+@mixin respond-to($breakpoint) {
+  $bp: map-get((
+    'sm': var(--breakpoint-sm),
+    'md': var(--breakpoint-md),
+    'lg': var(--breakpoint-lg),
+    'xl': var(--breakpoint-xl)
+  ), $breakpoint);
+  
+  @media (max-width: #{$bp}) {
+    @content;
+  }
+}
+
+// Add complementary mixin for min-width
+@mixin respond-above($breakpoint) {
+  @media (min-width: var(--breakpoint-#{$breakpoint})) {
+    @content;
+  }
 } 

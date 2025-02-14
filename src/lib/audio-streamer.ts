@@ -220,16 +220,25 @@ export class AudioStreamer {
       this.checkInterval = null;
     }
 
-    this.gainNode.gain.linearRampToValueAtTime(
-      0,
-      this.context.currentTime + 0.1,
-    );
+    // Only try to manipulate audio nodes if the context is not closed
+    if (this.context.state !== 'closed') {
+      try {
+        this.gainNode.gain.linearRampToValueAtTime(
+          0,
+          this.context.currentTime + 0.1,
+        );
 
-    setTimeout(() => {
-      this.gainNode.disconnect();
-      this.gainNode = this.context.createGain();
-      this.gainNode.connect(this.context.destination);
-    }, 200);
+        setTimeout(() => {
+          if (this.context.state !== 'closed') {
+            this.gainNode.disconnect();
+            this.gainNode = this.context.createGain();
+            this.gainNode.connect(this.context.destination);
+          }
+        }, 200);
+      } catch (error) {
+        console.warn('Error during audio cleanup:', error);
+      }
+    }
   }
 
   async resume() {

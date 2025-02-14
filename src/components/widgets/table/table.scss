@@ -1,0 +1,61 @@
+@import '../../../styles/shared/mixins';
+@import '../../../styles/shared/variables';
+
+.table-widget {
+  @include widget-base;
+  padding: var(--space-md);
+
+  .table-title {
+    font-size: var(--font-size-lg);
+    color: $retro-blue;
+    margin-bottom: var(--space-sm);
+    font-family: var(--font-display);
+  }
+
+  .table-description {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+    font-size: var(--font-size-sm);
+  }
+
+  .table-container {
+    overflow-x: auto;
+    @include custom-scrollbar;
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba($retro-black, 0.3);
+      border: var(--terminal-line);
+      
+      th, td {
+        padding: var(--space-sm);
+        text-align: left;
+        border: 1px solid rgba($retro-blue, 0.2);
+      }
+      
+      th {
+        background: rgba($retro-black, 0.6);
+        color: $retro-blue;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      
+      td {
+        color: var(--text-primary);
+      }
+      
+      tbody tr {
+        transition: var(--transition-all);
+        
+        &:nth-child(even) {
+          background: rgba($retro-black, 0.2);
+        }
+        
+        &:hover {
+          background: rgba($retro-blue, 0.1);
+        }
+      }
+    }
+  }
+} 

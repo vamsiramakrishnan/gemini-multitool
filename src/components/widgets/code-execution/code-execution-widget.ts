@@ -33,9 +33,9 @@ export class CodeExecutionWidget extends BaseWidget<CodeExecutionData> {
     }
   }
 
-  async render(data: CodeExecutionData): Promise<string> {
+  async render(data: CodeExecutionData = this.data): Promise<string> {
     const parsedOutput = this.tryParseOutput(data.output);
-    const language = data.language === 'python' ? 'python' : 
+    const language = data.language === 'python' ? 'python' :
                     data.language === 'javascript' ? 'javascript' :
                     'json';
 
@@ -48,7 +48,7 @@ export class CodeExecutionWidget extends BaseWidget<CodeExecutionData> {
           </div>
           <pre><code class="language-${language}">${data.code}</code></pre>
         </div>
-        
+
         <div class="execution-result ${data.outcome}">
           <div class="section-header">
             <span class="outcome-badge ${data.outcome}">
@@ -68,19 +68,19 @@ export class CodeExecutionWidget extends BaseWidget<CodeExecutionData> {
   async postRender(element: HTMLElement, data: CodeExecutionData): Promise<void> {
     try {
       const hljs = (await import('highlight.js')).default;
-      const languages = data.language === 'python' ? ['python'] : 
+      const languages = data.language === 'python' ? ['python'] :
                        data.language === 'javascript' ? ['javascript'] :
                        ['json'];
 
       // Load specific language support
-      await Promise.all(languages.map(lang => 
+      await Promise.all(languages.map(lang =>
         import(`highlight.js/lib/languages/${lang}`)
           .then(module => hljs.registerLanguage(lang, module.default))
       ));
 
       element.querySelectorAll('pre code').forEach((block) => {
         hljs.highlightElement(block as HTMLElement);
-        
+
         // Add copy button similar to logger
         const copyButton = document.createElement('button');
         copyButton.className = 'copy-button';
@@ -90,13 +90,39 @@ export class CodeExecutionWidget extends BaseWidget<CodeExecutionData> {
         copyButton.onclick = () => {
           navigator.clipboard.writeText(block.textContent || '');
         };
-        block.parentElement?.prepend(copyButton);
+        if (block.parentElement) {
+            block.parentElement.prepend(copyButton);
+        }
       });
 
     } catch (error) {
       console.error('Code highlighting failed:', error);
+        if (element) {
+            element.innerHTML = this.createErrorState(
+                error instanceof Error ? error.message : 'Code highlighting failed'
+            )
+        }
     }
   }
+
+    // Add a loading state method
+    createLoadingState(): string {
+        return `
+      <div class="loading-state">
+        <span class="material-symbols-outlined animate-spin">refresh</span>
+        <div class="loading-message">Loading...</div>
+      </div>
+    `;
+    }
+
+    createErrorState(message: string): string {
+        return `
+      <div class="error-state">
+        <span class="material-symbols-outlined">error</span>
+        <div class="error-message">${message}</div>
+      </div>
+    `;
+    }
 
   destroy(): void {
     // Cleanup if needed
