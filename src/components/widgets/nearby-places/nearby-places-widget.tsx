@@ -17,6 +17,8 @@ export interface Place {
 export interface NearbyPlacesData extends BaseWidgetData {
   places?: Place[];
   error?: string;
+  isLoading?: boolean;
+  query?: string;
 }
 
 export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
@@ -34,55 +36,116 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
   }
 
   async render(data: NearbyPlacesData = this.data): Promise<string> {
-    if (!data || data.error) {
-      return this.createErrorState(data?.error || 'No data available');
+    // Update internal data
+    this.data = { ...this.data, ...data };
+    
+    // Reset map state when new data arrives
+    this.mapInitialized = false;
+    
+    if (this.data.isLoading) {
+      return this.renderLoadingState();
     }
 
-    if (!data.places || data.places.length === 0) {
+    if (this.data.error) {
+      return this.createErrorState(this.data.error);
+    }
+
+    if (!this.data.places || this.data.places.length === 0) {
       return this.renderEmptyState();
     }
 
-    setTimeout(() => this.initializeMap(), 0);
+    setTimeout(() => this.initializeMap(), 100);
 
     return `
       <div class="nearby-places-widget">
-        <div class="nearby-places-main">
-          <div class="search-section">
-            <div class="search-container">
-              <span class="material-symbols-outlined search-icon">search</span>
-              <input type="text" placeholder="Search nearby places..." />
-            </div>
-            <div class="filters">
-              ${this.renderFilters()}
-            </div>
+        <div class="search-section">
+          <div class="search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" placeholder="Find nearby places..." value="${this.data.query || ''}" />
           </div>
+          <div class="filters">
+            ${this.renderFilters()}
+          </div>
+        </div>
 
-          <div class="map-section">
-            <div id="${this.mapId}" class="map-container"></div>
+        <div class="map-section">
+          <div id="${this.mapId}" class="map-container"></div>
+          <div class="map-controls">
+            <button class="control-button" title="Zoom in">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+            <button class="control-button" title="Zoom out">
+              <span class="material-symbols-outlined">remove</span>
+            </button>
+            <button class="control-button" title="Center map">
+              <span class="material-symbols-outlined">center_focus_strong</span>
+            </button>
           </div>
+        </div>
 
-          <div class="places-grid">
-            ${data.places.map(place => this.renderPlaceCard(place)).join('')}
-          </div>
+        <div class="places-grid">
+          ${this.data.places.map(place => this.renderPlaceCard(place)).join('')}
+        </div>
 
-          <div class="places-stats">
-            ${this.renderStats()}
-          </div>
+        <div class="places-stats">
+          ${this.renderStats()}
         </div>
       </div>
     `;
   }
 
   private renderFilters(): string {
-    const filters = ['Restaurant', 'Cafe', 'Shopping', 'Entertainment', 'Services'];
+    const filters = [
+      { icon: 'restaurant', label: 'Restaurants' },
+      { icon: 'coffee', label: 'Cafes' },
+      { icon: 'shopping_bag', label: 'Shopping' },
+      { icon: 'local_bar', label: 'Bars' },
+      { icon: 'hotel', label: 'Hotels' },
+      { icon: 'attractions', label: 'Attractions' }
+    ];
+
     return `
       <div class="filter-tags">
-        ${filters.map(filter => `
-          <button class="filter-tag">
-            <span class="material-symbols-outlined">${this.getFilterIcon(filter)}</span>
-            ${filter}
+        ${filters.map((filter, index) => `
+          <button class="filter-tag ${index === 0 ? 'active' : ''}">
+            <span class="material-symbols-outlined">${filter.icon}</span>
+            ${filter.label}
           </button>
         `).join('')}
+      </div>
+    `;
+  }
+
+  private renderStats(): string {
+    const totalPlaces = this.data.places?.length || 0;
+    const avgRating = this.calculateAverageRating();
+    
+    return `
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-symbols-outlined">place</span>
+          Total Places
+        </div>
+        <div class="stat-value">${totalPlaces}</div>
+        <div class="stat-label">Locations Found</div>
+      </div>
+      
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-symbols-outlined">star</span>
+          Average Rating
+        </div>
+        <div class="stat-value">${avgRating.toFixed(1)}</div>
+        <div class="stat-label">Out of 5.0</div>
+      </div>
+      
+      <div class="stat-item">
+        <div class="stat-icon">
+          <span class="material-symbols-outlined">category</span>
+          Categories
+        </div>
+        <div class="stat-value">${this.getUniqueCategories().length}</div>
+        <div class="stat-label">Different Types</div>
       </div>
     `;
   }
@@ -99,255 +162,84 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
     return sum / ratings.length;
   }
 
-  private renderStats(): string {
-    const totalPlaces = this.data.places?.length || 0;
-    const avgRating = this.calculateAverageRating();
-    const openNow = this.data.places?.filter(p => p.businessStatus === 'OPERATIONAL').length || 0;
+  private getUniqueCategories(): string[] {
+    const places = this.data.places || [];
+    const allTypes = places.flatMap(p => p.types || []);
+    return [...new Set(allTypes)];
+  }
+
+  private renderPlaceCard(place: Place): string {
+    const { name, address, rating, userRatings, priceLevel, photos, businessStatus, types } = place;
+    const mainPhotoUrl = photos && photos.length > 0 ? photos[0] : '';
+    const isOpen = businessStatus === 'OPERATIONAL';
     
     return `
-      <div class="stat-item">
-        <div class="stat-icon">
-          <span class="material-symbols-outlined">place</span>
-          Total Places
+      <div class="place-card">
+        <div class="place-photo">
+          ${mainPhotoUrl ? 
+            `<img src="${mainPhotoUrl}" alt="${name}" onerror="this.src='https://via.placeholder.com/500x300?text=No+Image'">` : 
+            `<div class="no-photo"><span class="material-symbols-outlined">image_not_supported</span></div>`
+          }
+          ${rating ? `
+            <div class="rating-badge">
+              <span class="material-symbols-outlined">star</span>
+              ${rating.toFixed(1)}
+            </div>` : ''
+          }
+          <div class="business-status ${isOpen ? 'open' : 'closed'}">
+            <span class="material-symbols-outlined">${isOpen ? 'check_circle' : 'cancel'}</span>
+            ${isOpen ? 'Open' : 'Closed'}
+          </div>
         </div>
-        <div class="stat-value">${totalPlaces}</div>
-        <div class="stat-label">Found Nearby</div>
-      </div>
-      
-      <div class="stat-item">
-        <div class="stat-icon">
-          <span class="material-symbols-outlined">star</span>
-          Average Rating
+        
+        <div class="place-details">
+          <h3 class="place-name">${name}</h3>
+          <div class="place-address">
+            <span class="material-symbols-outlined">location_on</span>
+            ${address}
+          </div>
+          
+          ${priceLevel ? `
+            <div class="place-price">
+              <span class="material-symbols-outlined">payments</span>
+              <span class="price-level">${'$'.repeat(priceLevel)}</span>
+            </div>` : ''
+          }
+          
+          <div class="place-categories">
+            ${types?.slice(0, 3).map(type => `
+              <span class="category-tag">
+                ${this.formatPlaceType(type)}
+              </span>
+            `).join('') || ''}
+          </div>
         </div>
-        <div class="stat-value">${avgRating.toFixed(1)}</div>
-        <div class="stat-label">Out of 5.0</div>
-      </div>
 
-      <div class="stat-item">
-        <div class="stat-icon">
-          <span class="material-symbols-outlined">storefront</span>
-          Open Now
+        <div class="place-actions">
+          <button class="action-button directions">
+            <span class="material-symbols-outlined">directions</span>
+            Directions
+          </button>
+          <button class="action-button details">
+            <span class="material-symbols-outlined">info</span>
+            Details
+          </button>
         </div>
-        <div class="stat-value">${openNow}</div>
-        <div class="stat-label">Places</div>
       </div>
     `;
   }
 
   private getFilterIcon(filter: string): string {
-    const icons: Record<string, string> = {
+    const iconMap: Record<string, string> = {
       'Restaurant': 'restaurant',
       'Cafe': 'coffee',
       'Shopping': 'shopping_bag',
-      'Entertainment': 'movie',
-      'Services': 'miscellaneous_services'
-    };
-    return icons[filter] || 'place';
-  }
-
-  private initializeMap(): void {
-    if (this.mapInitialized || !window.google?.maps) return;
-
-    const mapElement = document.getElementById(this.mapId);
-    if (!mapElement) return;
-
-    // Add retro styling
-    const retroStyle = [
-      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-      {
-        featureType: "administrative.locality",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#d59563" }],
-      },
-      {
-        featureType: "poi",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#d59563" }],
-      },
-      {
-        featureType: "poi.park",
-        elementType: "geometry",
-        stylers: [{ color: "#263c3f" }],
-      },
-      {
-        featureType: "poi.park",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#6b9a76" }],
-      },
-      {
-        featureType: "road",
-        elementType: "geometry",
-        stylers: [{ color: "#38414e" }],
-      },
-      {
-        featureType: "road",
-        elementType: "geometry.stroke",
-        stylers: [{ color: "#212a37" }],
-      },
-      {
-        featureType: "road",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#9ca5b3" }],
-      },
-      {
-        featureType: "water",
-        elementType: "geometry",
-        stylers: [{ color: "#17263c" }],
-      },
-      {
-        featureType: "water",
-        elementType: "labels.text.fill",
-        stylers: [{ color: "#515c6d" }],
-      },
-      {
-        featureType: "water",
-        elementType: "labels.text.stroke",
-        stylers: [{ color: "#17263c" }],
-      },
-    ];
-
-    const map = new google.maps.Map(mapElement, {
-      center: { lat: this.data.places?.[0]?.latitude || 0, lng: this.data.places?.[0]?.longitude || 0 },
-      zoom: 14,
-      disableDefaultUI: true,
-      mapTypeControl: false,
-      streetViewControl: false,
-      styles: retroStyle,
-    });
-
-    // Add custom styled markers for each place
-    this.data.places?.forEach(place => {
-      if (place.latitude && place.longitude) {
-        const marker = new google.maps.Marker({
-          position: { lat: place.latitude, lng: place.longitude },
-          map: map,
-          title: place.name,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: '#00f3ff', // retro blue
-            fillOpacity: 0.8,
-            strokeColor: '#00f3ff',
-            strokeWeight: 2,
-          }
-        });
-
-        // Add click listener to marker
-        marker.addListener('click', () => {
-          const infoWindow = new google.maps.InfoWindow({
-            content: `
-              <div style="color: #000; padding: 8px;">
-                <h3 style="margin: 0 0 4px;">${place.name}</h3>
-                <p style="margin: 0;">${place.address}</p>
-              </div>
-            `
-          });
-          infoWindow.open(map, marker);
-        });
-      }
-    });
-
-    this.mapInitialized = true;
-  }
-
-  private renderPlaceCard(place: Place): string {
-    const { name, address, rating, userRatings, priceLevel, photos, businessStatus, types } = place;
-    const mainPhotoUrl = photos && photos.length > 0 ? photos[0] : null;
-    
-    return `
-      <div class="place-card card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
-        <div class="card-body p-4">
-          <div class="flex items-start gap-4">
-            ${mainPhotoUrl ? `
-              <img src="${mainPhotoUrl}" 
-                   class="place-photo w-32 h-32 object-cover rounded-lg flex-shrink-0" 
-                   alt="${name}"
-                   onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image';">
-            ` : `
-              <div class="place-photo w-32 h-32 rounded-lg bg-base-200 flex items-center justify-center flex-shrink-0">
-                <span class="material-symbols-outlined text-4xl text-base-content/30">
-                  image_not_supported
-                </span>
-              </div>
-            `}
-            
-            <div class="place-details flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-2">
-                <h3 class="place-name text-lg font-semibold">${name}</h3>
-                ${this.renderBusinessStatus(businessStatus)}
-              </div>
-              
-              <p class="place-address text-sm text-base-content/70 mt-1">
-                <span class="material-symbols-outlined text-sm align-middle">location_on</span>
-                ${address}
-              </p>
-              ${this.renderRatingAndPrice(rating, userRatings, priceLevel)}
-              <div class="place-types">
-                ${types?.map(type => `<span class="place-type">${this.formatPlaceType(type)}</span>`).join('') || ''}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  private renderBusinessStatus(status: string): string {
-    const statusConfig: Record<string, { class: string; text: string }> = {
-      'OPERATIONAL': { class: 'badge-success', text: 'Open' },
-      'CLOSED_TEMPORARILY': { class: 'badge-warning', text: 'Temporary Closed' },
-      'CLOSED_PERMANENTLY': { class: 'badge-error', text: 'Permanently Closed' }
+      'Entertainment': 'local_activity',
+      'Services': 'miscellaneous_services',
+      'default': 'place'
     };
 
-    const config = statusConfig[status] || { class: 'badge-ghost', text: status };
-    return `<div class="badge ${config.class} badge-sm">${config.text}</div>`;
-  }
-
-  private renderRatingAndPrice(rating?: number, userRatings?: number, priceLevel?: number): string {
-    if (!rating && !priceLevel) return '';
-
-    return `
-      <div class="flex items-center gap-3 mt-2">
-        ${rating ? `
-          <div class="flex items-center gap-1">
-            <div class="rating rating-sm">
-              ${this.generateRatingStars(rating)}
-            </div>
-            <span class="text-sm font-medium">${rating.toFixed(1)}</span>
-            ${userRatings ? `
-              <span class="text-xs text-base-content/60">(${this.formatNumber(userRatings)})</span>
-            ` : ''}
-          </div>
-        ` : ''}
-        ${priceLevel ? `
-          <div class="text-sm font-medium text-base-content/70">
-            ${this.generatePriceLevel(priceLevel)}
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }
-
-  private formatNumber(num: number): string {
-    return new Intl.NumberFormat().format(num);
-  }
-
-  private generateRatingStars(rating: number): string {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    
-    return `
-      ${Array(fullStars).fill('<span class="text-warning">★</span>').join('')}
-      ${hasHalfStar ? '<span class="text-warning">★</span>' : ''}
-      ${Array(emptyStars).fill('<span class="text-base-content/20">★</span>').join('')}
-    `;
-  }
-
-  private generatePriceLevel(level: number): string {
-    return Array(level).fill('$').join('');
+    return iconMap[filter] || iconMap.default;
   }
 
   private formatPlaceType(type: string): string {
@@ -357,24 +249,283 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
       .join(' ');
   }
 
-  protected renderEmptyState(): string {
-    return `
-      <div class="hero min-h-[300px] bg-base-200/50 rounded-box backdrop-blur-sm">
-        <div class="hero-content text-center">
-          <div class="max-w-md">
-            <div class="avatar placeholder mb-8 animate-float">
-              <div class="w-24 h-24 rounded-full bg-base-300 ring-2 ring-base-content/10">
-                <span class="material-symbols-outlined text-5xl text-base-content/50">
-                  location_off
-                </span>
-              </div>
+  private initializeMap(): void {
+    if (this.mapInitialized) return;
+    
+    const mapElement = document.getElementById(this.mapId);
+    if (!mapElement || !window.google || !window.google.maps) return;
+    
+    // Get center coordinates from first place or default to a fallback
+    const firstPlace = this.data.places?.[0];
+    const center = firstPlace ? 
+      { lat: firstPlace.latitude, lng: firstPlace.longitude } : 
+      { lat: -37.8136, lng: 144.9631 }; // Default to Melbourne CBD
+    
+    // Enhanced map styling for dark theme
+    const mapOptions: google.maps.MapOptions = {
+      center,
+      zoom: 14,
+      disableDefaultUI: true,
+      zoomControl: false,
+      fullscreenControl: false,
+      styles: [
+        { elementType: "geometry", stylers: [{ color: "#121212" }] },
+        { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a1a" }] },
+        {
+          featureType: "administrative",
+          elementType: "geometry",
+          stylers: [{ color: "#2a2a2a" }]
+        },
+        {
+          featureType: "administrative.country",
+          elementType: "labels.text.fill",
+          stylers: [{ color: "#9e9e9e" }]
+        },
+        {
+          featureType: "administrative.locality",
+          elementType: "labels.text.fill",
+          stylers: [{ color: "#dfdfdf" }]
+        },
+        {
+          featureType: "poi",
+          elementType: "labels.text.fill",
+          stylers: [{ color: "#dfdfdf" }]
+        },
+        {
+          featureType: "poi.park",
+          elementType: "geometry",
+          stylers: [{ color: "#151515" }]
+        },
+        {
+          featureType: "poi.park",
+          elementType: "labels.text.fill",
+          stylers: [{ color: "#6b9a76" }]
+        },
+        {
+          featureType: "road",
+          elementType: "geometry",
+          stylers: [{ color: "#2a2a2a" }]
+        },
+        {
+          featureType: "road",
+          elementType: "geometry.stroke",
+          stylers: [{ color: "#1a1a1a" }]
+        },
+        {
+          featureType: "road.arterial",
+          elementType: "geometry",
+          stylers: [{ color: "#373737" }]
+        },
+        {
+          featureType: "road.highway",
+          elementType: "geometry",
+          stylers: [{ color: "#454545" }]
+        },
+        {
+          featureType: "road.highway.controlled_access",
+          elementType: "geometry",
+          stylers: [{ color: "#5c5c5c" }]
+        },
+        {
+          featureType: "road.local",
+          elementType: "geometry",
+          stylers: [{ color: "#2a2a2a" }]
+        },
+        {
+          featureType: "transit",
+          elementType: "labels.text.fill",
+          stylers: [{ color: "#e0e0e0" }]
+        },
+        {
+          featureType: "water",
+          elementType: "geometry",
+          stylers: [{ color: "#000000" }]
+        },
+        {
+          featureType: "water",
+          elementType: "labels.text.fill",
+          stylers: [{ color: "#4f97cf" }]
+        }
+      ]
+    };
+    
+    const map = new google.maps.Map(mapElement, mapOptions);
+    
+    // Create map attribution
+    const attribution = document.createElement('div');
+    attribution.className = 'map-attribution';
+    attribution.innerHTML = 'Map data ©2025 Google';
+    mapElement.appendChild(attribution);
+    
+    // Add enhanced markers for each place
+    const markers: google.maps.Marker[] = [];
+    const infoWindows: google.maps.InfoWindow[] = [];
+    
+    this.data.places?.forEach((place, index) => {
+      if (place.latitude && place.longitude) {
+        const position = { lat: place.latitude, lng: place.longitude };
+        
+        // Get place type color
+        const placeColor = this.getMarkerColorForPlaceType(place.types?.[0] || '');
+        
+        // Create custom icon with dynamic color
+        const icon = {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: placeColor,
+          fillOpacity: 0.9,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+          scale: 10,
+        };
+        
+        const marker = new google.maps.Marker({
+          position,
+          map,
+          title: place.name,
+          animation: google.maps.Animation.DROP,
+          icon,
+          optimized: false, // Helps with marker animations
+          zIndex: 1000 - index // Higher z-index for earlier places
+        });
+        
+        markers.push(marker);
+        
+        // Create improved info window
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div class="place-info-window">
+              <h4>${place.name}</h4>
+              <p>${place.address}</p>
+              ${place.rating ? `<p>Rating: ${place.rating} ★</p>` : ''}
             </div>
-            <h2 class="text-2xl font-bold mb-4">No Results Found</h2>
-            <p class="text-base-content/70">
-              No relevant results were found
-            </p>
+          `,
+          maxWidth: 240,
+          pixelOffset: new google.maps.Size(0, -10)
+        });
+        
+        infoWindows.push(infoWindow);
+        
+        // Add marker click event
+        marker.addListener('click', () => {
+          // Close all other info windows
+          infoWindows.forEach(iw => iw.close());
+          
+          // Open this info window
+          infoWindow.open(map, marker);
+          
+          // Add bounce animation
+          marker.setAnimation(google.maps.Animation.BOUNCE);
+          setTimeout(() => marker.setAnimation(null), 750);
+          
+          // Center map on this marker
+          map.panTo(position);
+        });
+      }
+    });
+    
+    // Add map control event listeners
+    const mapControls = mapElement.parentElement?.querySelector('.map-controls');
+    if (mapControls) {
+      const buttons = mapControls.querySelectorAll('.control-button');
+      buttons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const action = target.getAttribute('title');
+          
+          if (action === 'Zoom in') {
+            map.setZoom(map.getZoom() + 1);
+          } else if (action === 'Zoom out') {
+            map.setZoom(map.getZoom() - 1);
+          } else if (action === 'Center map') {
+            map.setCenter(center);
+            map.setZoom(14);
+          }
+        });
+      });
+    }
+    
+    this.mapInitialized = true;
+  }
+
+  private getMarkerColorForPlaceType(type: string): string {
+    const typeColors: Record<string, string> = {
+      restaurant: '#FF5722',
+      cafe: '#795548',
+      bar: '#9C27B0',
+      lodging: '#2196F3',
+      shopping_mall: '#4CAF50',
+      store: '#8BC34A',
+      movie_theater: '#673AB7',
+      museum: '#FFC107',
+      parking: '#607D8B',
+      subway_station: '#3F51B5',
+      transit_station: '#03A9F4',
+      default: '#E91E63'
+    };
+    
+    // Find matching type or use default
+    for (const key of Object.keys(typeColors)) {
+      if (type.toLowerCase().includes(key)) {
+        return typeColors[key];
+      }
+    }
+    
+    return typeColors.default;
+  }
+
+  private renderLoadingState(): string {
+    return `
+      <div class="nearby-places-widget loading">
+        <div class="search-section">
+          <div class="skeleton search"></div>
+          <div class="filters">
+            <div class="skeleton filter"></div>
+            <div class="skeleton filter"></div>
+            <div class="skeleton filter"></div>
           </div>
         </div>
+        
+        <div class="skeleton map"></div>
+        
+        <div class="places-grid">
+          <div class="skeleton card"></div>
+          <div class="skeleton card"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderEmptyState(): string {
+    return `
+      <div class="nearby-places-widget">
+        <div class="search-section">
+          <div class="search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" placeholder="Find nearby places..." value="${this.data.query || ''}" />
+          </div>
+          <div class="filters">
+            ${this.renderFilters()}
+          </div>
+        </div>
+        
+        <div class="places-empty">
+          <span class="material-symbols-outlined">location_off</span>
+          <h3>No Nearby Places Found</h3>
+          <p>We couldn't find any places nearby. Try changing your location or filters.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  private createErrorState(message: string): string {
+    return `
+      <div class="nearby-places-widget error">
+        <div class="error-icon">
+          <span class="material-symbols-outlined">error_outline</span>
+        </div>
+        <div class="error-message">${message || 'Unable to load nearby places'}</div>
       </div>
     `;
   }

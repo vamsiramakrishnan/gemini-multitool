@@ -19,7 +19,7 @@ import React from "react";
 import { useEffect, useRef } from "react";
 import c from "classnames";
 
-const lineCount = 3;
+const lineCount = 4;
 
 export type AudioPulseProps = {
   active: boolean;
@@ -36,8 +36,8 @@ export default function AudioPulse({ active, volume, hover }: AudioPulseProps) {
       lines.current.forEach(
         (line, i) =>
         (line.style.height = `${Math.min(
-          24,
-          4 + volume * (i === 1 ? 400 : 60),
+          28,
+          4 + volume * (i === 1 || i === 2 ? 400 : 60),
         )}px`),
       );
       timeout = window.setTimeout(update, 100);
@@ -56,7 +56,7 @@ export default function AudioPulse({ active, volume, hover }: AudioPulseProps) {
           <div
             key={i}
             ref={(el) => (lines.current[i] = el!)}
-            style={{ animationDelay: `${i * 133}ms` }}
+            style={{ animationDelay: `${i * 120}ms` }}
           />
         ))}
     </div>

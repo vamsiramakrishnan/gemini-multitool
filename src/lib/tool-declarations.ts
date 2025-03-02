@@ -187,5 +187,55 @@ export const toolDeclarations: FunctionDeclaration[] = [
       },
       required: ["altair_json"]
     }
+  },
+  {
+    name: "render_table",
+    description: "Renders a markdown table with the provided data",
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        markdown: {
+          type: SchemaType.STRING,
+          description: "The markdown table content to render (must be valid markdown table format)"
+        },
+        title: {
+          type: SchemaType.STRING,
+          description: "Optional title for the table"
+        },
+        description: {
+          type: SchemaType.STRING,
+          description: "Optional description for the table"
+        }
+      },
+      required: ["markdown"]
+    }
+  },
+  {
+    name: "explain_topic",
+    description: "Generate comprehensive explanations on any topic with customizable style and format",
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        topic: {
+          type: SchemaType.STRING,
+          description: "The topic to explain (e.g., 'quantum computing', 'climate change', 'blockchain')"
+        },
+        style: {
+          type: SchemaType.STRING,
+          description: "The style of explanation",
+          enum: ["academic", "conversational", "technical", "simple"]
+        },
+        format: {
+          type: SchemaType.STRING,
+          description: "The format of the explanation",
+          enum: ["detailed", "summary", "step-by-step", "qa"]
+        },
+        context: {
+          type: SchemaType.STRING,
+          description: "Additional context or specific aspects to focus on"
+        }
+      },
+      required: ["topic"]
+    }
   }
 ]; 

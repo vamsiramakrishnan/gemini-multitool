@@ -2,14 +2,61 @@
 @import '../../styles/shared/layout-mixins';
 
 .action-button {
-  @include retro-button-icon;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover::after {
+    opacity: 1;
+  }
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  &:active {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(0);
+  }
   
   &.connected {
-    @include retro-button-success;
+    background: rgba(var(--primary-rgb), 0.15);
+    border-color: rgba(var(--primary-rgb), 0.3);
+    color: var(--primary-500);
+    box-shadow: 0 2px 12px rgba(var(--primary-rgb), 0.15);
+    
+    &:hover {
+      background: rgba(var(--primary-rgb), 0.2);
+      box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.2);
+    }
   }
 
   &.error {
-    @include retro-button-danger;
+    background: rgba(var(--error-rgb), 0.1);
+    border-color: rgba(var(--error-rgb), 0.3);
+    color: var(--error-500);
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
   }
 
   &.loading {
@@ -19,100 +66,181 @@
     .loading-indicator {
       position: absolute;
       inset: 4px;
-      border: 2px solid rgba($retro-blue, 0.2);
-      border-top-color: $retro-blue;
+      border: 2px solid rgba(var(--primary-rgb), 0.1);
+      border-top-color: var(--primary-500);
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+  }
+  
+  &.active {
+    background: rgba(var(--primary-rgb), 0.15);
+    border-color: rgba(var(--primary-rgb), 0.3);
+    color: var(--primary-500);
+    box-shadow: 0 2px 12px rgba(var(--primary-rgb), 0.15);
+    animation: pulse 2s infinite;
+  }
+  
+  .material-symbols-outlined {
+    font-size: 24px;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
     }
   }
 }
 
 @property --volume {
-  syntax: "length";
+  syntax: "<length>";
   inherit: false;
   initial-value: 0px;
 }
 
 .disabled .mic-button,
 .mic-button.disabled {
-  &:before {
-    background: rgba(0, 0, 0, 0);
-  }
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .mic-button {
-  @include retro-button-icon;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  &:hover::before {
-    opacity: 0.2;
-  }
-  
-  &.active {
-    animation: pulse 2s infinite;
-  }
-  
   &.muted {
-    @include retro-button-danger;
+    background: rgba(var(--error-rgb), 0.1);
+    border-color: rgba(var(--error-rgb), 0.3);
+    color: var(--error-500);
+    
+    &:hover {
+      background: rgba(var(--error-rgb), 0.15);
+    }
   }
 }
 
 .connect-toggle {
-  @include retro-button-primary;
-  width: 48px;
+  width: auto;
+  padding: 12px 16px;
+  font-weight: 600;
   height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
+  border-radius: 16px;
+  /* Default state (not connected) */
+  background: var(--primary-100); /* Lighter shade for base */
+  border-color: var(--primary-300); /* Slightly darker border */
+  color: var(--primary-600);     /* Darker text for contrast */
+  order: -1;
+  transition: all 0.3s ease; /* Smooth transitions */
+
+    &:hover {
+      background: var(--primary-200); /* Slightly darker on hover */
+      box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.2); /* More pronounced shadow */
+      transform: translateY(-2px); /* Slight lift */
+    }
+
+    &:focus {
+      outline: 2px solid var(--primary-400); /* Clear focus ring */
+      outline-offset: 2px;
+    }
+
+    &:active {
+      background: var(--primary-300); /* Even darker on press */
+      transform: translateY(0); /* Reset lift */
+      box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.15); /* Smaller shadow */
+    }
+
   &.connected {
-    @include retro-button-success;
+    /* Connected state */
+    background: rgba(var(--error-rgb), 0.1);
+    border-color: rgba(var(--error-rgb), 0.3);
+    color: var(--error-500);
+
+    &:hover {
+      background: rgba(var(--error-rgb), 0.15);
+      box-shadow: 0 4px 16px rgba(var(--error-rgb), 0.2); /* More pronounced shadow */
+      transform: translateY(-2px);
+    }
+    &:active {
+      background: rgba(var(--error-rgb), 0.2); /* Even darker on press */
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(var(--error-rgb), 0.15);
+    }
   }
+    .loading-indicator {
+      position: absolute;
+      inset: 8px;
+      border: 2px solid rgba(var(--primary-rgb), 0.1);
+      border-top-color: var(--primary-500);
+      border-radius: 50%;
+      animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
 }
 
 .control-tray {
-  @include control-tray-base;
+  position: relative;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.chat-visible {
+    opacity: 0.85;
+    pointer-events: none;
+    filter: grayscale(0.3) blur(1px);
+    transform: scale(0.98);
+  }
 
   .controls-group {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 8px;
+    padding: var(--space-xs);
+    transition: all 0.3s ease;
     
     &.left {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
+      min-width: 200px;
+      justify-content: flex-start;
+      
+      .action-button {
+        margin-right: var(--space-xs);
+        transform-origin: left center;
+      }
     }
     
     &.center {
-      flex: 1;
-      display: flex;
-      align-items: center;
+      flex: 2;
       justify-content: center;
-      gap: var(--space-sm);
+      gap: var(--space-md);
+      
+      .action-button {
+        margin: 0 var(--space-xxs);
+        transform-origin: center;
+      }
     }
     
     &.right {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
+      min-width: 200px;
+      justify-content: flex-end;
+      
+      .action-button {
+        margin-left: var(--space-xs);
+        transform-origin: right center;
+      }
     }
   }
 
   .connection-container {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
+    padding: var(--space-xxs) var(--space-xs);
+    transition: transform 0.3s ease;
 
-    .connection-button-container {
-      position: relative;
+    &:hover {
+      transform: translateY(-1px);
     }
 
     .text-indicator {
@@ -120,136 +248,124 @@
       color: $retro-blue;
       font-size: var(--font-size-sm);
       min-width: 80px;
-      transition: var(--transition-all);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 12px rgba($retro-blue, 0.25);
+      opacity: 0.9;
+      
+      &:hover {
+        opacity: 1;
+        transform: scale(1.02);
+      }
     }
 
     &.connected .text-indicator {
       color: $retro-green;
+      text-shadow: 0 0 12px rgba($retro-green, 0.25);
     }
   }
 
   .actions-nav {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 12px;
+    padding: 4px 8px;
+    flex: 1;
+    transition: opacity 0.3s ease, filter 0.3s ease;
 
     &.disabled {
       opacity: 0.5;
       pointer-events: none;
-    }
-
-    .action-button {
-      @include retro-button-icon;
-
-      &.active {
-        @include retro-button-primary;
-      }
-
-      &.error {
-        @include retro-button-danger;
-        animation: shake 0.5s ease;
-      }
-
-      &.loading {
-        pointer-events: none;
-        position: relative;
-        .loading-indicator {
-          position: absolute;
-          inset: 4px;
-          border: 2px solid var(--text-secondary);
-          border-top-color: var(--primary);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-      }
-
-      &.mic-button {
-        &.muted {
-          @include retro-button-danger;
-        }
-      }
-
-      &.no-action {
-        pointer-events: none;
-      }
-
-      &.outlined {
-        border: 1px solid var(--border);
-      }
-
-      .material-symbols-outlined {
-        font-size: 24px;
-        &.filled {
-          font-variation-settings: 'FILL' 1;
-        }
-      }
-    }
-
-    .layout-controls {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xxs);
-      margin-left: var(--space-xs);
-      padding-left: var(--space-xs);
-      border-left: var(--terminal-line);
-
-      button {
-        @include retro-button-icon;
-      }
+      filter: grayscale(0.5);
     }
   }
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba($retro-pink, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba($retro-pink, 0); }
-  100% { box-shadow: 0 0 0 0 rgba($retro-pink, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0); }
 }
 
 @keyframes subtle-pulse {
-  0%, 100% { 
-    transform: scale(1);
-    opacity: 1;
+  0% {
+    box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.2);
   }
-  50% { 
-    transform: scale(1.05);
-    opacity: 0.9;
+  50% {
+    box-shadow: 0 0 16px rgba(var(--primary-rgb), 0.3);
   }
-}
-
-.action-button:not(.disabled):hover {
-  animation: subtle-pulse 1.5s infinite;
+  100% {
+    box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.2);
+  }
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-5px);
-  }
-  75% {
-    transform: translateX(5px);
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-3px); }
+  40%, 60% { transform: translateX(3px); }
+}
+
+@media (max-width: 768px) {
+  .control-tray {
+    padding: 8px 16px;
+    .action-button {
+      width: 36px;
+      height: 36px;
+    }
+    .actions-nav {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .controls-group {
+      width: 100%;
+      justify-content: space-between;
+    }
   }
 }
 
-// Media Queries
-@media (max-width: 768px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .control-tray {
-    padding: var(--space-xs) var(--space-sm);
-    
     .controls-group {
-      gap: var(--space-xs);
+      &.left, &.right {
+        min-width: 160px;
+      }
     }
-
+    
     .actions-nav {
-      gap: var(--space-xs);
+      gap: 10px;
     }
+  }
+}
+
+.persistent-chat-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+  
+  &.has-chat {
+    pointer-events: auto;
+  }
+}
+
+.error-message {
+  background: rgba(var(--error-rgb), 0.1);
+  color: var(--error-500);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  animation: fadeIn 0.3s ease;
+
+  &.error-active {
+    background: var(--error-400);
+    color: white;
   }
 }

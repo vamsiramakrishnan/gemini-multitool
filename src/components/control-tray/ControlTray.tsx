@@ -21,13 +21,13 @@ import { UseMediaStreamResult } from "../../hooks/use-media-stream-mux";
 import { useScreenCapture } from "../../hooks/use-screen-capture";
 import { useWebcam } from "../../hooks/use-webcam";
 import { AudioRecorder } from "../../lib/audio-recorder";
-import { ChatWidget } from "../widgets/chat/chat-widget";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
 import { ToolHandler } from "../../lib/tool-handler";
-import { useLayout } from "../../contexts/LayoutContext";
-import { ChatWidgetComponent } from "../widgets/chat/ChatWidgetComponent";
+import { ChatWidgetComponent } from "../chat/ChatWidgetComponent";
 import { useVideoStream } from '../../hooks/use-video-stream';
+import { useChat } from '../../contexts/ChatContext';
+import { motion } from 'framer-motion';
 
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
@@ -107,12 +107,9 @@ function ControlTray({
     activeVideoStream 
   });
   const connectButtonRef = useRef<HTMLButtonElement>(null);
-
   const { client, connected, connect, disconnect, volume } = useLiveAPIContext();
   const toolHandlerRef = useRef<ToolHandler | null>(null);
-  const [chatWidgetVisible, setChatWidgetVisible] = useState(false);
-  const chatWidgetRef = useRef<ChatWidget | null>(null);
-  const { mode, setMode } = useLayout();
+  const { isVisible: chatVisible, showChat, hideChat, setShouldCleanup } = useChat();
 
   // Handle stream changes
   const changeStreams = useCallback(async (nextStream?: UseMediaStreamResult) => {
@@ -226,49 +223,71 @@ function ControlTray({
     }
   }, [connected]);
 
-  // Handle chat widget
-  useEffect(() => {
-    if (connected && chatWidgetVisible && !chatWidgetRef.current) {
-      chatWidgetRef.current = new ChatWidget({
-        id: 'control-tray-chat',
-        liveAPIClient: client
-      });
-      const container = document.querySelector('.chat-widget-container');
-      if (container) {
-        chatWidgetRef.current.render().then(html => {
-          container.innerHTML = html;
-        });
-      }
-    }
-  }, [connected, chatWidgetVisible, client]);
+  // Handle disconnect
+  const handleDisconnect = useCallback(() => {
+    setShouldCleanup(true);
+    disconnect();
+  }, [disconnect, setShouldCleanup]);
 
-  const toggleChat = () => {
-    setChatWidgetVisible(!chatWidgetVisible);
-  };
+  // Reset cleanup flag when connection state changes
+  useEffect(() => {
+    if (connected) {
+      setShouldCleanup(false);
+    }
+  }, [connected, setShouldCleanup]);
+
+  // Handle chat toggle
+  const toggleChat = useCallback(() => {
+    if (chatVisible) {
+      hideChat();
+    } else {
+      showChat();
+    }
+  }, [chatVisible, showChat, hideChat]);
 
   return (
     <>
-      <section className="control-tray">
+      <section className={cn("control-tray", { "chat-visible": chatVisible })}>
         <canvas style={{ display: "none" }} ref={renderCanvasRef} />
-        <nav className={cn("actions-nav", { disabled: !connected })}>
-          <button
-            className={cn("action-button mic-button", { muted })}
-            onClick={() => setMuted(!muted)}
-            title={muted ? "Unmute microphone" : "Mute microphone"}
-          >
-            {!muted ? (
-              <span className="material-symbols-outlined filled">mic</span>
-            ) : (
-              <span className="material-symbols-outlined filled">mic_off</span>
-            )}
-          </button>
+        
+        {/* Connect/Disconnect button outside the disabled nav */}
+        <button
+          ref={connectButtonRef}
+          className={cn("action-button connect-toggle", { connected })}
+          onClick={connected ? handleDisconnect : connect}
+          title={connected ? "Disconnect" : "Connect"}
+          aria-label={connected ? "Disconnect" : "Connect"}
+        >
+          <span className="material-symbols-outlined">
+            {connected ? "power_settings_new" : "login"}
+          </span>
+          {!connected && client.status === "connecting" && (
+            <span className="loading-indicator" />
+          )}
+        </button>
 
-          <div className="action-button no-action outlined">
-            <AudioPulse volume={volume} active={connected} hover={false} />
+        <nav className={cn("actions-nav", { disabled: !connected })}>
+          {/* Group related buttons */}
+          <div className="controls-group">
+            <button
+              className={cn("action-button mic-button", { muted })}
+              onClick={() => setMuted(!muted)}
+              title={muted ? "Unmute microphone" : "Mute microphone"}
+            >
+              {!muted ? (
+                <span className="material-symbols-outlined">mic</span>
+              ) : (
+                <span className="material-symbols-outlined">mic_off</span>
+              )}
+            </button>
+
+            <div className="action-button no-action">
+              <AudioPulse volume={volume} active={connected} hover={false} />
+            </div>
           </div>
 
           {supportsVideo && (
-            <>
+            <div className="controls-group">
               <MediaStreamButton
                 isStreaming={screenCaptureStream.isStreaming}
                 start={() => changeStreams(screenCaptureStream)}
@@ -287,49 +306,39 @@ function ControlTray({
                 disabled={!connected}
                 error={streamError || videoProcessingError}
               />
-            </>
+            </div>
           )}
 
-          <button
-            className={cn("action-button", { active: chatWidgetVisible })}
-            onClick={toggleChat}
-            title={chatWidgetVisible ? "Close chat" : "Open chat"}
-          >
-            <span className="material-symbols-outlined filled">
-              {chatWidgetVisible ? "close" : "chat"}
-            </span>
-          </button>
-
-          <div className="layout-controls">
-            <button onClick={() => setMode('compact')} title="Compact view">
-              <span className="material-symbols-outlined">view_compact</span>
-            </button>
-            <button onClick={() => setMode('spacious')} title="Spacious view">
-              <span className="material-symbols-outlined">space_dashboard</span>
-            </button>
-            <button onClick={() => setMode('auto')} title="Auto layout">
-              <span className="material-symbols-outlined">auto_awesome</span>
+          <div className="controls-group">
+            <button
+              className={cn("action-button", { active: chatVisible })}
+              onClick={toggleChat}
+              title={chatVisible ? "Hide chat" : "Show chat"}
+            >
+              <span className="material-symbols-outlined">chat</span>
             </button>
           </div>
 
           {children}
         </nav>
-
-        <button
-          ref={connectButtonRef}
-          className={cn("action-button connect-toggle", { connected })}
-          onClick={connected ? disconnect : connect}
-          title={connected ? "Disconnect" : "Connect"}
-        >
-          <span className="material-symbols-outlined filled">
-            {connected ? "pause" : "play_arrow"}
-          </span>
-        </button>
       </section>
 
-      {chatWidgetVisible && (
-        <div className="chat-widget-container">
+      {/* Render chat in persistent layer */}
+      <div className={cn("persistent-chat-layer", { "has-chat": chatVisible })}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3 }}
+        >
           <ChatWidgetComponent />
+        </motion.div>
+      </div>
+
+      {streamError && (
+        <div className="error-message error-active">
+          <span className="material-symbols-outlined">error_outline</span>
+          {streamError.message}
         </div>
       )}
     </>

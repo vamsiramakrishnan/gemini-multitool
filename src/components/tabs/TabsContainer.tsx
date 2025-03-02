@@ -3,6 +3,7 @@ import './TabsContainer.scss';
 import { Item, WidgetState } from '../../types/widget';
 import { WidgetItem } from '../widgets/item/WidgetItem';
 import { useTab, useWidget } from '../../contexts/RootContext';
+import { Reorder } from 'framer-motion';
 
 export interface TabsContainerProps {
   activeTabId: string;
@@ -21,10 +22,6 @@ export function TabsContainer({
 
   // Debug logging
   useEffect(() => {
-    console.log('Current tab:', activeTabId);
-    console.log('Available widgets:', widgets);
-    console.log('Widget states:', widgetStates);
-    console.log('Widget data:', widgetData);
   }, [activeTabId, widgets, widgetStates, widgetData]);
 
   // Handle tab removal
@@ -95,40 +92,40 @@ export function TabsContainer({
 
   return (
     <div className="tabs-container">
-      <div className="tabs-header">
+      <Reorder.Group axis="x" values={tabs} onReorder={setTabs} className="tabs-header">
         {tabs.map(tab => (
-          <div
+          <Reorder.Item
             key={tab.id}
+            value={tab}
             className={`tab ${activeTabId === tab.id ? 'active' : ''}`}
             onClick={() => onTabChange(tab.id)}
+            aria-selected={activeTabId === tab.id}
+            role="tab"
+            aria-controls={`tabpanel-${tab.id}`}
           >
             <span className="material-symbols-outlined">tab</span>
-            <input
-              type="text"
-              value={tab.label}
-              onChange={(e) => handleTabTitleChange(tab.id, e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-            />
+            <span className="tab-title">{tab.label}</span>
             {tabs.length > 1 && (
               <button
                 className="remove-tab"
                 onClick={(e) => handleRemoveTab(tab.id, e)}
-                aria-label={`Close ${tab.label} tab`}
+                aria-label={`Close ${tab.label}`}
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             )}
-          </div>
+          </Reorder.Item>
         ))}
-        <button 
-          className="add-tab" 
+        <button
+          className="add-tab"
           onClick={handleAddTab}
           aria-label="Add new tab"
+          role="button"
         >
           <span className="material-symbols-outlined">add</span>
         </button>
-      </div>
-      <div className="tab-content">
+      </Reorder.Group>
+      <div className="tab-content" role="tabpanel" id={`tabpanel-${activeTabId}`}>
         <div className="widgets-container">
           {visibleWidgets.length === 0 ? (
             <div className="empty-state">

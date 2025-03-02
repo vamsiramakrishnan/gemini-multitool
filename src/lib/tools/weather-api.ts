@@ -38,7 +38,8 @@ const conditionMap: { [key: string]: string } = {
   'Tornado': 'storm'
 };
 
-interface WeatherData {
+// Export the interface so it can be imported elsewhere
+export interface WeatherData {
   temperature: number;
   condition: string;
   description: string;
@@ -84,6 +85,29 @@ export async function getWeather(city: string): Promise<WeatherData | { error: s
     const mainCondition = weatherData.weather[0].main;
     const condition = conditionMap[mainCondition] || 'cloudy';
 
+    // Get timezone offset in seconds from UTC
+    const timezoneOffsetSeconds = weatherData.timezone;
+    
+    // Format sunrise and sunset times using the city's timezone
+    const formatTimeInCityTimezone = (timestamp: number) => {
+      // Create a date in UTC
+      const date = new Date(timestamp * 1000);
+      
+      // Calculate the UTC time in milliseconds
+      const utcTime = date.getTime();
+      
+      // Apply the city's timezone offset
+      const cityTime = new Date(utcTime + (timezoneOffsetSeconds * 1000));
+      
+      // Format the time
+      return cityTime.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true,
+        timeZone: 'UTC' // This is needed because we manually adjusted the time
+      });
+    };
+
     return {
       temperature: weatherData.main.temp,
       condition: condition,
@@ -94,8 +118,8 @@ export async function getWeather(city: string): Promise<WeatherData | { error: s
       country: weatherData.sys.country,
       feelsLike: weatherData.main.feels_like,
       pressure: weatherData.main.pressure,
-      sunrise: new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-      sunset: new Date(weatherData.sys.sunset * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      sunrise: formatTimeInCityTimezone(weatherData.sys.sunrise),
+      sunset: formatTimeInCityTimezone(weatherData.sys.sunset),
     };
   } catch (error: any) {
     console.error('Detailed error:', {

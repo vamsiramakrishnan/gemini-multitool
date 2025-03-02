@@ -1,51 +1,55 @@
 .audioPulse {
   display: flex;
-  width: 24px;
+  width: 28px;
   justify-content: space-evenly;
   align-items: center;
-  transition: all 0.5s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   & > div {
     background-color: var(--Neutral-30);
-    border-radius: 1000px;
+    border-radius: 4px;
     width: 4px;
     min-height: 4px;
-    border-radius: 1000px;
-    transition: height 0.1s;
+    transition: height 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &.hover > div {
-    animation: hover 1.4s infinite alternate ease-in-out;
+    animation: modern-hover 1.2s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   height: 4px;
-  transition: opacity 0.333s;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.active {
     opacity: 1;
 
     & > div {
-      background-color: var(--Neutral-80);
+      background-color: var(--primary-500);
+      box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.3);
     }
   }
 }
 
-@keyframes hover {
+@keyframes modern-hover {
   from {
-    transform: translateY(0);
+    transform: scaleY(0.6);
+    opacity: 0.7;
   }
 
   to {
-    transform: translateY(-3.5px);
+    transform: scaleY(1.2);
+    opacity: 1;
   }
 }
 
-@keyframes pulse {
+@keyframes modern-pulse {
   from {
-    scale: 1 1;
+    transform: scaleY(0.8);
+    opacity: 0.8;
   }
 
   to {
-    scale: 1.2 1.2;
+    transform: scaleY(1.1);
+    opacity: 1;
   }
 }
