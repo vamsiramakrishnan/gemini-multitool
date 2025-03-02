@@ -14,72 +14,123 @@ export interface MapData extends BaseWidgetData {
   destination: string;
   _rawResponse?: google.maps.DirectionsResult;
   error?: string;
+  isLoading?: boolean;
 }
 
-const darkMapStyle = [
+// Modern dark map style with better contrast and readability
+const modernDarkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#121212" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a1a" }] },
   {
-    "elementType": "geometry",
-    "stylers": [{"color": "#0c1115"}]
+    featureType: "administrative",
+    elementType: "geometry",
+    stylers: [{ color: "#2a2a2a" }]
   },
   {
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#00fff9"}]
+    featureType: "administrative.country",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }]
   },
   {
-    "elementType": "labels.text.stroke",
-    "stylers": [{"color": "#0a0b0c"}]
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#dfdfdf" }]
   },
   {
-    "featureType": "administrative.locality",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#00ff9d"}]
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#dfdfdf" }]
   },
   {
-    "featureType": "road",
-    "elementType": "geometry",
-    "stylers": [{"color": "#131820"}]
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#151515" }]
   },
   {
-    "featureType": "road",
-    "elementType": "geometry.stroke",
-    "stylers": [{"color": "#1a1f28"}]
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#6b9a76" }]
   },
   {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#00fff9"}]
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#2a2a2a" }]
   },
   {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [{"color": "#bd00ff"}]
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1a1a1a" }]
   },
   {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [{"color": "#0a0b0c"}]
+    featureType: "road.arterial",
+    elementType: "geometry",
+    stylers: [{ color: "#373737" }]
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#454545" }]
+  },
+  {
+    featureType: "road.highway.controlled_access",
+    elementType: "geometry",
+    stylers: [{ color: "#5c5c5c" }]
+  },
+  {
+    featureType: "road.local",
+    elementType: "geometry",
+    stylers: [{ color: "#2a2a2a" }]
+  },
+  {
+    featureType: "transit",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#e0e0e0" }]
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#000000" }]
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#4f97cf" }]
   }
 ]; 
 
 export class MapWidget extends BaseWidget<MapData> {
-  protected data: MapData;
-  private map: google.maps.Map | null = null;
-  private directionsRenderer: google.maps.DirectionsRenderer | null = null;
-  private loading: boolean = true;
-  private currentStepMarker: google.maps.marker.AdvancedMarkerElement | null = null;
-  private resizeObserver: ResizeObserver | null = null;
-  private stepEventListeners: { element: Element; listener: () => void }[] = [];
-  private debouncedResize: (() => void) | null = null;
-  private mapContainer: HTMLElement | null = null;
-  private mapsInstance: typeof google.maps | null = null;
-  private animationFrameId: number | null = null;
-
-  // Cache for expensive computations
+  // Caches for better performance
   private static iconCache: Record<string, string> = {};
   private static formattedAddressCache: Record<string, string> = {};
+  
+  // Map instance and related objects
+  private map: google.maps.Map | null = null;
+  private mapsInstance: typeof google.maps | null = null;
+  private directionsRenderer: google.maps.DirectionsRenderer | null = null;
+  private currentStepMarker: google.maps.marker.AdvancedMarkerElement | null = null;
+  private mapContainer: HTMLElement | null = null;
+  
+  // Utility variables
+  private loading = false;
+  private mapInitialized = false;
+  private stepEventListeners: Array<{ element: HTMLElement, listener: (e: Event) => void }> = [];
+  private resizeObserver: ResizeObserver | null = null;
+  private debouncedResize: ((entries: ResizeObserverEntry[]) => void) | null = null;
+  private animationFrameId: number | null = null;
+  
+  // Maps-specific event handler
+  private handleWheelZoom = (e: WheelEvent): void => {
+    if (!this.map) return;
+    if (e.ctrlKey) {
+      e.preventDefault();
+      this.map.setZoom((this.map.getZoom() || 0) + (e.deltaY > 0 ? -1 : 1));
+    }
+  };
 
   constructor(data?: MapData) {
-    super('Map');
+    super(data || { title: 'Map', origin: '', destination: '' });
     this.data = {
       title: 'Map',
       origin: '',
@@ -91,6 +142,15 @@ export class MapWidget extends BaseWidget<MapData> {
   async render(data: MapData = this.data): Promise<string> {
     // Update internal data
     this.data = { ...this.data, ...data };
+    this.loading = !this.data._rawResponse;
+    
+    if (this.data.isLoading || this.loading) {
+      return this.createLoadingState();
+    }
+    
+    if (this.data.error) {
+      return this.createErrorState(this.data.error);
+    }
     
     // Pre-format addresses for better performance
     if (!MapWidget.formattedAddressCache[this.data.origin]) {
@@ -110,9 +170,9 @@ export class MapWidget extends BaseWidget<MapData> {
             <div class="route-info">
               <div class="route-title">Navigation Route</div>
               <div class="route-path">
-                ${this.data.origin} 
+                ${MapWidget.formattedAddressCache[this.data.origin]} 
                 <span class="separator">→</span> 
-                ${this.data.destination}
+                ${MapWidget.formattedAddressCache[this.data.destination]}
               </div>
             </div>
           </div>
@@ -149,260 +209,107 @@ export class MapWidget extends BaseWidget<MapData> {
         </div>
 
         <div class="map-main">
-          ${this.loading ? this.createLoadingState() : ''}
           <div id="map-container"></div>
-          
           <div class="map-controls">
-            <button class="zoom-in" title="Zoom in">
+            <button class="control-button" title="Zoom in">
               <span class="material-symbols-outlined">add</span>
             </button>
-            <button class="zoom-out" title="Zoom out">
+            <button class="control-button" title="Zoom out">
               <span class="material-symbols-outlined">remove</span>
             </button>
-            <button class="fullscreen" title="Toggle fullscreen">
-              <span class="material-symbols-outlined">fullscreen</span>
+            <button class="control-button" title="Center route">
+              <span class="material-symbols-outlined">center_focus_strong</span>
             </button>
           </div>
+          ${this.loading ? this.createLoadingState() : ''}
         </div>
       </div>
     `;
   }
 
-  async postRender(container: HTMLElement, data: MapData): Promise<void> {
-    try {
-      this.mapContainer = container.querySelector('#map-container');
-      if (!this.mapContainer) throw new Error('Map container not found');
-      
-      // Add compositing optimizations
-      this.setupMapContainer();
-      
-      // Load maps API only once and cache the instance
-      if (!this.mapsInstance) {
-        this.mapsInstance = await loadGoogleMapsAPI();
-      }
-      const maps = this.mapsInstance;
-
-      // Create map instance if it doesn't exist
-      if (!this.map) {
-        this.map = new maps.Map(this.mapContainer, {
-          zoom: 13,
-          center: { lat: -37.8136, lng: 144.9631 },
-          mapTypeId: maps.MapTypeId.ROADMAP,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          zoomControl: false,
-          styles: darkMapStyle
-        });
-
-        // Disable unnecessary features for better performance
-        this.map.setOptions({
-          clickableIcons: false,
-          disableDoubleClickZoom: true
-        });
-
-        // Add initial resize trigger
-        setTimeout(() => {
-          if (this.map) {
-            maps.event.trigger(this.map, 'resize');
-          }
-        }, 100);
-      }
-
-      // Setup custom controls with cleanup
-      this.setupMapControls(container);
-
-      // Setup directions renderer if not already set
-      if (!this.directionsRenderer) {
-        this.directionsRenderer = new maps.DirectionsRenderer({
-          map: this.map,
-          suppressMarkers: false,
-          polylineOptions: {
-            strokeColor: '#4287f5',
-            strokeWeight: 4,
-            strokeOpacity: 0.8
-          },
-          markerOptions: {
-            icon: {
-              path: maps.SymbolPath.CIRCLE,
-              scale: 7,
-              fillColor: '#4287f5',
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2
-            }
+  async postRender(element: HTMLElement): Promise<void> {
+    super.postRender(element);
+    
+    // Add event listener for retry button in error state
+    const retryButton = element.querySelector('#retry-map-load');
+    if (retryButton) {
+      retryButton.addEventListener('click', () => {
+        // Re-render the widget to try again
+        this.render(this.data).then(html => {
+          if (element.parentElement) {
+            element.innerHTML = html;
+            this.initializeMap();
           }
         });
-      }
-
-      if (data._rawResponse) {
-        this.directionsRenderer?.setOptions({
-          suppressMarkers: true,
-          preserveViewport: true,
-          polylineOptions: {
-            strokeColor: '#4287f5',
-            strokeWeight: 3,
-            strokeOpacity: 0.7
-          }
-        });
-        
-        // Debounce bounds calculation
-        this.debouncedFitBounds(data._rawResponse);
-
-        // Setup step interactions
-        this.setupStepInteractions(container, data);
-      }
-
-      // Handle map container resizing with debounce
-      if (!this.debouncedResize) {
-        this.debouncedResize = debounce(() => {
-          if (this.map) {
-            maps.event.trigger(this.map, 'resize');
-            if (data._rawResponse?.routes?.[0]?.bounds) {
-              const bounds = data._rawResponse.routes[0].bounds;
-              this.map.fitBounds(bounds);
-              // Add visual padding by zooming out one level
-              const currentZoom = this.map.getZoom();
-              if (currentZoom) {
-                this.map.setZoom(currentZoom - 1);
-              }
-            }
-          }
-        }, 250);
-      }
-
-      if (!this.resizeObserver) {
-        this.resizeObserver = new ResizeObserver(this.debouncedResize);
-        this.resizeObserver.observe(this.mapContainer);
-      }
-
-    } catch (error) {
-      console.error('Error in map postRender:', error);
-      this.loading = false;
-      
-      // Add error state cleanup
-      const loadingContainer = container.querySelector('.loading-container');
-      if (loadingContainer) {
-        loadingContainer.innerHTML = `
-          <div class="error-state">
-            <span class="material-symbols-outlined">error</span>
-            Failed to load directions
-          </div>
-        `;
-      }
+      });
+    }
+    
+    // Initialize map if not in error state
+    if (!this.data.error) {
+      this.initializeMap();
     }
   }
 
   private setupMapControls(container: HTMLElement): void {
-    const zoomInBtn = container.querySelector('.zoom-in');
-    const zoomOutBtn = container.querySelector('.zoom-out');
-    const fullscreenBtn = container.querySelector('.fullscreen');
-
-    const zoomInHandler = () => {
-      if (this.map) this.map.setZoom((this.map.getZoom() || 0) + 1);
-    };
-    const zoomOutHandler = () => {
-      if (this.map) this.map.setZoom((this.map.getZoom() || 0) - 1);
-    };
-    const fullscreenHandler = () => {
-      const mapMain = container.querySelector('.map-main');
-      if (mapMain?.requestFullscreen) {
-        if (document.fullscreenElement) {
-          document.exitFullscreen();
-        } else {
-          mapMain.requestFullscreen();
+    const controlsContainer = container.querySelector('.map-controls');
+    if (!controlsContainer || !this.map) return;
+    
+    const buttons = controlsContainer.querySelectorAll('.control-button');
+    
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const title = button.getAttribute('title');
+        
+        if (title === 'Zoom in' && this.map) {
+          this.map.setZoom((this.map.getZoom() || 0) + 1);
+        } else if (title === 'Zoom out' && this.map) {
+          this.map.setZoom((this.map.getZoom() || 0) - 1);
+        } else if (title === 'Center route' && this.map && this.data._rawResponse?.routes?.[0]?.bounds) {
+          this.map.fitBounds(this.data._rawResponse.routes[0].bounds);
         }
-      }
-    };
-
-    zoomInBtn?.addEventListener('click', zoomInHandler);
-    zoomOutBtn?.addEventListener('click', zoomOutHandler);
-    fullscreenBtn?.addEventListener('click', fullscreenHandler);
-
-    // Store listeners for cleanup
-    this.stepEventListeners.push(
-      { element: zoomInBtn!, listener: zoomInHandler },
-      { element: zoomOutBtn!, listener: zoomOutHandler },
-      { element: fullscreenBtn!, listener: fullscreenHandler }
-    );
-
-    // Remove passive flag and preventDefault
-    container.addEventListener('wheel', this.handleWheelZoom, { 
-      passive: false
+      });
     });
   }
 
-  private handleWheelZoom = (e: WheelEvent) => {
-    if (!this.map) return;
-    
-    // Instead of preventing default, let's handle the zoom more gracefully
-    const delta = e.deltaY > 0 ? -1 : 1;
-    const currentZoom = this.map.getZoom() || 0;
-    const newZoom = Math.min(Math.max(currentZoom + delta, 1), 20); // Limit zoom range
-    
-    // Use smooth zoom with native Google Maps API
-    this.smoothZoom(this.map, newZoom, {
-      duration: 200
+  private addStepInteraction(container: HTMLElement, response: google.maps.DirectionsResult): void {
+    // Clear previous event listeners
+    this.stepEventListeners.forEach(({ element, listener }) => {
+      element.removeEventListener('click', listener);
     });
-  };
-
-  // Smooth zoom implementation using native Google Maps methods
-  private smoothZoom(map: google.maps.Map, targetZoom: number, options: { duration: number }) {
-    if (!map) return;
+    this.stepEventListeners = [];
     
-    const startZoom = map.getZoom() || 0;
-    const startTime = performance.now();
-    
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / options.duration, 1);
-      
-      // Apply easing
-      const eased = this.easeOutCubic(progress);
-      
-      // Calculate new zoom
-      const zoom = startZoom + (targetZoom - startZoom) * eased;
-      
-      // Use native setZoom
-      map.setZoom(zoom);
-      
-      // Continue animation if not complete
-      if (progress < 1) {
-        this.animationFrameId = requestAnimationFrame(animate);
-      }
-    };
-    
-    // Start animation
-    this.animationFrameId = requestAnimationFrame(animate);
-  }
-
-  // Keep the easing function
-  private easeOutCubic(t: number): number {
-    return 1 - Math.pow(1 - t, 3);
-  }
-
-  private setupStepInteractions(container: HTMLElement, data: MapData): void {
+    // Add new event listeners
     const steps = container.querySelectorAll('.step');
     steps.forEach((step, index) => {
-      const clickHandler = () => {
-        const routeStep = data._rawResponse?.routes?.[0]?.legs?.[0]?.steps?.[index];
-        if (routeStep && this.map) {
-          // Remove active class from all steps
-          steps.forEach(s => s.classList.remove('active'));
-          // Add active class to clicked step
-          step.classList.add('active');
-          
-          // Pan to step location
-          this.map.panTo(routeStep.start_location);
-          this.map.setZoom(16);
-          
-          // Update step marker
-          this.updateStepMarker(this.map, routeStep);
-        }
+      const stepElement = step as HTMLElement;
+      const clickListener = (e: Event) => {
+        // Remove active class from all steps
+        steps.forEach(s => s.classList.remove('active'));
+        // Add active class to clicked step
+        stepElement.classList.add('active');
+        
+        // Get the step data
+        const leg = response.routes?.[0]?.legs?.[0];
+        if (!leg?.steps?.[index] || !this.map) return;
+        
+        const stepData = leg.steps[index];
+        
+        // Update marker and map
+        this.updateStepMarker(this.map, stepData);
+        
+        // Pan to location
+        this.map.panTo(stepData.start_location);
+        this.map.setZoom(15);
       };
       
-      step.addEventListener('click', clickHandler);
-      this.stepEventListeners.push({ element: step, listener: clickHandler });
+      stepElement.addEventListener('click', clickListener);
+      this.stepEventListeners.push({ element: stepElement, listener: clickListener });
+      
+      // Activate first step by default
+      if (index === 0) {
+        // Using setTimeout to ensure the map is ready
+        setTimeout(() => clickListener(new Event('click')), 500);
+      }
     });
   }
 
@@ -453,7 +360,7 @@ export class MapWidget extends BaseWidget<MapData> {
 
   private renderNavigationSteps(data: MapData): string {
     if (!data._rawResponse?.routes?.[0]?.legs?.[0]?.steps) {
-      return '<div class="no-steps">No route steps available</div>';
+      return '<div class="no-steps">Route directions are loading...</div>';
     }
 
     return `
@@ -510,6 +417,61 @@ export class MapWidget extends BaseWidget<MapData> {
         <div class="loading-text">
           <span class="material-symbols-outlined">map</span>
           Preparing your route...
+        </div>
+      </div>
+    `;
+  }
+  
+  public createErrorState(message: string): string {
+    return `
+      <div class="map-widget">
+        <div class="map-sidebar">
+          <div class="route-header">
+            <div class="route-icon">
+              <span class="material-symbols-outlined">route</span>
+            </div>
+            <div class="route-info">
+              <div class="route-title">Navigation Route</div>
+              <div class="route-path">
+                ${this.data.origin} 
+                <span class="separator">→</span> 
+                ${this.data.destination}
+              </div>
+            </div>
+          </div>
+
+          <div class="navigation-fallback">
+            <div class="error-notice">
+              <div class="error-icon">
+                <span class="material-symbols-outlined">error_outline</span>
+              </div>
+              <div class="error-text">Map display unavailable</div>
+            </div>
+            ${this.data._rawResponse ? this.renderNavigationSteps(this.data) : `
+              <div class="no-route-data">
+                <p>Route directions could not be loaded.</p>
+                <p>Please try again later.</p>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <div class="map-main">
+          <div id="map-container" class="map-error-container">
+            <div class="map-error">
+              <div class="map-error-icon">
+                <span class="material-symbols-outlined">error_outline</span>
+              </div>
+              <div class="map-error-message">
+                <h3>Map loading failed</h3>
+                <p>${message || 'Unable to load Google Maps. Please check your internet connection and try again.'}</p>
+              </div>
+              <button class="map-error-retry" id="retry-map-load">
+                <span class="material-symbols-outlined">refresh</span>
+                Retry loading map
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -613,4 +575,97 @@ export class MapWidget extends BaseWidget<MapData> {
       }
     });
   }, 100);
+
+  private async loadGoogleMaps(): Promise<boolean> {
+    try {
+      // Check if Google Maps is already loaded
+      if (window.google?.maps) {
+        return true;
+      }
+      
+      // Attempt to load Google Maps
+      await loadGoogleMapsAPI();
+      
+      // Verify loading was successful
+      if (!window.google?.maps) {
+        throw new Error('Google Maps failed to load');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error loading Google Maps:', error);
+      this.handleMapError('Unable to load Google Maps API. Please check your internet connection or API key configuration.');
+      return false;
+    }
+  }
+
+  private handleMapError(errorMessage: string): void {
+    // Create error message element if map container exists
+    if (this.mapContainer) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'map-error';
+      errorDiv.innerHTML = `
+        <div class="map-error-icon">
+          <span class="material-symbols-outlined">error_outline</span>
+        </div>
+        <div class="map-error-message">
+          <h3>Map loading failed</h3>
+          <p>${errorMessage}</p>
+        </div>
+        <button class="map-error-retry">
+          <span class="material-symbols-outlined">refresh</span>
+          Retry
+        </button>
+      `;
+      
+      // Add click handler for retry button
+      const retryButton = errorDiv.querySelector('.map-error-retry');
+      if (retryButton) {
+        retryButton.addEventListener('click', () => {
+          // Remove error state
+          errorDiv.remove();
+          // Try loading the map again
+          this.initializeMap();
+        });
+      }
+      
+      this.mapContainer.appendChild(errorDiv);
+    }
+  }
+
+  async initializeMap(): Promise<void> {
+    if (this.mapInitialized) return;
+    
+    this.mapContainer = document.getElementById('map-container');
+    if (!this.mapContainer) return;
+    
+    // Show loading indicator
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.className = 'map-loading';
+    loadingIndicator.innerHTML = `
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading map...</div>
+    `;
+    this.mapContainer.appendChild(loadingIndicator);
+    
+    // Ensure Google Maps is loaded
+    const mapsLoaded = await this.loadGoogleMaps();
+    if (!mapsLoaded) {
+      loadingIndicator.remove();
+      return;
+    }
+    
+    // Continue with map initialization
+    try {
+      // Existing initialization code...
+      
+      // Remove loading indicator on success
+      loadingIndicator.remove();
+      this.mapInitialized = true;
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      loadingIndicator.remove();
+      this.handleMapError('Failed to initialize the map. Please try again later.');
+    }
+  }
 } 

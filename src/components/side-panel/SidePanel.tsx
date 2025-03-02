@@ -79,12 +79,13 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
       <button
         className={cn('panel-toggle', { open: panelOpen })}
         onClick={() => setPanelOpen(!panelOpen)}
-        aria-label={panelOpen ? 'Close panel' : 'Open panel'}
+        aria-label={panelOpen ? 'Close activity panel' : 'Open activity panel'}
+        style={{ transition: 'transform 0.3s ease', transform: panelOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
       >
         {panelOpen ? (
-          <RiSidebarFoldLine style={{ color: 'var(--retro-blue)' }} />
+          <RiSidebarFoldLine />
         ) : (
-          <RiSidebarUnfoldLine style={{ color: 'var(--retro-blue)' }} />
+          <RiSidebarUnfoldLine />
         )}
       </button>
 
@@ -92,7 +93,7 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
         <div className="panel-header">
           <h2>Activity Panel</h2>
           <div className={cn('streaming-indicator', { connected })}>
-            {connected ? '🔵 Streaming' : '⏸️ Paused'}
+            {connected ? '🟢 Live' : '⏸️ Paused'}
           </div>
         </div>
 
@@ -117,10 +118,10 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
                 value={textInput}
                 placeholder="Type something..."
                 disabled={!connected}
-                aria-label="Type your message"
+                aria-label="Message input"
               />
               <button
-                className="send-button material-symbols-outlined filled"
+                className="send-button material-symbols-outlined"
                 onClick={handleSubmit}
                 disabled={!connected}
                 aria-label="Send message"

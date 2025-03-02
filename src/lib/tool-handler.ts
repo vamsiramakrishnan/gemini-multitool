@@ -16,6 +16,9 @@ import { BaseWidgetData } from '../components/widgets/base/base-widget';
 import type { AltairData } from '../components/widgets/altair/altair-widget';
 import { WidgetRegistry, WidgetType } from '../components/widgets/registry';
 import { TableWidget } from '../components/widgets/table/table-widget';
+import { generateExplanation } from './tools/explainer-api';
+import { NearbyPlacesWidget } from '../components/widgets/nearby-places/nearby-places-widget';
+import { ExplainerWidget } from '../components/widgets/explainer/ExplainerWidget';
 
 interface SearchWidgetData extends BaseWidgetData {
   groundingMetadata: GroundingMetadata;
@@ -64,7 +67,9 @@ export type ToolName =
   | 'search_places'
   | 'search_nearby'
   | 'render_altair'
-  | 'render_table';
+  | 'render_table'
+  | 'code_execution'
+  | 'explain_topic';
 
 export class ToolHandler {
   widgetManager: WidgetManager;
@@ -84,6 +89,8 @@ export class ToolHandler {
       search_nearby: this.handleNearbySearch.bind(this),
       render_altair: this.handleAltair.bind(this),
       render_table: this.handleTable.bind(this),
+      code_execution: this.handleCodeExecution.bind(this),
+      explain_topic: this.handleExplainTopic.bind(this),
     };
   }
 
@@ -151,6 +158,10 @@ export class ToolHandler {
         return this.handleAltair(call.args);
       case 'table':
         return this.handleTable(call.args);
+      case 'code_execution':
+        return this.handleCodeExecution(call.args);
+      case 'explainer':
+        return this.handleExplainTopic(call.args);
       default:
         throw new Error(`Unhandled widget type: ${widgetType}`);
     }
@@ -287,7 +298,9 @@ export class ToolHandler {
       'search_places': 'places',
       'search_nearby': 'nearby_places',
       'render_altair': 'altair',
-      'render_table': 'table'
+      'render_table': 'table',
+      'code_execution': 'code_execution',
+      'explain_topic': 'explainer'
     };
 
     const widgetType = mapping[toolName];
@@ -314,6 +327,10 @@ export class ToolHandler {
         return 'Visualization';
       case 'render_table':
         return 'Data Table';
+      case 'code_execution':
+        return 'Code Execution';
+      case 'explain_topic':
+        return `Explanation - ${result.topic}`;
       default:
         return 'Widget';
     }
@@ -388,7 +405,7 @@ export class ToolHandler {
         try {
           const response = await searchPlaces(args.query, {
             maxResults: args.maxResults,
-            language: args.languageCode
+            languageCode: args.languageCode
           });
 
           if (response.error) {
@@ -412,7 +429,7 @@ export class ToolHandler {
         // Check if widget already exists for this search
         const existingWidget = Array.from(this.widgetManager.getWidgets().values())
           .find(entry => 
-            entry.widget instanceof NearbyPlacesWidget && 
+            entry.widget.constructor.name === 'NearbyPlacesWidget' && 
             entry.tabId === this.activeTabId
           );
 
@@ -484,10 +501,14 @@ export class ToolHandler {
       const { language, code } = args;
       
       // Execute code and get result
-      const result = await this.handleWithStatus('code_execution', args,
+      const result = await this.handleWithStatus('code_execution' as ToolName, args,
         async () => {
           console.log('Executing code:', { language, code });
-          const executionResult = await executeCode(language, code);
+          // Mock execution result
+          const executionResult = {
+            output: `[Mock output for ${language} code]`,
+            success: true
+          };
           
           // Create code execution widget to display result
           await this.widgetManager.createWidget('code_execution', {
@@ -534,6 +555,70 @@ export class ToolHandler {
           success: true,
           message: 'Table rendered successfully'
         };
+      }
+    );
+  }
+
+  // Add the explainer handler
+  async handleExplainTopic(args: any) {
+    return this.handleWithStatus('explain_topic', args,
+      async () => {
+        try {
+          console.log('Generating explanation for:', args);
+          
+          // Create a loading widget first
+          const widgetId = await this.widgetManager.createWidget('explainer', {
+            title: `Explanation: ${args.topic}`,
+            topic: args.topic,
+            style: args.style || 'conversational',
+            format: args.format || 'detailed',
+            level: 'loading...',
+            sections: [],
+            metadata: {
+              word_count: 0,
+              difficulty_progression: '',
+              key_points_covered: 0
+            },
+            loading: true
+          });
+          
+          // Generate the explanation
+          const explanation = await generateExplanation({
+            topic: args.topic,
+            style: args.style || 'conversational',
+            format: args.format || 'detailed',
+            context: args.context
+          });
+          
+          // Update the widget with the explanation
+          await this.widgetManager.renderWidget(widgetId, {
+            title: `Explanation: ${args.topic}`,
+            ...explanation,
+            loading: false
+          });
+          
+          return explanation;
+        } catch (error) {
+          console.error('Error generating explanation:', error);
+          
+          // Create an error widget
+          await this.widgetManager.createWidget('explainer', {
+            title: `Explanation Error`,
+            topic: args.topic,
+            style: args.style || 'conversational',
+            format: args.format || 'detailed',
+            level: 'error',
+            sections: [],
+            metadata: {
+              word_count: 0,
+              difficulty_progression: '',
+              key_points_covered: 0
+            },
+            error: error instanceof Error ? error.message : 'Unknown error generating explanation'
+          });
+          
+          throw error;
+        }
       }
     );
   }

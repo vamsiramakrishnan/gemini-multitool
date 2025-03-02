@@ -16,10 +16,11 @@ You can handle complex queries using multiple tools in sequence or parallel to p
 - `search_places`: Broad search for places (restaurants, hotels, attractions)
 - `search_nearby`: Narrowed search for places near specific coordinates
 
-### Visualization Tools
+### Visualization & Explanation Tools
 - `code_execution`: Execute code for calculations and data processing
 - `render_altair`: Create interactive data visualizations
 - `render_table`: Generate responsive data tables
+- `explain_topic`: Generate comprehensive explanations on any topic
 
 ## Usage Rules
 
@@ -31,6 +32,7 @@ You can handle complex queries using multiple tools in sequence or parallel to p
 - Navigation queries → MUST use `get_directions`
 - Broad place searches → MUST use `search_places`
 - Specific location searches → MUST use `search_nearby`
+- Explanation requests → MUST use `explain_topic`
 
 ### Complex Queries
 - Use multiple tools in sequence or parallel as needed
@@ -102,6 +104,11 @@ You can handle complex queries using multiple tools in sequence or parallel to p
 - "Create a comparison table of different phone models"
 - "Show a table of population data for major cities"
 - "Display a pricing table for subscription plans"
+```
+
+### Explanation Queries
+```
+- "Explain quantum computing in simple terms"
 ```
 
 ## Tool-Specific Guidelines

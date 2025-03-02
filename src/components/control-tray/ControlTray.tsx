@@ -27,6 +27,7 @@ import { ToolHandler } from "../../lib/tool-handler";
 import { ChatWidgetComponent } from "../chat/ChatWidgetComponent";
 import { useVideoStream } from '../../hooks/use-video-stream';
 import { useChat } from '../../contexts/ChatContext';
+import { motion } from 'framer-motion';
 
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
@@ -255,31 +256,38 @@ function ControlTray({
           className={cn("action-button connect-toggle", { connected })}
           onClick={connected ? handleDisconnect : connect}
           title={connected ? "Disconnect" : "Connect"}
+          aria-label={connected ? "Disconnect" : "Connect"}
         >
-          <span className="material-symbols-outlined filled">
-            {connected ? "power_settings_new" : "play_arrow"}
+          <span className="material-symbols-outlined">
+            {connected ? "power_settings_new" : "login"}
           </span>
+          {!connected && client.status === "connecting" && (
+            <span className="loading-indicator" />
+          )}
         </button>
 
         <nav className={cn("actions-nav", { disabled: !connected })}>
-          <button
-            className={cn("action-button mic-button", { muted })}
-            onClick={() => setMuted(!muted)}
-            title={muted ? "Unmute microphone" : "Mute microphone"}
-          >
-            {!muted ? (
-              <span className="material-symbols-outlined filled">mic</span>
-            ) : (
-              <span className="material-symbols-outlined filled">mic_off</span>
-            )}
-          </button>
+          {/* Group related buttons */}
+          <div className="controls-group">
+            <button
+              className={cn("action-button mic-button", { muted })}
+              onClick={() => setMuted(!muted)}
+              title={muted ? "Unmute microphone" : "Mute microphone"}
+            >
+              {!muted ? (
+                <span className="material-symbols-outlined">mic</span>
+              ) : (
+                <span className="material-symbols-outlined">mic_off</span>
+              )}
+            </button>
 
-          <div className="action-button no-action outlined">
-            <AudioPulse volume={volume} active={connected} hover={false} />
+            <div className="action-button no-action">
+              <AudioPulse volume={volume} active={connected} hover={false} />
+            </div>
           </div>
 
           {supportsVideo && (
-            <>
+            <div className="controls-group">
               <MediaStreamButton
                 isStreaming={screenCaptureStream.isStreaming}
                 start={() => changeStreams(screenCaptureStream)}
@@ -298,16 +306,18 @@ function ControlTray({
                 disabled={!connected}
                 error={streamError || videoProcessingError}
               />
-            </>
+            </div>
           )}
 
-          <button
-            className={cn("action-button", { active: chatVisible })}
-            onClick={toggleChat}
-            title={chatVisible ? "Hide chat" : "Show chat"}
-          >
-            <span className="material-symbols-outlined filled">chat</span>
-          </button>
+          <div className="controls-group">
+            <button
+              className={cn("action-button", { active: chatVisible })}
+              onClick={toggleChat}
+              title={chatVisible ? "Hide chat" : "Show chat"}
+            >
+              <span className="material-symbols-outlined">chat</span>
+            </button>
+          </div>
 
           {children}
         </nav>
@@ -315,8 +325,22 @@ function ControlTray({
 
       {/* Render chat in persistent layer */}
       <div className={cn("persistent-chat-layer", { "has-chat": chatVisible })}>
-        <ChatWidgetComponent />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChatWidgetComponent />
+        </motion.div>
       </div>
+
+      {streamError && (
+        <div className="error-message error-active">
+          <span className="material-symbols-outlined">error_outline</span>
+          {streamError.message}
+        </div>
+      )}
     </>
   );
 }

@@ -5,6 +5,8 @@ export interface TableData extends BaseWidgetData {
   markdown: string;
   title?: string;
   description?: string;
+  isLoading?: boolean;
+  error?: string;
 }
 
 export class TableWidget extends BaseWidget<TableData> {
@@ -41,7 +43,18 @@ export class TableWidget extends BaseWidget<TableData> {
   }
 
   async render(data: TableData = this.data): Promise<string> {
-    const markdown = data?.markdown || '';
+    // Update internal data
+    this.data = { ...this.data, ...data };
+    
+    if (this.data.isLoading) {
+      return this.createLoadingState();
+    }
+    
+    if (this.data.error) {
+      return this.createErrorState(this.data.error);
+    }
+    
+    const markdown = this.data?.markdown || '';
     const { headers, rows } = this.parseMarkdownTable(markdown);
 
     if (headers.length === 0) {
@@ -50,8 +63,8 @@ export class TableWidget extends BaseWidget<TableData> {
 
     return `
       <div class="table-widget">
-        ${data.title ? `<h3 class="table-title">${data.title}</h3>` : ''}
-        ${data.description ? `<p class="table-description">${data.description}</p>` : ''}
+        ${this.data.title ? `<h3 class="table-title">${this.data.title}</h3>` : ''}
+        ${this.data.description ? `<p class="table-description">${this.data.description}</p>` : ''}
         <div class="table-container">
           <table>
             <thead>
@@ -68,6 +81,27 @@ export class TableWidget extends BaseWidget<TableData> {
             </tbody>
           </table>
         </div>
+      </div>
+    `;
+  }
+  
+  private createLoadingState(): string {
+    return `
+      <div class="table-widget loading">
+        <div class="skeleton title"></div>
+        <div class="skeleton description"></div>
+        <div class="skeleton table"></div>
+      </div>
+    `;
+  }
+  
+  private createErrorState(message: string): string {
+    return `
+      <div class="table-widget error">
+        <div class="error-icon">
+          <span class="material-symbols-outlined">error_outline</span>
+        </div>
+        <div class="error-message">${message || 'Unable to load table data'}</div>
       </div>
     `;
   }

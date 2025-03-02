@@ -3,15 +3,18 @@
 .logger {
   width: 100%;
   height: 100%;
-  background: rgba(var(--terminal-darker-rgb), 0.92);
-  border: 1px solid rgba(var(--primary-rgb), 0.2);
-  border-radius: var(--radius-lg);
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   overflow: hidden;
   position: relative;
-  font-size: 12px;
+  font-size: 13px;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-xl);
+  animation: fadeIn 0.5s ease;
 
   // Variables for height management
   --expanded-height: 100%;
@@ -32,15 +35,15 @@
 
     .logger-header {
       border-bottom: none;
-      background: rgba(var(--surface-2-rgb), 0.15);
+      background: rgba(30, 30, 30, 0.7);
 
       .view-controls .toolbar-button {
         &[title="Expand"] {
-          color: var(--primary-300);
-          background: rgba(var(--primary-rgb), 0.2);
+          color: var(--primary-400);
+          background: rgba(var(--primary-rgb), 0.1);
           
           &:hover {
-            background: rgba(var(--primary-rgb), 0.3);
+            background: rgba(var(--primary-rgb), 0.15);
           }
         }
       }
@@ -64,17 +67,18 @@
     width: 90vw;
     height: 90vh;
     z-index: 1000;
-    background: var(--terminal-darker) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    background: rgba(20, 20, 20, 0.95) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(16px);
 
     .view-controls .toolbar-button {
       &[title="Minimize"] {
-        color: var(--primary-300);
-        background: rgba(var(--primary-rgb), 0.2);
+        color: var(--primary-400);
+        background: rgba(var(--primary-rgb), 0.1);
         
         &:hover {
-          background: rgba(var(--primary-rgb), 0.3);
+          background: rgba(var(--primary-rgb), 0.15);
         }
       }
     }
@@ -84,9 +88,9 @@
   .logger-header {
     --header-height: 42px;
     height: var(--header-height);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--surface-2-rgb), 0.25);
-    border-bottom: 1px solid rgba(var(--primary-rgb), 0.25);
+    padding: 0 16px;
+    background: rgba(30, 30, 30, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -95,24 +99,20 @@
     .header-left {
       display: flex;
       align-items: center;
-      gap: var(--space-md);
+      gap: 16px;
 
       h2 {
-        font-family: var(--font-display);
-        font-size: 14px;
-        color: var(--primary-300);
+        font-size: 15px;
+        color: var(--text-primary);
         margin: 0;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-        text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.4);
-        opacity: 0.95;
+        font-weight: 500;
       }
 
       .log-stats {
         display: flex;
         align-items: center;
-        gap: var(--space-sm);
-        font-size: 11px;
+        gap: 8px;
+        font-size: 12px;
         color: var(--text-secondary);
         
         .stat {
@@ -120,9 +120,9 @@
           align-items: center;
           gap: 4px;
           padding: 2px 8px;
-          background: rgba(var(--surface-2-rgb), 0.15);
-          border-radius: var(--radius-sm);
-          border: 1px solid rgba(var(--primary-rgb), 0.2);
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
           
           .material-symbols-outlined {
             font-size: 14px;
@@ -134,16 +134,16 @@
     .header-right {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
+      gap: 8px;
 
       .view-controls {
         display: flex;
         align-items: center;
         gap: 4px;
         padding: 2px;
-        background: rgba(var(--surface-2-rgb), 0.15);
-        border: 1px solid rgba(var(--primary-rgb), 0.2);
-        border-radius: var(--radius-sm);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
 
         .toolbar-button {
           padding: 4px;
@@ -154,18 +154,18 @@
           justify-content: center;
           background: transparent;
           border: none;
-          border-radius: 3px;
+          border-radius: 4px;
           color: var(--text-secondary);
           transition: all 0.2s ease;
 
           &:hover {
-            background: rgba(var(--primary-rgb), 0.15);
-            color: var(--primary-300);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
           }
 
           &.active {
-            background: rgba(var(--primary-rgb), 0.2);
-            color: var(--primary-300);
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary-400);
           }
 
           .material-symbols-outlined {
@@ -181,49 +181,69 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-xs) var(--space-md);
-    background: rgba(var(--surface-2-rgb), 0.12);
-    border-bottom: 1px solid rgba(var(--primary-rgb), 0.15);
+    padding: 8px 16px;
+    background: rgba(30, 30, 30, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 
     .toolbar-group {
       display: flex;
-      gap: var(--space-xs);
+      gap: 8px;
     }
 
     .toolbar-button {
       display: flex;
       align-items: center;
-      gap: var(--space-xs);
-      padding: 4px 8px;
-      height: 26px;
-      background: rgba(var(--surface-2-rgb), 0.15);
-      border: 1px solid rgba(var(--primary-rgb), 0.15);
-      border-radius: var(--radius-sm);
+      gap: 8px;
+      padding: 6px 12px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
       color: var(--text-secondary);
-      font-size: 11px;
-      font-family: var(--font-mono);
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.2s ease;
 
       .material-symbols-outlined {
-        font-size: 14px;
+        font-size: 16px;
       }
 
       &:hover {
-        background: rgba(var(--primary-rgb), 0.15);
-        border-color: rgba(var(--primary-rgb), 0.35);
-        color: var(--primary-300);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
       }
 
       &.active {
-        background: rgba(var(--primary-rgb), 0.2);
-        border-color: rgba(var(--primary-rgb), 0.45);
-        color: var(--primary-300);
+        background: rgba(var(--primary-rgb), 0.1);
+        border-color: rgba(var(--primary-rgb), 0.2);
+        color: var(--primary-400);
       }
 
       &.icon-only {
-        padding: 4px;
-        width: 26px;
+        padding: 6px;
+        width: 32px;
+      }
+    }
+    
+    .search-input {
+      height: 32px;
+      padding: 0 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 12px;
+      min-width: 180px;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: rgba(var(--primary-rgb), 0.3);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+      }
+      
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.4);
       }
     }
   }
@@ -234,7 +254,7 @@
     overflow: auto;
     position: relative;
     z-index: 2;
-    padding: var(--space-sm);
+    padding: 12px;
 
     &::-webkit-scrollbar {
       width: 6px;
@@ -242,20 +262,39 @@
     }
 
     &::-webkit-scrollbar-track {
-      background: rgba(var(--surface-2-rgb), 0.05);
+      background: rgba(255, 255, 255, 0.02);
     }
 
     &::-webkit-scrollbar-thumb {
-      background: rgba(var(--primary-rgb), 0.2);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 3px;
       
       &:hover {
-        background: rgba(var(--primary-rgb), 0.3);
+        background: rgba(255, 255, 255, 0.15);
       }
     }
 
     &::-webkit-scrollbar-corner {
-      background: rgba(var(--surface-2-rgb), 0.05);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    
+    .logger-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-secondary);
+      gap: 16px;
+      opacity: 0.6;
+      
+      .material-symbols-outlined {
+        font-size: 32px;
+      }
+      
+      span {
+        font-size: 14px;
+      }
     }
   }
 
@@ -270,115 +309,114 @@
     .plain-log {
       display: flex;
       align-items: flex-start;
-      padding: var(--space-sm) var(--space-md);
-      gap: var(--space-sm);
-      border: 1px solid rgba(var(--primary-rgb), 0.15);
-      border-radius: var(--radius-sm);
-      background: rgba(var(--terminal-dark-rgb), 0.4) !important;
-      margin-bottom: 4px;
+      padding: 10px 12px;
+      gap: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.2) !important;
+      margin-bottom: 8px;
       transition: all 0.2s ease;
       min-width: min-content;
 
       &:hover {
-        background: rgba(var(--terminal-dark-rgb), 0.6) !important;
-        border-color: rgba(var(--primary-rgb), 0.25);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
       }
 
       .timestamp {
         color: var(--text-secondary);
         font-size: 11px;
-        font-family: var(--font-mono);
         white-space: nowrap;
         opacity: 0.8;
         min-width: 70px;
       }
 
       .source {
-        color: var(--primary-300);
+        color: var(--primary-400);
         font-size: 11px;
-        font-family: var(--font-mono);
         white-space: nowrap;
         text-transform: uppercase;
         letter-spacing: 0.03em;
         opacity: 0.9;
         min-width: 140px;
-        padding-right: var(--space-sm);
-        border-right: 1px solid rgba(var(--primary-rgb), 0.1);
+        padding-right: 12px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
       }
 
       .message {
         flex: 1;
         min-width: 300px;
         white-space: pre;
-        font-family: var(--font-mono);
         color: var(--text-primary);
-        line-height: 1.4;
-        font-size: 11px;
-        padding-left: var(--space-sm);
+        line-height: 1.5;
+        font-size: 12px;
+        padding-left: 12px;
         overflow-x: auto;
       }
 
       .count {
-        padding: 1px 6px;
+        padding: 2px 8px;
         background: rgba(var(--primary-rgb), 0.1);
-        border: 1px solid rgba(var(--primary-rgb), 0.15);
-        border-radius: 10px;
-        font-size: 10px;
-        color: var(--primary-300);
-        font-family: var(--font-mono);
+        border: 1px solid rgba(var(--primary-rgb), 0.2);
+        border-radius: 12px;
+        font-size: 11px;
+        color: var(--primary-400);
       }
 
       &.source-client {
-        background: rgba(var(--primary-rgb), 0.04) !important;
-        border-left: 2px solid rgba(var(--primary-rgb), 0.6);
+        background: rgba(var(--primary-rgb), 0.05) !important;
+        border-left: 2px solid rgba(var(--primary-rgb), 0.3);
       }
 
       &.source-server {
-        background: rgba(var(--secondary-rgb), 0.04) !important;
-        border-left: 2px solid rgba(var(--secondary-rgb), 0.6);
+        background: rgba(var(--secondary-rgb), 0.05) !important;
+        border-left: 2px solid rgba(var(--secondary-rgb), 0.3);
       }
 
       &.receive {
-        border-left: 2px solid rgba(var(--success-rgb), 0.6);
+        border-left: 2px solid rgba(var(--success-rgb), 0.3);
       }
 
       &.send {
-        border-left: 2px solid rgba(var(--warning-rgb), 0.6);
+        border-left: 2px solid rgba(var(--warning-rgb), 0.3);
       }
     }
   }
 
   .rich-log {
-    padding: var(--space-sm);
-    border-radius: var(--radius-sm);
-    background: rgba(var(--surface-2-rgb), 0.04);
-    border: 1px solid rgba(var(--primary-rgb), 0.15);
-    margin-bottom: 4px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
 
     h4 {
-      margin: 0 0 var(--space-xs);
-      font-size: 12px;
-      color: var(--primary-300);
-      font-family: var(--font-display);
-      letter-spacing: -0.01em;
-      opacity: 0.95;
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--primary-400);
+      font-weight: 500;
+      letter-spacing: 0.01em;
     }
 
     h5 {
       margin: 0;
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-secondary);
-      font-family: var(--font-display);
-      letter-spacing: 0.02em;
-      opacity: 0.9;
       font-weight: 500;
+      letter-spacing: 0.01em;
     }
 
     .part {
-      margin-bottom: var(--space-sm);
-      background: rgba(var(--terminal-darker-rgb), 0.25);
-      border: 1px solid rgba(var(--primary-rgb), 0.15);
-      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
       overflow: hidden;
 
       &:last-child {
@@ -386,35 +424,34 @@
       }
 
       &.part-text {
-        padding: var(--space-sm);
+        padding: 12px;
         color: var(--text-primary);
-        font-family: var(--font-mono);
-        line-height: 1.5;
+        line-height: 1.6;
         font-size: 12px;
       }
 
       &.part-executableCode, &.part-functioncall {
         h5 {
-          padding: 4px var(--space-sm);
-          background: rgba(var(--surface-2-rgb), 0.15);
-          border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+          padding: 6px 12px;
+          background: rgba(0, 0, 0, 0.2);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           font-size: 11px;
         }
 
         pre {
-          font-size: 11px !important;
+          font-size: 12px !important;
           
           code {
-            font-size: 11px !important;
+            font-size: 12px !important;
           }
         }
       }
 
       &.part-codeExecutionResult {
         h5 {
-          padding: 4px var(--space-sm);
-          background: rgba(var(--surface-2-rgb), 0.15);
-          border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+          padding: 6px 12px;
+          background: rgba(0, 0, 0, 0.2);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           font-size: 11px;
           
           &.success {
@@ -427,10 +464,10 @@
         }
 
         pre {
-          font-size: 11px !important;
+          font-size: 12px !important;
           
           code {
-            font-size: 11px !important;
+            font-size: 12px !important;
           }
         }
       }
@@ -438,66 +475,64 @@
 
     pre {
       margin: 0;
-      padding: var(--space-sm);
-      background: rgba(var(--terminal-darker-rgb), 0.95) !important;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3) !important;
       border-radius: 0;
-      font-size: 11px !important;
-      font-family: var(--font-mono) !important;
+      font-size: 12px !important;
       line-height: 1.5;
       overflow-x: auto;
 
       code {
-        font-family: var(--font-mono) !important;
-        font-size: 11px !important;
+        font-size: 12px !important;
       }
 
       &::-webkit-scrollbar {
-        height: 3px;
+        height: 4px;
       }
 
       &::-webkit-scrollbar-track {
-        background: rgba(var(--surface-2-rgb), 0.05);
+        background: rgba(255, 255, 255, 0.02);
       }
 
       &::-webkit-scrollbar-thumb {
-        background: rgba(var(--primary-rgb), 0.2);
-        border-radius: 1.5px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
       }
     }
 
     &.client-content {
-      background: rgba(var(--primary-rgb), 0.03);
-      border-color: rgba(var(--primary-rgb), 0.15);
+      background: rgba(var(--primary-rgb), 0.05);
+      border-color: rgba(var(--primary-rgb), 0.1);
     }
 
     &.model-turn {
-      background: rgba(var(--secondary-rgb), 0.03);
-      border-color: rgba(var(--secondary-rgb), 0.15);
+      background: rgba(var(--secondary-rgb), 0.05);
+      border-color: rgba(var(--secondary-rgb), 0.1);
     }
 
     &.tool-call, &.tool-response, &.tool-call-cancellation {
       .part {
-        font-size: 11px;
+        font-size: 12px;
         
         h5 {
-          font-size: 11px;
+          font-size: 12px;
         }
         
         pre, code {
-          font-size: 11px !important;
+          font-size: 12px !important;
         }
       }
     }
   }
 
   .inline-code {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--primary-300);
-    background: rgba(var(--primary-rgb), 0.08);
-    padding: 1px 4px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(var(--primary-rgb), 0.15);
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--primary-400);
+    background: rgba(var(--primary-rgb), 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
     margin: 0 2px;
   }
 
@@ -535,8 +570,48 @@
 .logger-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
   z-index: 999;
   animation: fadeIn 0.3s ease;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .logger {
+    .logger-header {
+      .header-left {
+        gap: 8px;
+        
+        h2 {
+          font-size: 14px;
+        }
+        
+        .log-stats {
+          .stat {
+            padding: 2px 6px;
+            font-size: 10px;
+          }
+        }
+      }
+    }
+    
+    .logger-toolbar {
+      padding: 6px 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+      
+      .toolbar-group {
+        flex-wrap: wrap;
+      }
+      
+      .search-input {
+        min-width: 120px;
+      }
+    }
+    
+    .logger-virtual-scroll {
+      padding: 8px;
+    }
+  }
 }

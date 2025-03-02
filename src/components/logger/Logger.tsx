@@ -408,7 +408,7 @@ const Logger = memo(() => {
       })}>
         <div className="logger-header">
           <div className="header-left">
-            <h2>Activity Panel</h2>
+            <h2>Activity Log</h2>
             <div className="log-stats">
               <div className="stat">
                 <span className="material-symbols-outlined">chat</span>

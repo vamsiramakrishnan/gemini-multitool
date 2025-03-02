@@ -1,133 +1,107 @@
 @import '../../../styles/shared/mixins';
 @import '../../../styles/shared/design-system';
 
-// Mixins for retrofuturistic effects
-@mixin neon-glow($color, $intensity: 1) {
-  box-shadow: 
-    0 0 5px rgba($color, 0.2 * $intensity),
-    0 0 10px rgba($color, 0.1 * $intensity),
-    0 0 20px rgba($color, 0.05 * $intensity);
-}
-
-@mixin terminal-scanline {
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      transparent 50%,
-      rgba(0, 0, 0, 0.05) 50%
-    );
-    background-size: 100% 4px;
-    pointer-events: none;
-    opacity: 0.1;
-    animation: scanline 10s linear infinite;
-  }
-}
-
-// Enhanced visual hierarchy variables
+// Enhanced design variables with better visual hierarchy
 :root {
+  // Elevation system with progressive depth
   --widget-elevation-1: 
-    0 2px 4px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(var(--primary-rgb), 0.05);
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(var(--primary-rgb), 0.03);
   --widget-elevation-2: 
-    0 4px 12px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(var(--primary-rgb), 0.1);
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(var(--primary-rgb), 0.05);
   --widget-elevation-3: 
-    0 8px 24px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(var(--primary-rgb), 0.15);
-  --widget-header-height: clamp(48px, 8vh, 64px);
-  --widget-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    0 12px 32px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(var(--primary-rgb), 0.08);
   
-  // Enhanced responsive scaling
-  --widget-title-size: clamp(1rem, 2.5vw, 1.25rem);
-  --widget-text-size: clamp(0.875rem, 2vw, 1rem);
-  --widget-icon-size: clamp(20px, 2.5vw, 24px);
-  --widget-padding: clamp(1rem, 3vw, 1.5rem);
-  --widget-gap: clamp(0.5rem, 2vw, 1rem);
+  // Responsive scaling variables
+  --widget-header-height: clamp(48px, 8vh, 60px);
+  --widget-title-size: clamp(0.9rem, 2vw, 1.1rem);
+  --widget-text-size: clamp(0.875rem, 1.5vw, 1rem);
+  --widget-icon-size: clamp(18px, 2vw, 22px);
+  --widget-padding: clamp(0.75rem, 2vw, 1.25rem);
+  --widget-gap: clamp(0.5rem, 1.5vw, 0.75rem);
+  
+  // Animation variables
+  --widget-transition: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --widget-spring: 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-// Base widget styles with improved visual hierarchy
-.widget-wrapper {
+// Modernized widget styles with enhanced visual hierarchy
+.widget-item {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--terminal-darker);
-  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  background: var(--surface-1);
+  border: 1px solid rgba(var(--surface-2-rgb), 0.5);
   border-radius: var(--radius-lg);
   overflow: hidden;
   height: fit-content;
-  min-height: clamp(250px, 50vh, 400px);
-  transition: all 0.3s var(--ease-out-quad);
+  min-height: clamp(200px, 40vh, 350px);
+  max-height: clamp(300px, 60vh, 800px);
+  width: 100%;
+  transition: transform var(--widget-spring), 
+              opacity var(--widget-transition),
+              box-shadow var(--widget-transition),
+              border-color var(--widget-transition);
   box-shadow: var(--widget-elevation-1);
   transform-origin: center center;
   will-change: transform, box-shadow;
-  @include terminal-scanline;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: 
-      radial-gradient(
-        circle at top right,
-        rgba(var(--primary-rgb), 0.1),
-        transparent 70%
-      );
-    pointer-events: none;
-    opacity: 0.5;
-  }
-
+  // Enhanced header with improved visual hierarchy
   .widget-header {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--widget-padding);
-    background: var(--terminal-dark);
-    border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
+    padding: 0 var(--widget-padding);
+    background: linear-gradient(to bottom, 
+                rgba(var(--surface-1-rgb), 0.97), 
+                rgba(var(--surface-1-rgb), 0.95));
+    border-bottom: 1px solid rgba(var(--surface-3-rgb), 0.1);
     z-index: 2;
     height: var(--widget-header-height);
     position: relative;
-    @include neon-glow(var(--primary-500), 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 
-    .widget-title-section {
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(var(--primary-rgb), 0.1),
+        transparent
+      );
+    }
+
+    .widget-title {
+      font-family: var(--font-display);
+      font-size: var(--widget-title-size);
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      transition: var(--widget-transition);
       flex: 1;
       min-width: 0;
       padding-right: var(--widget-gap);
-
-      .widget-title {
-        font-family: var(--font-display);
-        font-size: var(--widget-title-size);
-        font-weight: 600;
-        color: var(--primary-300);
-        margin: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
-        letter-spacing: -0.02em;
-        line-height: 1.2;
-        transition: var(--widget-transition);
-      }
-
-      .widget-subtitle {
-        font-family: var(--font-mono);
-        font-size: 0.875em;
-        color: var(--text-secondary);
-        margin-top: var(--space-xxs);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        opacity: 0.8;
-        transition: var(--widget-transition);
-      }
     }
 
     .widget-controls {
       display: flex;
-      gap: var(--widget-gap);
+      gap: calc(var(--widget-gap) * 0.75);
       flex-shrink: 0;
       position: relative;
       z-index: 3;
@@ -136,59 +110,73 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: calc(var(--widget-icon-size) * 1.5);
-        height: calc(var(--widget-icon-size) * 1.5);
+        width: calc(var(--widget-icon-size) * 1.4);
+        height: calc(var(--widget-icon-size) * 1.4);
         padding: 0;
-        background: rgba(var(--surface-2-rgb), 0.1);
-        border: 1px solid rgba(var(--primary-rgb), 0.2);
-        color: var(--text-secondary);
-        border-radius: var(--radius-sm);
+        background: transparent;
+        border: none;
+        color: var(--text-tertiary);
+        border-radius: var(--radius-full);
         cursor: pointer;
-        transition: var(--widget-transition);
+        transition: all var(--widget-transition);
         transform-origin: center center;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: currentColor;
+          opacity: 0;
+          transition: opacity var(--widget-transition);
+          border-radius: inherit;
+        }
 
         &:hover {
           transform: translateY(-1px);
-          @include neon-glow(var(--primary-500));
+          
+          &::before {
+            opacity: 0.06;
+          }
         }
 
         &:active {
           transform: translateY(0);
+          
+          &::before {
+            opacity: 0.1;
+          }
         }
 
         .material-symbols-outlined {
           font-size: var(--widget-icon-size);
+          position: relative;
+          z-index: 1;
         }
 
         &.minimize { 
-          --button-color: var(--primary-400);
           &:hover { 
-            background: rgba(var(--primary-rgb), 0.2);
-            color: var(--primary-300);
+            color: var(--primary-500);
           }
         }
         
         &.maximize { 
-          --button-color: var(--retro-green);
           &:hover { 
-            background: rgba(var(--retro-green-rgb), 0.2);
-            color: var(--retro-green);
-            @include neon-glow(var(--retro-green));
+            color: var(--success-500);
           }
         }
         
         &.close { 
-          --button-color: var(--error-500);
           &:hover { 
-            background: rgba(var(--error-rgb), 0.2);
-            color: var(--error-300);
-            @include neon-glow(var(--error-500));
+            color: var(--error-500);
           }
         }
       }
     }
   }
 
+  // Enhanced content area with better scrolling and responsive padding
   .widget-content {
     flex: 1;
     min-height: 0;
@@ -197,11 +185,19 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(
-      180deg,
-      var(--terminal-darker) 0%,
-      var(--terminal-dark) 100%
-    );
+    background: var(--surface-1);
+    transition: height var(--widget-transition), 
+                opacity var(--widget-transition),
+                visibility var(--widget-transition);
+
+    &.collapsed {
+      height: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: height var(--widget-transition), 
+                  opacity var(--widget-transition),
+                  visibility 0s linear var(--widget-transition);
+    }
 
     .widget-scroll-area {
       flex: 1;
@@ -210,10 +206,10 @@
       -webkit-overflow-scrolling: touch;
       padding: var(--widget-padding);
       @include custom-scrollbar;
-      font-family: var(--font-mono);
       font-size: var(--widget-text-size);
       line-height: 1.6;
-      color: var(--text-secondary);
+      color: var(--text-primary);
+      scroll-behavior: smooth;
       
       > * + * {
         margin-top: var(--widget-gap);
@@ -223,13 +219,13 @@
         font-family: var(--font-display);
         line-height: 1.2;
         margin-bottom: var(--widget-gap);
-        color: var(--primary-300);
-        text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
+        color: var(--text-primary);
+        font-weight: 500;
       }
 
-      h1 { font-size: calc(var(--widget-title-size) * 1.75); }
-      h2 { font-size: calc(var(--widget-title-size) * 1.5); }
-      h3 { font-size: calc(var(--widget-title-size) * 1.25); }
+      h1 { font-size: calc(var(--widget-title-size) * 1.6); }
+      h2 { font-size: calc(var(--widget-title-size) * 1.4); }
+      h3 { font-size: calc(var(--widget-title-size) * 1.2); }
       h4 { font-size: var(--widget-title-size); }
       
       p { 
@@ -237,86 +233,104 @@
         margin-bottom: 1em;
         color: var(--text-secondary);
       }
+      
+      code, pre {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+        border-radius: var(--radius-md);
+      }
+      
+      pre {
+        background: rgba(var(--surface-2-rgb), 0.5);
+        padding: var(--widget-gap);
+        overflow-x: auto;
+        @include custom-scrollbar;
+      }
+    }
+
+    .widget-container {
+      height: 100%;
     }
   }
 
+  // Enhanced widget state styling with better animations and transitions
   &.maximized {
     position: fixed;
-    inset: var(--space-md);
+    inset: 0;
     z-index: var(--z-modal);
-    height: calc(100vh - var(--space-md) * 2);
-    max-height: none;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--terminal-darker);
-    backdrop-filter: blur(16px);
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transform: none !important;
     box-shadow: var(--widget-elevation-3);
-    animation: maximizeWidget 0.3s var(--ease-out-quad);
+    border-radius: 0;
+    animation: maximizeWidget 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 
     .widget-header {
-      background: var(--terminal-dark);
-      border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
-      @include neon-glow(var(--primary-500));
-
-      .widget-controls {
-        .control-button {
-          opacity: 1;
-          visibility: visible;
-          transform: none;
-        }
-      }
+      background: linear-gradient(to bottom, 
+                  rgba(var(--surface-1-rgb), 0.98), 
+                  rgba(var(--surface-1-rgb), 0.95));
+      border-bottom: 1px solid rgba(var(--surface-3-rgb), 0.15);
     }
 
     .widget-content {
       flex: 1;
       min-height: 0;
       overflow: hidden;
+      height: calc(100vh - var(--widget-header-height));
       
       .widget-scroll-area {
         height: 100%;
-        overflow-y: auto;
-        @include custom-scrollbar;
+        padding: calc(var(--widget-padding) * 1.5);
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
       }
     }
-
-    @media (max-width: 768px) {
-      inset: 0;
-      height: 100vh;
-      border-radius: 0;
-      
-      .widget-header {
-        padding: calc(var(--widget-padding) * 0.75);
-      }
-      
-      .widget-content .widget-scroll-area {
-        padding: calc(var(--widget-padding) * 0.75);
-      }
+    
+    .widget-controls .control-button.maximize {
+      color: var(--success-500);
+      background: rgba(var(--success-rgb), 0.1);
     }
   }
 
+  &.minimized {
+    min-height: var(--widget-header-height);
+    max-height: var(--widget-header-height);
+    
+    .widget-controls .control-button.minimize {
+      color: var(--primary-500);
+      background: rgba(var(--primary-rgb), 0.1);
+    }
+  }
+
+  // Enhanced hover state with subtle animations
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--widget-elevation-2);
-    @include neon-glow(var(--primary-500), 0.7);
+    border-color: rgba(var(--primary-rgb), 0.15);
 
-    .widget-title-section {
-      .widget-title {
-        color: var(--primary-300);
-      }
-      .widget-subtitle {
-        opacity: 1;
-      }
+    .widget-title {
+      color: var(--primary-500);
     }
+  }
 
-    .widget-controls .control-button {
-      opacity: 1;
-      visibility: visible;
-    }
+  // Animation for closing widgets
+  &.widget-closing {
+    transform: scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-// Animations
+// Enhanced animations
 @keyframes maximizeWidget {
   from {
     opacity: 0;
@@ -328,51 +342,58 @@
   }
 }
 
-@keyframes scanline {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(100%);
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 // Container queries for ultra-responsive layouts
 @container (width < 400px) {
-  .widget-wrapper {
+  .widget-item {
     --widget-padding: var(--space-sm);
     --widget-gap: var(--space-xs);
     --widget-title-size: var(--font-size-sm);
     --widget-text-size: var(--font-size-xs);
     --widget-icon-size: 16px;
+    
+    .widget-header {
+      padding: 0 calc(var(--widget-padding) * 0.75);
+    }
   }
 }
 
-// Reduced motion
+// Reduced motion preferences
 @media (prefers-reduced-motion: reduce) {
-  .widget-wrapper {
-    transition: none !important;
+  .widget-item {
+    transition: opacity 0.1s ease-in-out !important;
     animation: none !important;
     
-    &::after {
-      animation: none !important;
+    &.maximized,
+    &.widget-closing {
+      transition: opacity 0.1s ease-in-out !important;
     }
     
     .widget-controls .control-button {
-      transition: none !important;
+      transition: color 0.1s ease-in-out !important;
+      transform: none !important;
+    }
+    
+    .widget-content,
+    .widget-content.collapsed {
+      transition: opacity 0.1s ease-in-out !important;
     }
   }
 }
 
 // Enhanced focus states for accessibility
-.widget-wrapper:focus-within {
+.widget-item:focus-within {
   outline: 2px solid var(--primary-400);
   outline-offset: 2px;
 }
 
 // Enhanced touch interactions
 @media (pointer: coarse) {
-  .widget-wrapper {
+  .widget-item {
     --widget-padding: clamp(0.75rem, 4vw, 1.25rem);
     
     .widget-controls .control-button {
@@ -380,227 +401,54 @@
       min-height: 44px;
       
       &:active {
-        transform: scale(0.9);
+        transform: scale(0.95);
       }
     }
   }
 }
 
-// Base widget item styles
-.widget-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface-1);
-  border: 1px solid var(--surface-2);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  height: fit-content;
-  min-height: clamp(300px, 50vh, 600px);
-  max-height: clamp(300px, 60vh, 800px);
-  width: 100%;
-  transition: all 0.3s ease;
-  z-index: 1;
-
-  &.maximized {
-    position: fixed;
-    inset: 0;
-    min-height: 100vh !important;
-    max-height: 100vh !important;
-    border-radius: 0;
-    z-index: 9999;
-    background: var(--surface-1);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    
-    .widget-content {
-      height: calc(100vh - var(--widget-header-height));
-    }
-  }
-
-  &.minimized {
-    min-height: var(--widget-header-height) !important;
-    max-height: var(--widget-header-height) !important;
-    
-    .widget-content {
-      display: none;
-    }
-  }
-
-  // Header styles
-  .widget-header {
-    @include widget-header; // Use header mixin
-    background: linear-gradient(
-      90deg,
-      rgba($retro-black, 0.9) 0%,
-      rgba($retro-black, 0.95) 100%
-    );
-    border-bottom: 1px solid rgba($retro-blue, 0.2);
-    z-index: 2;
-
-    .title {
-      color: $retro-blue;
-      font-family: var(--font-mono);
-      font-size: var(--font-size-sm);
-      font-weight: 600;
-      text-shadow: 0 0 8px rgba($retro-blue, 0.4);
-    }
-
-    .controls {
-      display: flex;
-      gap: var(--space-xs);
-
-      .control-button {
-        @include retro-button-icon;
-        width: 28px;
-        height: 28px;
-        
-        &.minimize { color: $retro-blue; }
-        &.maximize { color: $retro-green; }
-        &.close { 
-          color: $retro-red;
-          &:hover { @include retro-button-danger; }
-        }
-
-        .material-symbols-outlined {
-          font-size: 18px;
-        }
-      }
-    }
-  }
-
-  // Hover effects
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 8px 30px rgba($retro-black, 0.3),
-      0 0 0 1px rgba($retro-blue, 0.2),
-      0 0 20px rgba($retro-blue, 0.1);
-    border-color: rgba($retro-blue, 0.3);
-  }
-
-  // Active state glow
-  &.active {
-    animation: glow 2s infinite;
-  }
-
-  &.widget-closing {
-    transform: scale(0.95);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .widget-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-    background: var(--widget-header-bg);
-    border-bottom: 1px solid var(--widget-border-color);
-
-    .widget-title {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--widget-title-color);
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .widget-controls {
-      display: flex;
-      gap: 0.5rem;
-      margin-left: 1rem;
-
-      .control-button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        padding: 0;
-        border: none;
-        background: transparent;
-        color: var(--widget-control-color);
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-
-        &:hover {
-          background: var(--widget-control-hover-bg);
-          color: var(--widget-control-hover-color);
-        }
-
-        &.close {
-          &:hover {
-            background: var(--widget-close-hover-bg, var(--error-500));
-            color: var(--widget-close-hover-color, white);
-          }
-        }
-
-        .material-symbols-outlined {
-          font-size: 18px;
-        }
-      }
-    }
-  }
-}
-
-// Media query for smaller screens
-@media (max-width: 768px) {
-  .widget-item {
-    &.maximized {
-      inset: 0;
-      border-radius: 0;
-    }
-
-    .widget-header {
-      padding: var(--space-xs);
-
-      .controls .control-button {
-        width: 24px;
-        height: 24px;
-
-        .material-symbols-outlined {
-          font-size: 16px;
-        }
-      }
-    }
-  }
-}
-
-// Container queries for responsive layouts
-@container (width < 400px) {
-  .widget-content {
-    flex-direction: column;
-  }
-}
-
-// Scrollable content area
-.widget-item__scrollable-content {
-  @include widget-scrollable;
-  border-radius: var(--radius-lg);
-}
-
-// Add overlay when widget is maximized
+// Improved overlay when widget is maximized
 .widget-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 9998;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s var(--widget-transition);
+  will-change: opacity;
 
   &.active {
     opacity: 1;
     pointer-events: auto;
+    animation: fadeIn 0.3s var(--widget-transition);
+  }
+}
+
+// Dark mode enhancements
+@media (prefers-color-scheme: dark) {
+  .widget-item {
+    border-color: rgba(255, 255, 255, 0.08);
+    
+    &:hover {
+      border-color: rgba(var(--primary-rgb), 0.2);
+    }
+    
+    .widget-header {
+      background: linear-gradient(to bottom, 
+                  rgba(20, 20, 20, 0.97), 
+                  rgba(20, 20, 20, 0.95));
+    }
+    
+    &.maximized .widget-header {
+      background: linear-gradient(to bottom, 
+                  rgba(18, 18, 18, 0.98), 
+                  rgba(18, 18, 18, 0.95));
+    }
   }
 } 

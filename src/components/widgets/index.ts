@@ -8,6 +8,8 @@ export * from '../chat/ChatWidgetComponent';
 export * from './altair/Altair';
 export * from './code-execution/CodeExecutionWidget';
 export * from './nearby-places/NearbyPlacesWidget';
+export * from './table/TableWidget';
+export * from './explainer/ExplainerWidget';
 
 export const ImageWidget = {
   render: (data: any) => `

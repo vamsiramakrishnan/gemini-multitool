@@ -2,6 +2,7 @@ import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import './places-widget.scss';
 
 export interface Place {
+  id: string;
   name: string;
   address: string;
   rating?: number;
@@ -10,34 +11,19 @@ export interface Place {
   photos?: string[];
   businessStatus: string;
   types?: string[];
-  latitude?: number;
-  longitude?: number;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  icon?: string;
 }
 
 export interface PlacesData extends BaseWidgetData {
-  places: Array<{
-    id: string;
-    name: string;
-    address: string;
-    location: {
-      latitude: number;
-      longitude: number;
-    };
-    rating?: number;
-    userRatings?: number;
-    priceLevel?: number;
-    photos?: string[];
-    businessStatus: string;
-    types?: string[];
-    icon?: string;
-  }>;
+  places: Place[];
   query?: string;
   nextPageToken?: string;
-}
-
-interface PlaceFeature {
-  icon: string;
-  label: string;
+  error?: string;
+  isLoading?: boolean;
 }
 
 export class PlacesWidget extends BaseWidget<PlacesData> {
@@ -45,9 +31,9 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
   private readonly mapId: string;
 
   constructor(data?: PlacesData) {
-    super('Places Search');
+    super('Places');
     this.data = {
-      title: 'Places Search',
+      title: 'Places',
       places: [],
       ...data
     };
@@ -55,56 +41,59 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
   }
 
   async render(data: PlacesData = this.data): Promise<string> {
+    // Update internal data
     this.data = { ...this.data, ...data };
     
     // Reset map state when new data arrives
     this.mapInitialized = false;
+    
+    if (this.data.isLoading) {
+      return this.renderLoadingState();
+    }
 
-    if (!this.data || this.data.error) {
-      return this.createErrorState(this.data?.error || 'No data available');
+    if (this.data.error) {
+      return this.createErrorState(this.data.error);
     }
 
     if (!this.data.places || this.data.places.length === 0) {
       return this.renderEmptyState();
     }
 
-    setTimeout(() => this.initializeMap(), 0);
+    setTimeout(() => this.initializeMap(), 100);
 
     return `
       <div class="places-widget">
-        <div class="places-main">
-          <div class="search-section">
-            <div class="search-container">
-              <span class="material-symbols-outlined search-icon">search</span>
-              <input type="text" placeholder="Explore nearby places..." />
-            </div>
-            <div class="filters">
-              ${this.renderFilters()}
-            </div>
+        <div class="search-section">
+          <div class="search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" placeholder="Search places..." value="${this.data.query || ''}" />
           </div>
+          <div class="filters">
+            ${this.renderFilters()}
+          </div>
+        </div>
 
-          <div class="map-section">
-            <div id="${this.mapId}" class="map-container"></div>
-            <div class="map-controls">
-              <button class="control-button" title="Zoom in">
-                <span class="material-symbols-outlined">add</span>
-              </button>
-              <button class="control-button" title="Zoom out">
-                <span class="material-symbols-outlined">remove</span>
-              </button>
-              <button class="control-button" title="Center map">
-                <span class="material-symbols-outlined">center_focus_strong</span>
-              </button>
-            </div>
+        <div class="map-section">
+          <div id="${this.mapId}" class="map-container"></div>
+          <div class="map-controls">
+            <button class="control-button" title="Zoom in">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+            <button class="control-button" title="Zoom out">
+              <span class="material-symbols-outlined">remove</span>
+            </button>
+            <button class="control-button" title="Center map">
+              <span class="material-symbols-outlined">center_focus_strong</span>
+            </button>
           </div>
+        </div>
 
-          <div class="places-grid">
-            ${this.data.places.map(place => this.renderPlaceCard(place)).join('')}
-          </div>
+        <div class="places-grid">
+          ${this.data.places.map(place => this.renderPlaceCard(place)).join('')}
+        </div>
 
-          <div class="places-stats">
-            ${this.renderStats()}
-          </div>
+        <div class="places-stats">
+          ${this.renderStats()}
         </div>
       </div>
     `;
@@ -147,38 +136,170 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     const mapElement = document.getElementById(this.mapId);
     if (!mapElement) return;
 
-    const map = new google.maps.Map(mapElement, {
-      center: { lat: this.data.places?.[0]?.location.latitude || 0, lng: this.data.places?.[0]?.location.longitude || 0 },
-      zoom: 14,
-      disableDefaultUI: true,
-      mapTypeControl: false,
-      streetViewControl: false,
-    });
+    // Center map on the first place
+    const firstPlace = this.data.places[0];
+    const center = firstPlace.location 
+      ? { lat: firstPlace.location.latitude, lng: firstPlace.location.longitude }
+      : { lat: 0, lng: 0 };
 
-    this.data.places?.forEach(place => {
-      if (place.location.latitude && place.location.longitude) {
-        new google.maps.Marker({
-          position: { lat: place.location.latitude, lng: place.location.longitude },
-          map: map,
-          title: place.name
-        });
-      }
+    // Map styling
+    const mapOptions = {
+      center,
+      zoom: 14,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      fullscreenControl: false,
+      streetViewControl: false,
+      mapTypeControl: false,
+      zoomControl: false,
+      styles: [
+        {
+          featureType: 'all',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#746855' }]
+        },
+        {
+          featureType: 'all',
+          elementType: 'labels.text.stroke',
+          stylers: [{ color: '#242f3e' }, { lightness: -80 }]
+        },
+        {
+          featureType: 'administrative.locality',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#d59563' }]
+        },
+        {
+          featureType: 'poi',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#d59563' }]
+        },
+        {
+          featureType: 'poi.park',
+          elementType: 'geometry',
+          stylers: [{ color: '#263c3f' }]
+        },
+        {
+          featureType: 'poi.park',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#6b9a76' }]
+        },
+        {
+          featureType: 'road',
+          elementType: 'geometry.fill',
+          stylers: [{ color: '#2b3544' }]
+        },
+        {
+          featureType: 'road',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#9ca5b3' }]
+        },
+        {
+          featureType: 'road.arterial',
+          elementType: 'geometry.fill',
+          stylers: [{ color: '#38414e' }]
+        },
+        {
+          featureType: 'road.highway',
+          elementType: 'geometry.fill',
+          stylers: [{ color: '#746855' }]
+        },
+        {
+          featureType: 'road.highway',
+          elementType: 'geometry.stroke',
+          stylers: [{ color: '#1f2835' }]
+        },
+        {
+          featureType: 'road.highway',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#f3d19c' }]
+        },
+        {
+          featureType: 'water',
+          elementType: 'geometry',
+          stylers: [{ color: '#17263c' }]
+        },
+        {
+          featureType: 'water',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#515c6d' }]
+        },
+        {
+          featureType: 'water',
+          elementType: 'labels.text.stroke',
+          stylers: [{ lightness: -20 }]
+        }
+      ]
+    };
+
+    const map = new google.maps.Map(mapElement, mapOptions);
+
+    // Add markers for all places
+    this.data.places.forEach(place => {
+      if (!place.location) return;
+      
+      const marker = new google.maps.Marker({
+        position: { lat: place.location.latitude, lng: place.location.longitude },
+        map,
+        title: place.name,
+        animation: google.maps.Animation.DROP,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#4285F4',
+          fillOpacity: 0.8,
+          strokeWeight: 2,
+          strokeColor: '#ffffff'
+        }
+      });
+      
+      // Add click listener for marker
+      marker.addListener('click', () => {
+        // Find the card element and scroll to it
+        const card = document.querySelector(`[data-place-id="${place.id}"]`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.classList.add('highlight');
+          setTimeout(() => card.classList.remove('highlight'), 1500);
+        }
+      });
     });
 
     this.mapInitialized = true;
+
+    // Add event listeners to control buttons
+    document.querySelectorAll('.map-controls .control-button').forEach(button => {
+      button.addEventListener('click', event => {
+        const target = event.currentTarget as HTMLElement;
+        const action = target.getAttribute('title');
+        
+        if (action === 'Zoom in') {
+          map.setZoom(map.getZoom() + 1);
+        } else if (action === 'Zoom out') {
+          map.setZoom(map.getZoom() - 1);
+        } else if (action === 'Center map') {
+          map.setCenter(center);
+          map.setZoom(14);
+        }
+      });
+    });
   }
 
-  private renderError(error: string): string {
-    return this.createErrorState(error);
-  }
-
-  private renderPlaceCard(place: PlacesData['places'][0]): string {
-    const { name, address, rating, userRatings, photos, businessStatus, types } = place;
-    const mainPhotoUrl = photos?.[0];
-    const isOpen = businessStatus === 'OPERATIONAL';
+  private renderPlaceCard(place: Place): string {
+    const {
+      id,
+      name,
+      address,
+      rating = 0,
+      userRatings = 0,
+      photos = [],
+      businessStatus,
+      types = []
+    } = place;
     
+    const isOpen = businessStatus?.toLowerCase() === 'operational';
+    const mainPhotoUrl = photos.length > 0 ? photos[0] : '';
+
     return `
-      <div class="place-card" data-place-id="${place.id}">
+      <div class="place-card" data-place-id="${id}">
         <div class="place-photo">
           ${mainPhotoUrl ? `
             <img src="${mainPhotoUrl}" alt="${name}" loading="lazy" />
@@ -187,11 +308,11 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
               <span class="material-symbols-outlined">image_not_supported</span>
             </div>
           `}
-          ${rating ? `
+          ${rating > 0 ? `
             <div class="rating-badge">
               <span class="material-symbols-outlined">star</span>
               ${rating.toFixed(1)}
-              ${userRatings ? `<span class="user-ratings">(${this.formatNumber(userRatings)})</span>` : ''}
+              ${userRatings > 0 ? `<span class="user-ratings">(${this.formatNumber(userRatings)})</span>` : ''}
             </div>
           ` : ''}
           <div class="status-badge ${isOpen ? 'open' : 'closed'}">
@@ -204,7 +325,7 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
           <div class="place-header">
             <h3 class="place-name">${name}</h3>
             <div class="place-type">
-              ${this.getPlaceTypeIcon(types?.[0] || 'place')}
+              ${this.getPlaceTypeIcon(types[0] || 'place')}
             </div>
           </div>
           
@@ -215,7 +336,7 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
             </div>
             
             <div class="place-categories">
-              ${types?.slice(0, 3).map(type => `
+              ${types.slice(0, 3).map(type => `
                 <span class="category-tag">
                   ${this.formatPlaceType(type)}
                 </span>
@@ -271,43 +392,6 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
       .join(' ');
   }
 
-  private getPlaceFeatures(place: Place): PlaceFeature[] {
-    const features: PlaceFeature[] = [];
-    
-    if (place.types) {
-      const typeToFeature: Record<string, PlaceFeature> = {
-        restaurant: { icon: 'restaurant', label: 'Restaurant' },
-        cafe: { icon: 'coffee', label: 'Café' },
-        bar: { icon: 'local_bar', label: 'Bar' },
-        lodging: { icon: 'hotel', label: 'Hotel' },
-        shopping_mall: { icon: 'shopping_bag', label: 'Shopping' }
-      };
-
-      place.types.forEach(type => {
-        const feature = typeToFeature[type];
-        if (feature) {
-          features.push(feature);
-        }
-      });
-    }
-
-    return features;
-  }
-
-  protected renderEmptyState(): string {
-    return `
-      <div class="places-empty">
-        <span class="material-symbols-outlined">location_off</span>
-        <h3>No Results Found</h3>
-        <p>No relevant results were found</p>
-      </div>
-    `;
-  }
-
-  destroy(): void {
-    this.mapInitialized = false;
-  }
-
   private renderFilters(): string {
     const filters = [
       { icon: 'restaurant', label: 'Restaurants' },
@@ -320,13 +404,72 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
 
     return `
       <div class="filter-tags">
-        ${filters.map(filter => `
-          <button class="filter-tag">
+        ${filters.map((filter, index) => `
+          <button class="filter-tag ${index === 0 ? 'active' : ''}">
             <span class="material-symbols-outlined">${filter.icon}</span>
             ${filter.label}
           </button>
         `).join('')}
       </div>
     `;
+  }
+
+  private renderLoadingState(): string {
+    return `
+      <div class="places-widget loading">
+        <div class="search-section">
+          <div class="skeleton search"></div>
+          <div class="filters">
+            <div class="skeleton filter"></div>
+            <div class="skeleton filter"></div>
+            <div class="skeleton filter"></div>
+          </div>
+        </div>
+        
+        <div class="skeleton map"></div>
+        
+        <div class="places-grid">
+          <div class="skeleton card"></div>
+          <div class="skeleton card"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderEmptyState(): string {
+    return `
+      <div class="places-widget">
+        <div class="search-section">
+          <div class="search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" placeholder="Search places..." value="${this.data.query || ''}" />
+          </div>
+          <div class="filters">
+            ${this.renderFilters()}
+          </div>
+        </div>
+        
+        <div class="places-empty">
+          <span class="material-symbols-outlined">location_off</span>
+          <h3>No Places Found</h3>
+          <p>Try adjusting your search or filters to find places nearby.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  private createErrorState(message: string): string {
+    return `
+      <div class="places-widget error">
+        <div class="error-icon">
+          <span class="material-symbols-outlined">error_outline</span>
+        </div>
+        <div class="error-message">${message || 'Unable to load places data'}</div>
+      </div>
+    `;
+  }
+
+  destroy(): void {
+    this.mapInitialized = false;
   }
 }

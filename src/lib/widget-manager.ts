@@ -9,6 +9,7 @@ import { EventEmitter } from 'eventemitter3';
 import { AltairWidget } from '../components/widgets/altair/altair-widget';
 import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
 import { TableWidget } from '../components/widgets/table/table-widget';
+import { ExplainerWidget } from '../components/widgets/explainer/explainer-widget';
 
 export type WidgetType =
   | 'weather'
@@ -24,7 +25,8 @@ export type WidgetType =
   | 'search_places'
   | 'search_nearby'
   | 'code_execution'
-  | 'table';
+  | 'table'
+  | 'explainer';
 
 // Define a type that allows both sync and async render methods
 interface WidgetBase<T extends BaseWidgetData = BaseWidgetData> extends BaseWidget<T> {
@@ -69,7 +71,8 @@ export class WidgetManager extends EventEmitter {
     search_places: PlacesWidget,
     search_nearby: NearbyPlacesWidget,
     code_execution: CodeExecutionWidget,
-    table: TableWidget
+    table: TableWidget,
+    explainer: ExplainerWidget
   } as unknown as Record<WidgetType, WidgetConstructor>;
   
   private activeWidgets: Map<string, WidgetEntry> = new Map();
@@ -301,7 +304,8 @@ export class WidgetManager extends EventEmitter {
       search_places: 'Places',
       search_nearby: 'Nearby Places',
       code_execution: 'Code Execution',
-      table: 'Table'
+      table: 'Table',
+      explainer: 'Explanation'
     };
     return titles[type] || 'Widget';
   }

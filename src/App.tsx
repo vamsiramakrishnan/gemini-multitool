@@ -38,6 +38,7 @@ import VideoStream from "./components/video-stream/VideoStream";
 import { LayoutProvider } from './contexts/LayoutContext';
 import { WidgetRegistry, WidgetType } from './components/widgets/registry';
 import { ChatProvider, useChat } from './contexts/ChatContext';
+import { FocusStyleManager } from '@blueprintjs/core';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
@@ -253,6 +254,9 @@ function AppContent() {
 }
 
 function App() {
+  // Enable focus styles only when using keyboard to navigate
+  FocusStyleManager.onlyShowFocusOnTabs();
+
   const [showOnboarding, setShowOnboarding] = useState(true);
   const widgetManager = useRef(new WidgetManager()).current;
   

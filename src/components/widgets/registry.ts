@@ -7,6 +7,8 @@ import { AltairWidget } from './altair/Altair';
 import { CodeExecutionWidget } from './code-execution/CodeExecutionWidget';
 import { NearbyPlacesWidget } from './nearby-places/NearbyPlacesWidget';
 import { TableWidget } from './table/TableWidget';
+import { ExplainerWidget } from './explainer/ExplainerWidget';
+import { OtherWidgets } from './other/OtherWidgets';
 
 export type WidgetType = 
   | 'weather'
@@ -17,7 +19,8 @@ export type WidgetType =
   | 'google_search'
   | 'altair'
   | 'code_execution'
-  | 'table';
+  | 'table'
+  | 'explainer';
 
 export const WidgetRegistry: Record<WidgetType, React.ComponentType<any>> = {
   weather: WeatherWidget,
@@ -28,7 +31,8 @@ export const WidgetRegistry: Record<WidgetType, React.ComponentType<any>> = {
   google_search: SearchWidget,
   altair: AltairWidget,
   code_execution: CodeExecutionWidget,
-  table: TableWidget
+  table: TableWidget,
+  explainer: ExplainerWidget
 };
 
 // Add type for chart types

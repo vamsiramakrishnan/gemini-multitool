@@ -15,4 +15,6 @@ class MapWidgetWrapper extends MapWidgetClass {
 export const MapWidget = withWidget<MapWidgetProps>(
   MapWidgetWrapper,
   'MapWidget'
-); 
+);
+
+export default MapWidget; 

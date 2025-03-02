@@ -5,10 +5,8 @@
  */
 
 import { Content, GenerateContentResult, GenerationConfig, Part } from "@google/generative-ai";
-import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import EventEmitter from "eventemitter3";
 import { toolDeclarations } from "./tool-declarations";
-import fs from "fs";
 
 interface SecondaryLLMConfig {
   apiKey: string;
@@ -34,30 +32,13 @@ export class SecondaryLLM extends EventEmitter<SecondaryLLMEventTypes> {
   private model: string;
   private defaultGenerationConfig: Partial<GenerationConfig>;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-  private fileManager: GoogleAIFileManager;
 
   constructor(config: SecondaryLLMConfig) {
     super();
     this.apiKey = config.apiKey;
     this.model = config.model || 'gemini-2.0-flash-exp';
     this.defaultGenerationConfig = config.defaultGenerationConfig || {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.8,
-      maxOutputTokens: 1024,
-    };
-    this.fileManager = new GoogleAIFileManager(this.apiKey);
-  }
-
-  /**
-   * Helper function to convert a local file to a Part object for inline data
-   */
-  private fileToGenerativePart(path: string, mimeType: string): Part {
-    return {
-      inlineData: {
-        data: Buffer.from(fs.readFileSync(path)).toString("base64"),
-        mimeType
-      },
+      maxOutputTokens: 8192,
     };
   }
 
@@ -78,23 +59,21 @@ export class SecondaryLLM extends EventEmitter<SecondaryLLMEventTypes> {
   /**
    * Upload a file using the File API for large files (>20MB)
    */
-  async uploadFile(filePath: string, options: FileUploadOptions) {
-    const uploadResult = await this.fileManager.uploadFile(filePath, options);
-
-    // For video/PDF files, we need to wait for processing to complete
-    if (options.mimeType.startsWith('video/') || options.mimeType === 'application/pdf') {
-      let file = await this.fileManager.getFile(uploadResult.file.name);
-      while (file.state === FileState.PROCESSING) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        file = await this.fileManager.getFile(uploadResult.file.name);
-      }
-
-      if (file.state === FileState.FAILED) {
-        throw new Error('File processing failed');
-      }
+  async uploadFile(file: File, options: FileUploadOptions) {
+    // In a browser environment, we'd need to implement file upload differently
+    // This is a placeholder for browser-compatible file upload
+    console.warn('File upload not fully implemented for browser environment');
+    
+    // Mock implementation that would need to be replaced with actual browser-compatible code
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mimeType', options.mimeType);
+    if (options.displayName) {
+      formData.append('displayName', options.displayName);
     }
 
-    return uploadResult;
+    // This would need to be implemented with a proper API endpoint
+    throw new Error('File upload not implemented for browser environment');
   }
 
   /**
@@ -114,13 +93,19 @@ export class SecondaryLLM extends EventEmitter<SecondaryLLMEventTypes> {
       ...config,
     };
 
-    const requestBody = {
+    // Create the request body based on the example from Google Gemini repository
+    const requestBody: any = {
       contents: [content],
       generationConfig,
-      tools: [{ functionDeclarations: toolDeclarations }],
     };
 
     try {
+      console.log('Sending request to Gemini API:', {
+        model: this.model,
+        config: generationConfig,
+        endpoint: `${this.baseUrl}/models/${this.model}:generateContent`
+      });
+
       const response = await fetch(
         `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
         {
@@ -133,6 +118,8 @@ export class SecondaryLLM extends EventEmitter<SecondaryLLMEventTypes> {
       );
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API error:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -163,13 +150,23 @@ export class SecondaryLLM extends EventEmitter<SecondaryLLMEventTypes> {
       ...config,
     };
 
-    const requestBody = {
+    const requestBody: any = {
       contents: [content],
       generationConfig,
-      tools: [{ functionDeclarations: toolDeclarations }],
     };
 
+    // Only add tools if we have tool declarations and we're not using a schema
+    if (!generationConfig.responseSchema && toolDeclarations && toolDeclarations.length > 0) {
+      requestBody.tools = [{ functionDeclarations: toolDeclarations }];
+    }
+
     try {
+      console.log('Sending streaming request to Gemini API:', {
+        model: this.model,
+        config: generationConfig,
+        endpoint: `${this.baseUrl}/models/${this.model}:streamGenerateContent`
+      });
+
       const response = await fetch(
         `${this.baseUrl}/models/${this.model}:streamGenerateContent?key=${this.apiKey}`,
         {
@@ -182,6 +179,8 @@ export class SecondaryLLM extends EventEmitter<SecondaryLLMEventTypes> {
       );
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API streaming error:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
