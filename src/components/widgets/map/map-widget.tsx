@@ -117,7 +117,7 @@ export class MapWidget extends BaseWidget<MapData> {
   private mapInitialized = false;
   private stepEventListeners: Array<{ element: HTMLElement, listener: (e: Event) => void }> = [];
   private resizeObserver: ResizeObserver | null = null;
-  private debouncedResize: ((entries: ResizeObserverEntry[]) => void) | null = null;
+  private debouncedResize: (((entries: ResizeObserverEntry[]) => void) & { cancel: () => void }) | null = null;
   private animationFrameId: number | null = null;
   
   // Maps-specific event handler
@@ -209,7 +209,7 @@ export class MapWidget extends BaseWidget<MapData> {
         </div>
 
         <div class="map-main">
-          <div id="map-container"></div>
+          <div class="map-container"></div>
           <div class="map-controls">
             <button class="control-button" title="Zoom in">
               <span class="material-symbols-outlined">add</span>
@@ -228,25 +228,28 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   async postRender(element: HTMLElement): Promise<void> {
-    super.postRender(element);
-    
-    // Add event listener for retry button in error state
-    const retryButton = element.querySelector('#retry-map-load');
-    if (retryButton) {
-      retryButton.addEventListener('click', () => {
-        // Re-render the widget to try again
-        this.render(this.data).then(html => {
-          if (element.parentElement) {
-            element.innerHTML = html;
-            this.initializeMap();
-          }
-        });
-      });
-    }
-    
-    // Initialize map if not in error state
-    if (!this.data.error) {
-      this.initializeMap();
+    try {
+      await super.postRender(element);
+
+      const mapContainerElement = element.querySelector('.map-container') as HTMLElement;
+      if (!mapContainerElement) {
+        throw new Error('Map container element not found');
+      }
+
+      this.mapContainer = mapContainerElement;
+
+      await this.initializeMap();
+
+      if (this.data.origin && this.data.destination && this.map && this.mapInitialized) {
+        await this.showDirections();
+      }
+    } catch (error) {
+      console.error('Error in map postRender:', error);
+      if (this.mapContainer) {
+        this.mapContainer.innerHTML = this.createErrorState(
+          error instanceof Error ? error.message : 'Failed to initialize map'
+        );
+      }
     }
   }
 
@@ -478,59 +481,107 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   destroy(): void {
-    // Cancel any pending animations
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
+    console.log('Destroying map widget');
     
-    // Clear caches through reassignment instead of mutation
-    MapWidget.iconCache = {};
-    MapWidget.formattedAddressCache = {};
-
-    // Clean up additional listeners
-    if (this.mapContainer) {
-      this.mapContainer.removeEventListener('wheel', this.handleWheelZoom);
-    }
-
-    // Clean up resize observer
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
-
-    // Clean up debounced resize handler
+    // Store references locally before nullifying instance variables
+    const mapContainer = this.mapContainer;
+    const currentStepMarker = this.currentStepMarker;
+    const directionsRenderer = this.directionsRenderer;
+    const map = this.map;
+    const stepEventListeners = [...this.stepEventListeners];
+    const resizeObserver = this.resizeObserver;
+    const animationFrameId = this.animationFrameId;
+    
+    // Cancel any pending operations
     if (this.debouncedResize) {
-      (this.debouncedResize as any).cancel?.();
+      this.debouncedResize.cancel?.();
       this.debouncedResize = null;
     }
-
-    // Clean up event listeners
-    this.stepEventListeners.forEach(({ element, listener }) => {
-      element.removeEventListener('click', listener);
+    
+    if (this.debouncedFitBounds) {
+      this.debouncedFitBounds.cancel?.();
+    }
+    
+    if (this.debouncedMapUpdate) {
+      this.debouncedMapUpdate.cancel?.();
+    }
+    
+    // Cancel any animation frames
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      this.animationFrameId = null;
+    }
+    
+    // Remove event listeners
+    stepEventListeners.forEach(({ element, listener }) => {
+      if (element && element.removeEventListener) {
+        try {
+          element.removeEventListener('click', listener);
+        } catch (e) {
+          console.warn('Failed to remove event listener', e);
+        }
+      }
     });
     this.stepEventListeners = [];
-
+    
+    if (mapContainer) {
+      try {
+        mapContainer.removeEventListener('wheel', this.handleWheelZoom);
+      } catch (e) {
+        console.warn('Failed to remove wheel event listener', e);
+      }
+    }
+    
     // Clean up markers
-    if (this.currentStepMarker) {
-      this.currentStepMarker.map = null;
+    if (currentStepMarker) {
+      try {
+        currentStepMarker.map = null;
+      } catch (e) {
+        console.warn('Failed to clean up marker', e);
+      }
       this.currentStepMarker = null;
     }
-
+    
     // Clean up directions renderer
-    if (this.directionsRenderer) {
-      this.directionsRenderer.setMap(null);
+    if (directionsRenderer) {
+      try {
+        directionsRenderer.setMap(null);
+      } catch (e) {
+        console.warn('Failed to clean up directions renderer', e);
+      }
       this.directionsRenderer = null;
     }
-
-    // Clean up map instance
-    if (this.map) {
+    
+    // Clean up map instance - carefully
+    if (map) {
+      try {
+        // Google Maps doesn't have a destroy method, so we need to clean up manually
+        // Remove event listeners by setting the map to null
+        google.maps.event.clearInstanceListeners(map);
+      } catch (e) {
+        console.warn('Failed to clean up map event listeners', e);
+      }
+      
+      // Clear the map reference
       this.map = null;
     }
-
-    // Clear instance references
+    
+    // Clean up resize observer
+    if (resizeObserver) {
+      try {
+        resizeObserver.disconnect();
+      } catch (e) {
+        console.warn('Failed to disconnect resize observer', e);
+      }
+      this.resizeObserver = null;
+    }
+    
+    // Reset state
     this.mapsInstance = null;
     this.mapContainer = null;
-
+    this.mapInitialized = false;
+    
+    // Call parent destroy
     super.destroy();
   }
 
@@ -541,7 +592,7 @@ export class MapWidget extends BaseWidget<MapData> {
         this.map!.setZoom(Math.min(this.map!.getZoom()!, 14));
       });
     }
-  }, 500);
+  }, 500) as ReturnType<typeof debounce>;
 
   // Add GPU acceleration and compositing hints
   private setupMapContainer(): void {
@@ -574,7 +625,7 @@ export class MapWidget extends BaseWidget<MapData> {
         this.updateStepMarker(this.map, firstStep);
       }
     });
-  }, 100);
+  }, 100) as ReturnType<typeof debounce>;
 
   private async loadGoogleMaps(): Promise<boolean> {
     try {
@@ -612,9 +663,9 @@ export class MapWidget extends BaseWidget<MapData> {
           <h3>Map loading failed</h3>
           <p>${errorMessage}</p>
         </div>
-        <button class="map-error-retry">
+        <button class="map-error-retry" id="retry-map-load">
           <span class="material-symbols-outlined">refresh</span>
-          Retry
+          Retry loading map
         </button>
       `;
       
@@ -634,10 +685,25 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   async initializeMap(): Promise<void> {
-    if (this.mapInitialized) return;
+    if (this.mapInitialized) {
+      console.log('Map already initialized, skipping initialization');
+      return;
+    }
     
-    this.mapContainer = document.getElementById('map-container');
-    if (!this.mapContainer) return;
+    // Use the stored map container if available
+    if (!this.mapContainer) {
+      // Try to find it by ID as a fallback
+      this.mapContainer = document.getElementById('map-container');
+      
+      if (!this.mapContainer) {
+        throw new Error('Map container not found and not previously stored');
+      }
+    }
+    
+    // Clear any existing content to prevent DOM issues
+    while (this.mapContainer.firstChild) {
+      this.mapContainer.removeChild(this.mapContainer.firstChild);
+    }
     
     // Show loading indicator
     const loadingIndicator = document.createElement('div');
@@ -648,24 +714,341 @@ export class MapWidget extends BaseWidget<MapData> {
     `;
     this.mapContainer.appendChild(loadingIndicator);
     
-    // Ensure Google Maps is loaded
-    const mapsLoaded = await this.loadGoogleMaps();
-    if (!mapsLoaded) {
-      loadingIndicator.remove();
-      return;
-    }
-    
-    // Continue with map initialization
     try {
-      // Existing initialization code...
+      // Ensure Google Maps is loaded
+      const mapsLoaded = await this.loadGoogleMaps();
+      if (!mapsLoaded) {
+        loadingIndicator.remove();
+        return;
+      }
       
-      // Remove loading indicator on success
+      // Define map options
+      const mapOptions: google.maps.MapOptions = {
+        center: { lat: 0, lng: 0 },
+        zoom: 3,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        fullscreenControl: false,
+        streetViewControl: false,
+        mapTypeControl: false,
+        zoomControl: false,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+          {
+            featureType: "administrative.locality",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#d59563" }],
+          },
+          {
+            featureType: "poi",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#d59563" }],
+          },
+          {
+            featureType: "poi.park",
+            elementType: "geometry",
+            stylers: [{ color: "#263c3f" }],
+          },
+          {
+            featureType: "poi.park",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#6b9a76" }],
+          },
+          {
+            featureType: "road",
+            elementType: "geometry",
+            stylers: [{ color: "#38414e" }],
+          },
+          {
+            featureType: "road",
+            elementType: "geometry.stroke",
+            stylers: [{ color: "#212a37" }],
+          },
+          {
+            featureType: "road",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#9ca5b3" }],
+          },
+          {
+            featureType: "road.highway",
+            elementType: "geometry",
+            stylers: [{ color: "#746855" }],
+          },
+          {
+            featureType: "road.highway",
+            elementType: "geometry.stroke",
+            stylers: [{ color: "#1f2835" }],
+          },
+          {
+            featureType: "road.highway",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#f3d19c" }],
+          },
+          {
+            featureType: "transit",
+            elementType: "geometry",
+            stylers: [{ color: "#2f3948" }],
+          },
+          {
+            featureType: "transit.station",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#d59563" }],
+          },
+          {
+            featureType: "water",
+            elementType: "geometry",
+            stylers: [{ color: "#17263c" }],
+          },
+          {
+            featureType: "water",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#515c6d" }],
+          },
+          {
+            featureType: "water",
+            elementType: "labels.text.stroke",
+            stylers: [{ color: "#17263c" }],
+          },
+          {
+            featureType: "transit.line",
+            elementType: "geometry",
+            stylers: [{ color: "#515c6d" }],
+          },
+          {
+            featureType: "transit.station",
+            elementType: "geometry",
+            stylers: [{ color: "#3a4a5f" }],
+          },
+          {
+            featureType: "poi.business",
+            stylers: [{ visibility: "simplified" }],
+          },
+          {
+            featureType: "poi.business",
+            elementType: "labels.icon",
+            stylers: [{ visibility: "off" }],
+          }
+        ]
+      };
+      
+      // Create the map with explicit error handling
+      try {
+        this.map = new google.maps.Map(this.mapContainer, mapOptions);
+      } catch (mapError) {
+        console.error('Error creating Google Map instance:', mapError);
+        throw new Error(`Failed to create map: ${mapError instanceof Error ? mapError.message : 'Unknown error'}`);
+      }
+      
+      // Add event listener for map idle event
+      if (this.map) {
+        this.map.addListener('idle', () => {
+          // Map is ready, if we have directions data, show it
+          if (this.data._rawResponse && !this.directionsRenderer) {
+            this.showDirections();
+          }
+        });
+        
+        // Setup map controls
+        this.setupMapControls(this.mapContainer);
+      }
+      
+      // Remove loading indicator
       loadingIndicator.remove();
       this.mapInitialized = true;
+      
+      // If we have directions data, show it after a small delay to ensure the map is fully loaded
+      if (this.data.origin && this.data.destination && this.map) {
+        setTimeout(() => {
+          this.showDirections();
+        }, 100);
+      }
     } catch (error) {
       console.error('Error initializing map:', error);
       loadingIndicator.remove();
       this.handleMapError('Failed to initialize the map. Please try again later.');
+      throw error; // Re-throw to allow the parent to handle it
     }
+  }
+
+  public setData(data: MapData): void {
+    this.data = { ...this.data, ...data };
+  }
+
+  async showDirections(): Promise<void> {
+    // Early validation - make sure we have the necessary components
+    if (!this.map) {
+      console.log('Map not initialized yet, initializing...');
+      try {
+        await this.initializeMap();
+        if (!this.map) {
+          console.error('Failed to initialize map for directions');
+          return;
+        }
+      } catch (error) {
+        console.error('Error initializing map for directions:', error);
+        return;
+      }
+    }
+
+    // Make sure we have origin and destination
+    if (!this.data.origin || !this.data.destination) {
+      console.warn('Missing origin or destination, cannot show directions');
+      return;
+    }
+
+    try {
+      // Create DirectionsService instance
+      const directionsService = new google.maps.DirectionsService();
+      
+      // Create or update DirectionsRenderer
+      if (!this.directionsRenderer) {
+        this.directionsRenderer = new google.maps.DirectionsRenderer({
+          map: this.map,
+          suppressMarkers: false,
+          polylineOptions: {
+            strokeColor: '#4285F4',
+            strokeWeight: 5,
+            strokeOpacity: 0.8
+          }
+        });
+      } else {
+        this.directionsRenderer.setMap(this.map);
+      }
+
+      // Set up request
+      const request = {
+        origin: this.data.origin,
+        destination: this.data.destination,
+        travelMode: google.maps.TravelMode.DRIVING
+      };
+
+      // Request directions
+      directionsService.route(request, (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          // Store the raw response
+          this.data._rawResponse = result;
+          
+          // Update directions
+          this.directionsRenderer?.setDirections(result);
+          
+          // Update bounds
+          if (result.routes[0]?.bounds && this.map) {
+            this.map.fitBounds(result.routes[0].bounds);
+          }
+          
+          console.log('Directions displayed successfully');
+        } else {
+          console.error(`Directions request failed: ${status}`);
+          this.handleMapError(`Could not find directions: ${status}`);
+        }
+      });
+    } catch (error) {
+      console.error('Error showing directions:', error);
+      this.handleMapError('Failed to display directions. Please try again later.');
+    }
+  }
+
+  private getMapStyles(): google.maps.MapTypeStyle[] {
+    // Return a dark-themed map style
+    return [
+      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+      {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "geometry",
+        stylers: [{ color: "#263c3f" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#6b9a76" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#38414e" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#212a37" }],
+      },
+      {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#9ca5b3" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry",
+        stylers: [{ color: "#746855" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#1f2835" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#f3d19c" }],
+      },
+      {
+        featureType: "transit",
+        elementType: "geometry",
+        stylers: [{ color: "#2f3948" }],
+      },
+      {
+        featureType: "transit.station",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#17263c" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#515c6d" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#17263c" }],
+      },
+      {
+        featureType: "transit.line",
+        elementType: "geometry",
+        stylers: [{ color: "#515c6d" }],
+      },
+      {
+        featureType: "transit.station",
+        elementType: "geometry",
+        stylers: [{ color: "#3a4a5f" }],
+      },
+      {
+        featureType: "poi.business",
+        stylers: [{ visibility: "simplified" }],
+      },
+      {
+        featureType: "poi.business",
+        elementType: "labels.icon",
+        stylers: [{ visibility: "off" }],
+      }
+    ];
   }
 } 

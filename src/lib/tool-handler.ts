@@ -4,7 +4,7 @@ import { getDirections } from './tools/google-maps';
 import { searchPlaces, searchNearby } from './tools/places-api';
 import { toolDeclarations } from './tool-declarations';
 import { BaseWidget } from '../components/widgets/base/base-widget';
-import { WidgetManager } from './widget-manager';
+import { WidgetManager, WidgetType } from './widget-manager';
 import { AltairWidget } from '../components/widgets/altair/altair-widget';
 import { 
   GroundingMetadata, 
@@ -14,11 +14,12 @@ import {
 } from '../multimodal-live-types';
 import { BaseWidgetData } from '../components/widgets/base/base-widget';
 import type { AltairData } from '../components/widgets/altair/altair-widget';
-import { WidgetRegistry, WidgetType } from '../components/widgets/registry';
+import { WidgetRegistry } from '../components/widgets/registry';
 import { TableWidget } from '../components/widgets/table/table-widget';
 import { generateExplanation } from './tools/explainer-api';
 import { NearbyPlacesWidget } from '../components/widgets/nearby-places/nearby-places-widget';
 import { ExplainerWidget } from '../components/widgets/explainer/ExplainerWidget';
+import { SearchWidget } from '../components/widgets/search/search-widget';
 
 interface SearchWidgetData extends BaseWidgetData {
   groundingMetadata: GroundingMetadata;
@@ -69,12 +70,21 @@ export type ToolName =
   | 'render_altair'
   | 'render_table'
   | 'code_execution'
-  | 'explain_topic';
+  | 'explain_topic'
+  | 'search_along_route';
+
+// Add SearchData interface definition
+interface SearchData extends BaseWidgetData {
+  groundingMetadata: GroundingMetadata;
+  timestamp?: string;
+  title?: string;
+}
 
 export class ToolHandler {
   widgetManager: WidgetManager;
   activeToolCalls: Map<string, ActiveToolCall>;
   toolHandlers: Record<string, (args: any) => Promise<any>>;
+  private routePolylineMap: Map<string, string> = new Map();
   private altairWidget: AltairWidget | null = null;
   private activeTabId: string = 'default';
 
@@ -91,6 +101,7 @@ export class ToolHandler {
       render_table: this.handleTable.bind(this),
       code_execution: this.handleCodeExecution.bind(this),
       explain_topic: this.handleExplainTopic.bind(this),
+      search_along_route: this.handleSearchAlongRoute.bind(this),
     };
   }
 
@@ -162,6 +173,8 @@ export class ToolHandler {
         return this.handleCodeExecution(call.args);
       case 'explainer':
         return this.handleExplainTopic(call.args);
+      case 'search_along_route':
+        return this.handleSearchAlongRoute(call.args);
       default:
         throw new Error(`Unhandled widget type: ${widgetType}`);
     }
@@ -244,21 +257,47 @@ export class ToolHandler {
         if (groundingMetadata.groundingSupports?.length) {
             for (const support of groundingMetadata.groundingSupports) {
                 let relevantChunks = []; // Initialize relevantChunks
-                // Check if support has segments before trying to access them
+
                 if (support.segments?.length) {
+                    // Use segments and their supportingChunkIndexes if available
                     relevantChunks = support.segments.flatMap(segment =>
                         segment.supportingChunkIndexes?.map((idx: number) => indexedChunks[idx]) || []
-                    ).filter(Boolean);
+                    ).filter(Boolean); // Ensure no null values
                 } else if (support.groundingChunkIndices?.length) {
-                    // Handle the case where we have groundingChunkIndices directly
+                    // Handle direct groundingChunkIndices (legacy or alternative format)
                     relevantChunks = support.groundingChunkIndices
                         .map((idx: number) => indexedChunks[idx])
-                        .filter(Boolean);
+                        .filter(Boolean); // Ensure no null values
                 } else {
                     console.warn('Support missing both segments and groundingChunkIndices:', support);
                 }
             }
         }
+
+        // Create or update SearchWidget
+        const searchWidgetData: SearchData = {
+            title: 'Search Results', // Or derive from context
+            groundingMetadata: {
+                ...groundingMetadata, // Pass the original metadata
+                groundingChunks: indexedChunks, // Use indexed chunks
+            },
+            timestamp: new Date().toISOString()
+        };
+
+        // Check if a SearchWidget already exists in the active tab
+        const existingSearchWidget = Array.from(this.widgetManager.getWidgets().values())
+          .find(entry =>
+            entry.widget instanceof SearchWidget && entry.tabId === this.activeTabId
+          );
+
+        if (existingSearchWidget) {
+            // Update the existing widget
+            await this.widgetManager.renderWidget(existingSearchWidget.id, searchWidgetData);
+        } else {
+            // Create a new SearchWidget
+            await this.widgetManager.createWidget('search', searchWidgetData, this.activeTabId);
+        }
+
     } catch (error: any) {
         console.error('Error handling grounding chunks:', error);
         throw error;
@@ -300,7 +339,8 @@ export class ToolHandler {
       'render_altair': 'altair',
       'render_table': 'table',
       'code_execution': 'code_execution',
-      'explain_topic': 'explainer'
+      'explain_topic': 'explainer',
+      'search_along_route': 'search_along_route'
     };
 
     const widgetType = mapping[toolName];
@@ -384,15 +424,22 @@ export class ToolHandler {
         return this.handleToolError('get_directions', args.toolCallId, new Error(response.error));
       }
 
-      // Create widget with full data
+      const routeId = `${args.origin}-${args.destination}-${Date.now()}`;
+      if (response.polyline) {
+        this.routePolylineMap.set(routeId, response.polyline);
+      }
+
       await this.widgetManager.createWidget('map', {
         title: 'Navigation',
         ...response.widgetData,
-        mode: args.mode
+        mode: args.mode,
+        routeId
       });
 
-      // Return simplified response for Gemini
-      return response.llmResponse;
+      return {
+        ...response.llmResponse,
+        routeId
+      };
 
     } catch (error: any) {
       return this.handleToolError('get_directions', args.toolCallId, error);
@@ -621,5 +668,35 @@ export class ToolHandler {
         }
       }
     );
+  }
+
+  async handleSearchAlongRoute(args: { query: string; routeId: string }) {
+    try {
+      const polyline = this.routePolylineMap.get(args.routeId);
+      if (!polyline) {
+        throw new Error(`Polyline not found for routeId: ${args.routeId}`);
+      }
+
+      // Create the widget with the SearchAlongRouteWidget class
+      const widgetId = await this.widgetManager.createWidget('search_along_route', {
+        title: `Search: ${args.query} along route`,
+        query: args.query,
+        polyline,
+        origin: args.routeId.split('-')[0],
+        isLoading: true
+      }, this.activeTabId);
+
+      return {
+        success: true,
+        widgetId,
+        message: 'Search along route widget created successfully'
+      };
+    } catch (error: any) {
+      console.error('Error in handleSearchAlongRoute:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 } 

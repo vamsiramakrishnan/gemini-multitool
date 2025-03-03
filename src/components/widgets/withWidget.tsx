@@ -5,8 +5,8 @@ export interface WidgetProps extends BaseWidgetData {
   [key: string]: any;
 }
 
-// Add a new type for the props passed to the WidgetComponent
-interface WidgetComponentProps<P> extends P {
+// Fix the interface by constraining P to be an object type
+interface WidgetComponentProps<P extends object> extends P {
   containerRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -27,7 +27,6 @@ export function withWidget<P extends WidgetProps, T extends BaseWidget = BaseWid
       }
 
       const renderContent = async () => {
-        // if (!widgetRef.current || !containerRef.current) return; // Remove unnecessary null check
         if (!containerRef.current) return;
 
         try {
@@ -48,7 +47,6 @@ export function withWidget<P extends WidgetProps, T extends BaseWidget = BaseWid
       return () => {
         if (widgetRef.current) {
           widgetRef.current.destroy();
-          // widgetRef.current = null; // No need to set to null, garbage collection will handle it
         }
       };
     }, [props]); // Keep props in the dependency array

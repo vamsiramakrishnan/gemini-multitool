@@ -94,6 +94,7 @@ export async function getDirections(
 ): Promise<{
   llmResponse: LLMDirectionsResponse;
   widgetData: WidgetDirectionsResponse;
+  polyline?: string;
   error?: string;
 }> {
   try {
@@ -158,6 +159,8 @@ export async function getDirections(
       });
     });
 
+    const polyline = result.routes[0]?.overview_polyline;
+
     const baseResponse = {
       origin: result.routes[0].legs[0].start_address,
       destination: result.routes[0].legs[0].end_address,
@@ -187,6 +190,7 @@ export async function getDirections(
     return {
       llmResponse,
       widgetData,
+      polyline: polyline,
       error: undefined
     };
 

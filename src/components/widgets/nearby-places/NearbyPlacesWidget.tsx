@@ -1,8 +1,10 @@
+import React, { useEffect, useState } from 'react';
 import { withWidget } from '../withWidget';
 import { NearbyPlacesWidget as NearbyPlacesWidgetClass } from './nearby-places-widget';
 import type { NearbyPlacesData } from './nearby-places-widget';
 
 export interface Place {
+  id?: string;
   name: string;
   address: string;
   rating?: number;
@@ -11,8 +13,10 @@ export interface Place {
   photos?: string[];
   businessStatus: string;
   types?: string[];
-  latitude: number;
-  longitude: number;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export type NearbyPlacesWidgetProps = NearbyPlacesData;

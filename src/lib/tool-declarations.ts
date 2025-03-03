@@ -237,5 +237,23 @@ export const toolDeclarations: FunctionDeclaration[] = [
       },
       required: ["topic"]
     }
+  },
+  {
+    name: "search_along_route",
+    description: "Search for places along a predefined route using a query and a route identifier",
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        query: {
+          type: SchemaType.STRING,
+          description: "The search query for places along the route (e.g., 'coffee shops', 'gas stations')"
+        },
+        routeId: {
+          type: SchemaType.STRING,
+          description: "A simple identifier for the route, formatted as 'origin-destination-uniqueId' (e.g., 'SF-LA-123')"
+        }
+      },
+      required: ["query", "routeId"]
+    }
   }
 ]; 

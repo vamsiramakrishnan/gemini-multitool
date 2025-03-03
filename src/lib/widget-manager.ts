@@ -10,6 +10,7 @@ import { AltairWidget } from '../components/widgets/altair/altair-widget';
 import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
 import { TableWidget } from '../components/widgets/table/table-widget';
 import { ExplainerWidget } from '../components/widgets/explainer/explainer-widget';
+import { SearchAlongRouteWidget } from '../components/widgets/search-along-route/search-along-route-widget';
 
 export type WidgetType =
   | 'weather'
@@ -18,6 +19,7 @@ export type WidgetType =
   | 'places'
   | 'nearby_places'
   | 'google_search'
+  | 'search'
   | 'altair'
   | 'get_directions'
   | 'get_weather'
@@ -26,7 +28,8 @@ export type WidgetType =
   | 'search_nearby'
   | 'code_execution'
   | 'table'
-  | 'explainer';
+  | 'explainer'
+  | 'search_along_route';
 
 // Define a type that allows both sync and async render methods
 interface WidgetBase<T extends BaseWidgetData = BaseWidgetData> extends BaseWidget<T> {
@@ -64,6 +67,7 @@ export class WidgetManager extends EventEmitter {
     places: PlacesWidget,
     nearby_places: NearbyPlacesWidget,
     google_search: SearchWidget,
+    search: SearchWidget,
     altair: AltairWidget,
     get_directions: MapWidget,
     get_weather: WeatherWidget,
@@ -72,7 +76,8 @@ export class WidgetManager extends EventEmitter {
     search_nearby: NearbyPlacesWidget,
     code_execution: CodeExecutionWidget,
     table: TableWidget,
-    explainer: ExplainerWidget
+    explainer: ExplainerWidget,
+    search_along_route: SearchAlongRouteWidget
   } as unknown as Record<WidgetType, WidgetConstructor>;
   
   private activeWidgets: Map<string, WidgetEntry> = new Map();
@@ -297,6 +302,7 @@ export class WidgetManager extends EventEmitter {
       places: 'Places',
       nearby_places: 'Nearby Places',
       google_search: 'Search Results',
+      search: 'Search Results',
       altair: 'Visualization',
       get_directions: 'Directions',
       get_weather: 'Weather',
@@ -305,7 +311,8 @@ export class WidgetManager extends EventEmitter {
       search_nearby: 'Nearby Places',
       code_execution: 'Code Execution',
       table: 'Table',
-      explainer: 'Explanation'
+      explainer: 'Explanation',
+      search_along_route: 'Search Along Route'
     };
     return titles[type] || 'Widget';
   }

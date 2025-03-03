@@ -67,6 +67,14 @@ export type MultimodalLiveAPIClientConnection = {
   apiKey: string;
 };
 
+interface ChunkMetadata {
+  url?: string;
+  title?: string;
+  snippet?: string;
+  timestamp?: string;
+  source?: string;
+}
+
 /**
  * A event-emitting class that manages the connection to the websocket and emits
  * events to the rest of the application.
@@ -332,6 +340,7 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
 
   private async handleConcurrentGrounding(metadata: GroundingMetadata) {
     try {
+      console.log('Handling concurrent grounding with metadata:', metadata);
       // Process chunks in parallel with validation
       const chunkPromises = metadata.groundingChunks?.map(async (chunk) => ({
         ...chunk,
@@ -339,8 +348,9 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
         metadata: {
           ...chunk.metadata,
           timestamp: chunk.metadata?.timestamp || new Date().toISOString(),
-          source: chunk.source || 'web'
-        }
+          // Prioritize existing source, fallback to 'web' if undefined
+          source: chunk.metadata?.source ?? chunk.source ?? 'web'
+        } as ChunkMetadata
       })) || [];
 
       const processedChunks = await Promise.all(chunkPromises);
@@ -351,14 +361,14 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
         ?.map(async (support) => {
           try {
             // Check for required fields with fallbacks
-            if (!support?.content) {
+            if (!support?.segment?.text) {
               console.warn('Skipping support with missing content', support);
               return null;
             }
 
             return {
               ...support,
-              content: support.content.trim(),
+              content: support.segment.text.trim(),
               segments: support.segments?.map(segment => ({
                 ...segment,
                 startIndex: Math.max(0, segment.startIndex || 0),

@@ -370,8 +370,8 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
         // Get place type color
         const placeColor = this.getMarkerColorForPlaceType(place.types?.[0] || '');
         
-        // Create custom icon with dynamic color
-        const icon = {
+        // Create custom icon with dynamic color and proper typing
+        const icon: google.maps.Symbol = {
           path: google.maps.SymbolPath.CIRCLE,
           fillColor: placeColor,
           fillOpacity: 0.9,
@@ -386,8 +386,8 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
           title: place.name,
           animation: google.maps.Animation.DROP,
           icon,
-          optimized: false, // Helps with marker animations
-          zIndex: 1000 - index // Higher z-index for earlier places
+          optimized: false,
+          zIndex: 1000 - index
         });
         
         markers.push(marker);
@@ -407,7 +407,7 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
         
         infoWindows.push(infoWindow);
         
-        // Add marker click event
+        // Add marker click event with improved animation
         marker.addListener('click', () => {
           // Close all other info windows
           infoWindows.forEach(iw => iw.close());
@@ -421,6 +421,28 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
           
           // Center map on this marker
           map.panTo(position);
+          
+          // Animate the symbol size with proper typing
+          const symbolIcon = marker.getIcon() as google.maps.Symbol;
+          const originalScale = symbolIcon.scale || 10;
+          
+          // Create animation sequence
+          const animateMarker = () => {
+            // Make sure we're working with a Symbol
+            if (symbolIcon) {
+              // Create a copy of the icon to modify
+              const newIcon: google.maps.Symbol = { ...symbolIcon, scale: originalScale * 1.3 };
+              marker.setIcon(newIcon);
+              
+              setTimeout(() => {
+                const resetIcon: google.maps.Symbol = { ...symbolIcon, scale: originalScale };
+                marker.setIcon(resetIcon);
+              }, 200);
+            }
+          };
+          
+          // Run the animation
+          animateMarker();
         });
       }
     });

@@ -1,17 +1,19 @@
 import { BaseWidgetData } from '../components/widgets/base/base-widget';
 
-export type WidgetType =
-  | 'weather'
-  | 'stock'
-  | 'map'
-  | 'places'
-  | 'nearby_places'
-  | 'google_search'
-  | 'chat'
-  | 'altair'
-  | 'code_execution'
-  | 'table'
-  | 'explainer';
+export enum WidgetType {
+  WEATHER = 'weather',
+  STOCK = 'stock',
+  MAP = 'map',
+  PLACES = 'places',
+  NEARBY_PLACES = 'nearby_places',
+  GOOGLE_SEARCH = 'google_search',
+  CHAT = 'chat',
+  ALTAIR = 'altair',
+  CODE_EXECUTION = 'code_execution',
+  TABLE = 'table',
+  EXPLAINER = 'explainer',
+  SEARCH = 'search',
+}
 
 export type ToolName =
   | 'get_weather'
@@ -29,14 +31,14 @@ export interface ToolToWidgetMapping {
 }
 
 export const TOOL_WIDGET_MAPPING: Record<ToolName, ToolToWidgetMapping> = {
-  get_weather: { widgetType: 'weather' },
-  get_stock_price: { widgetType: 'stock' },
-  get_directions: { widgetType: 'map' },
-  search_places: { widgetType: 'places' },
-  search_nearby: { widgetType: 'nearby_places' },
-  render_altair: { widgetType: 'altair' },
-  render_table: { widgetType: 'table' },
-  explain_topic: { widgetType: 'explainer' }
+  get_weather: { widgetType: WidgetType.WEATHER },
+  get_stock_price: { widgetType: WidgetType.STOCK },
+  get_directions: { widgetType: WidgetType.MAP },
+  search_places: { widgetType: WidgetType.PLACES },
+  search_nearby: { widgetType: WidgetType.NEARBY_PLACES },
+  render_altair: { widgetType: WidgetType.ALTAIR },
+  render_table: { widgetType: WidgetType.TABLE },
+  explain_topic: { widgetType: WidgetType.EXPLAINER }
 };
 
 export type WidgetState = {

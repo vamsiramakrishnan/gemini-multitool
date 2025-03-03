@@ -1,20 +1,26 @@
 import { BaseWidget, BaseWidgetData } from '../base/base-widget';
 import './search-widget.scss'; // Import SCSS for styling
+import {withWidget} from "../withWidget";
 
 export interface SearchSupport {
   groundingChunkIndices: number[];
   segment: {
     text: string;
+    startIndex?: number; // Make optional since they might not always be present
+    endIndex?: number;   // Make optional
   };
+  confidenceScores?: number[]; // Optional, as per the example
 }
 
 export interface SearchChunk {
-  index: number;
+  index: number; // Add index to match the processed data
   web?: {
     title?: string;
     uri?: string;
   };
   score?: number;
+  source?: string; // Add source
+  metadata?: any; // Add metadata
 }
 
 export interface SearchEntryPoint {
@@ -113,10 +119,10 @@ export class SearchWidget extends BaseWidget<SearchData> {
       <div class="results-grid">
         <div class="answer-container">
           <div class="answer-summary">
-            <h2 class="answer-title">Key Points about India's Budget 2025-26</h2>
+            <h2 class="answer-title">Answer</h2>
             
             <div class="main-content">
-              ${this.renderMainPoints(metadata.groundingSupports)}
+              ${this.renderMainPoints(metadata.groundingSupports, metadata.groundingChunks)}
             </div>
 
             <div class="bibliography-section">
@@ -129,26 +135,32 @@ export class SearchWidget extends BaseWidget<SearchData> {
     `;
   }
 
-  private renderMainPoints(supports: SearchSupport[]): string {
+  private renderMainPoints(supports: SearchSupport[], chunks: SearchChunk[]): string {
     if (!supports.length) return '';
 
     return `
       <div class="key-points">
         <ul class="points-list">
-          ${supports.map((support, idx) => `
-            <li class="point-item">
-              <div class="point-content">
-                ${support.segment ? this.highlightRelevantText(support.segment.text, idx) : ''}
-                ${this.renderInlineCitations(support.groundingChunkIndices)}
-              </div>
-            </li>
-          `).join('')}
+          ${supports.map((support, idx) => {
+            // Find the chunk indices.  Supports now have an array of chunk indices.
+            const chunkIndices = support.groundingChunkIndices;
+
+            return `
+              <li class="point-item">
+                <div class="point-content">
+                  ${support.segment ? this.highlightRelevantText(support.segment.text, idx) : ''}
+                  ${this.renderInlineCitations(chunkIndices)}
+                </div>
+              </li>
+            `;
+          }).join('')}
         </ul>
       </div>
     `;
   }
 
   private renderInlineCitations(indices: number[]): string {
+    // Increment indices for display (1-based)
     return `<sup class="citations">[${indices.map(i => i + 1).join(', ')}]</sup>`;
   }
 
@@ -266,4 +278,11 @@ export class SearchWidget extends BaseWidget<SearchData> {
   destroy(): void {
     // Clean up any subscriptions/timers if needed
   }
-} 
+}
+
+export type SearchWidgetProps = SearchData;
+
+export const SearchWidgetComponent = withWidget<SearchWidgetProps>(
+  SearchWidget, // Use the class itself
+  'SearchWidget'
+);

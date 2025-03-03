@@ -616,4 +616,130 @@
 // Animations
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.places-widget-wrapper {
+  height: 100%;
+  width: 100%;
+  
+  .places-widget {
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(var(--primary-rgb), 0.05),
+          transparent
+        );
+        animation: shimmer 1.5s infinite;
+      }
+    }
+    
+    .place-card {
+      transition: all 0.3s ease;
+      
+      &.highlight {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12),
+                    0 0 0 2px rgba(var(--primary-rgb), 0.3);
+      }
+      
+      &:hover {
+        transform: translateY(-4px);
+      }
+      
+      .place-actions button {
+        position: relative;
+        overflow: hidden;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: rgba(var(--primary-rgb), 0.1);
+          border-radius: inherit;
+          transform: scale(0);
+          transition: transform 0.3s ease;
+        }
+        
+        &:hover::after {
+          transform: scale(1);
+        }
+      }
+    }
+    
+    // Improved empty state
+    .places-empty {
+      background: rgba(var(--surface-2-rgb), 0.05);
+      border-radius: var(--radius-lg);
+      padding: 3rem 2rem;
+      
+      .material-symbols-outlined {
+        font-size: 3.5rem;
+        background: rgba(var(--surface-3-rgb), 0.1);
+        padding: 1rem;
+        border-radius: 50%;
+      }
+      
+      h3 {
+        font-size: 1.25rem;
+        margin: 1rem 0 0.5rem;
+      }
+      
+      p {
+        margin: 0 0 1.5rem;
+        max-width: 20rem;
+      }
+      
+      .retry-button {
+        padding: 0.75rem 1.25rem;
+        background: var(--primary-500);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 auto;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: var(--primary-600);
+          transform: translateY(-2px);
+        }
+      }
+    }
+    
+    // Improved loading animations
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
+    }
+  }
+}
+
+// Responsive improvements
+@media (max-width: 640px) {
+  .places-widget {
+    .place-card {
+      flex-direction: column;
+      
+      .place-photo {
+        width: 100%;
+        height: 160px;
+      }
+    }
+  }
 } 

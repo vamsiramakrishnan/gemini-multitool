@@ -89,7 +89,10 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
         </div>
 
         <div class="places-grid">
-          ${this.data.places.map(place => this.renderPlaceCard(place)).join('')}
+          ${this.data.places.map((place, index) => {
+            console.log(`Rendering place ${index}:`, place);
+            return this.renderPlaceCard(place);
+          }).join('')}
         </div>
 
         <div class="places-stats">
@@ -131,7 +134,7 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
   }
 
   private initializeMap(): void {
-    if (this.mapInitialized || !window.google?.maps) return;
+    if (this.mapInitialized) return;
 
     const mapElement = document.getElementById(this.mapId);
     if (!mapElement) return;
@@ -142,8 +145,8 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
       ? { lat: firstPlace.location.latitude, lng: firstPlace.location.longitude }
       : { lat: 0, lng: 0 };
 
-    // Map styling
-    const mapOptions = {
+    // Map options with proper typing
+    const mapOptions: google.maps.MapOptions = {
       center,
       zoom: 14,
       mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -232,23 +235,26 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
 
     const map = new google.maps.Map(mapElement, mapOptions);
 
-    // Add markers for all places
+    // Add markers for all places with proper typing for custom icons
     this.data.places.forEach(place => {
       if (!place.location) return;
+      
+      // Create a properly typed custom Symbol
+      const markerIcon: google.maps.Symbol = {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#4285F4',
+        fillOpacity: 0.8,
+        strokeWeight: 2,
+        strokeColor: '#ffffff'
+      };
       
       const marker = new google.maps.Marker({
         position: { lat: place.location.latitude, lng: place.location.longitude },
         map,
         title: place.name,
         animation: google.maps.Animation.DROP,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: '#4285F4',
-          fillOpacity: 0.8,
-          strokeWeight: 2,
-          strokeColor: '#ffffff'
-        }
+        icon: markerIcon
       });
       
       // Add click listener for marker
@@ -259,6 +265,25 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
           card.scrollIntoView({ behavior: 'smooth', block: 'center' });
           card.classList.add('highlight');
           setTimeout(() => card.classList.remove('highlight'), 1500);
+        }
+        
+        // Animate the marker with proper typing
+        const icon = marker.getIcon() as google.maps.Symbol;
+        if (icon) {
+          // Create a copy of the symbol with temporary changes for animation
+          const animatedIcon: google.maps.Symbol = {
+            ...icon,
+            scale: (icon.scale || 8) * 1.3,
+            fillColor: '#FF5722',
+            fillOpacity: 1.0
+          };
+          
+          marker.setIcon(animatedIcon);
+          
+          // Reset after animation
+          setTimeout(() => {
+            marker.setIcon(icon);
+          }, 700);
         }
       });
     });
@@ -272,9 +297,9 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
         const action = target.getAttribute('title');
         
         if (action === 'Zoom in') {
-          map.setZoom(map.getZoom() + 1);
+          map.setZoom((map.getZoom() || 0) + 1);
         } else if (action === 'Zoom out') {
-          map.setZoom(map.getZoom() - 1);
+          map.setZoom((map.getZoom() || 0) - 1);
         } else if (action === 'Center map') {
           map.setCenter(center);
           map.setZoom(14);
@@ -284,16 +309,21 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
   }
 
   private renderPlaceCard(place: Place): string {
+    // Generate a unique ID if one isn't provided
+    const id = place.id || `place-${Math.random().toString(36).substr(2, 9)}`;
+    
     const {
-      id,
       name,
-      address,
+      address = 'No address available',
       rating = 0,
       userRatings = 0,
       photos = [],
-      businessStatus,
+      businessStatus = 'UNKNOWN',
       types = []
     } = place;
+    
+    // Debug to see what we're rendering
+    console.log('Rendering place:', { id, name, address, types });
     
     const isOpen = businessStatus?.toLowerCase() === 'operational';
     const mainPhotoUrl = photos.length > 0 ? photos[0] : '';

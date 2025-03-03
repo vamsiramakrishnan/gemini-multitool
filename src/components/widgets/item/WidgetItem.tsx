@@ -10,17 +10,17 @@ import { ChatWidgetComponent } from '../../chat/ChatWidgetComponent';
 import { AltairWidget } from '../altair/Altair';
 import { CodeExecutionWidget } from '../code-execution/CodeExecutionWidget';
 import { NearbyPlacesWidget } from "../nearby-places/NearbyPlacesWidget";
-import { WidgetRegistry, WidgetType } from '../registry';
+import { WidgetRegistry, WidgetType as WidgetTypeRegistry } from '../registry';
 import { cn } from '../../../utils/cn';
 import { debounce } from 'lodash';
 import { TableWidget } from '../table/TableWidget';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WidgetType as WidgetTypeEnum } from '../../../types/widget-types';
+import { WidgetType } from '../../../types/widget-types';
 
 interface WidgetItemProps {
   item: {
     id: string;
-    type: WidgetTypeEnum;
+    type: WidgetType;
     title: string;
   };
   index: number;
@@ -34,52 +34,23 @@ interface WidgetItemProps {
   defaultCollapsed?: boolean;
 }
 
-const getWidgetTitle = (type: WidgetTypeEnum, data: any): string => {
-  const baseTitle = (() => {
-    const titles: Record<WidgetTypeEnum, string> = {
-      weather: 'Weather',
-      stock: 'Stock Price',
-      map: 'Map',
-      places: 'Places',
-      nearby_places: 'Nearby Places',
-      google_search: 'Search Results',
-      chat: 'Chat',
-      altair: 'Visualization',
-      code_execution: 'Code Execution',
-      table: 'Table',
-      explainer: 'Explainer'
-    };
-    return titles[type] || 'Widget';
-  })();
-
-  // Add specific attributes based on widget type
-  switch (type) {
-    case 'stock':
-      return data?.symbol ? `${baseTitle} - ${data.symbol}` : baseTitle;
-    case 'weather':
-      return data?.location ? `${baseTitle} - ${data.location}` : baseTitle;
-    case 'places':
-      return data?.type && data?.name ? `${baseTitle} - ${data.type}: ${data.name}` : baseTitle;
-    case 'nearby_places':
-      if (data?.type && data?.name) {
-        return `${baseTitle} - ${data.type}: ${data.name}`;
-      } else if (data?.name) {
-        return `${baseTitle} - ${data.name}`;
-      }
-      return baseTitle;
-    case 'map':
-      return data?.location ? `${baseTitle} - ${data.location}` : baseTitle;
-    case 'google_search':
-      return data?.query ? `${baseTitle} - ${data.query}` : baseTitle;
-    case 'table':
-      return data?.tableName ? `${baseTitle} - ${data.tableName}` : baseTitle;
-    case 'altair':
-      return data?.chartTitle || data?.title ? `${baseTitle} - ${data.chartTitle || data.title}` : baseTitle;
-    case 'explainer':
-      return data?.title ? `${baseTitle} - ${data.title}` : baseTitle;
-    default:
-      return baseTitle;
-  }
+const getWidgetTitle = (type: WidgetType, data: any): string => {
+  const titles: Record<WidgetType, string> = {
+    [WidgetType.WEATHER]: 'Weather',
+    [WidgetType.STOCK]: 'Stock Price',
+    [WidgetType.MAP]: 'Map',
+    [WidgetType.PLACES]: 'Places',
+    [WidgetType.NEARBY_PLACES]: 'Nearby Places',
+    [WidgetType.GOOGLE_SEARCH]: 'Search Results',
+    [WidgetType.CHAT]: 'Chat',
+    [WidgetType.ALTAIR]: 'Visualization',
+    [WidgetType.CODE_EXECUTION]: 'Code Execution',
+    [WidgetType.TABLE]: 'Table',
+    [WidgetType.EXPLAINER]: 'Explainer',
+    [WidgetType.SEARCH]: 'Search',
+    [WidgetType.SEARCH_ALONG_ROUTE]: 'Search Along Route',
+  };
+  return titles[type] || 'Widget';
 };
 
 export function WidgetItem({
@@ -248,7 +219,10 @@ export function WidgetItem({
         <div className={cn('widget-content', { 'collapsed': isContentCollapsed })}>
           <div className="widget-scroll-area" ref={contentRef}>
             <div className="widget-container">
-              <WidgetComponent {...widgetData} />
+              {WidgetComponent ? 
+                <WidgetComponent {...widgetData} /> :
+                <div className="widget-error">Widget type "{item.type}" not found</div>
+              }
             </div>
           </div>
         </div>

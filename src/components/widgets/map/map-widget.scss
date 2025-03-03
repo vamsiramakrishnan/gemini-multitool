@@ -150,11 +150,11 @@
           border-left: 2px solid rgba(var(--surface-3-rgb), 0.2);
           position: relative;
           cursor: pointer;
-          transition: all 0.2s var(--widget-transition);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           
           &:hover {
             background: rgba(var(--surface-2-rgb), 0.2);
-            border-left-color: var(--primary-300);
+            transform: translateX(2px);
           }
           
           &.active {
@@ -163,6 +163,8 @@
             
             &::before {
               background: var(--primary-400);
+              transform: translateY(-50%) scale(1.2);
+              box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
             }
           }
           
@@ -214,6 +216,16 @@
                 font-size: 0.8rem;
                 color: var(--text-secondary);
               }
+            }
+          }
+          
+          animation: fadeInStep 0.3s ease forwards;
+          opacity: 0;
+          transform: translateX(-10px);
+          
+          @for $i from 1 through 20 {
+            &:nth-child(#{$i}) {
+              animation-delay: #{$i * 0.05}s;
             }
           }
         }
@@ -294,18 +306,17 @@
         border-radius: var(--radius-md);
         color: var(--text-primary);
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         backdrop-filter: blur(4px);
         box-shadow: var(--widget-elevation-1);
         
         &:hover {
           background: rgba(var(--surface-1-rgb), 1);
-          transform: translateY(-2px);
-          box-shadow: var(--widget-elevation-2);
+          transform: translateY(-2px) scale(1.05);
         }
         
         &:active {
-          transform: translateY(0);
+          transform: scale(0.95);
         }
       }
     }
@@ -323,12 +334,19 @@
         background: var(--primary-500);
         border: 2px solid #ffffff;
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(255, 255, 255, 0.3);
         transition: transform 0.2s ease;
         
         .material-symbols-outlined {
           font-size: 1.125rem;
           color: #ffffff;
+        }
+      }
+      
+      &:hover {
+        .marker-inner {
+          transform: scale(1.2);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(255, 255, 255, 0.4);
         }
       }
     }
@@ -499,4 +517,123 @@
 // Animation
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInStep {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.map-widget-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  
+  .map-container {
+    flex: 1;
+    position: relative;
+    min-height: 300px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--widget-elevation-1);
+  }
+  
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(var(--surface-1-rgb), 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    backdrop-filter: blur(3px);
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(var(--primary-rgb), 0.1);
+      border-top-color: var(--primary-400);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+    
+    .loading-text {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+  }
+  
+  .map-error {
+    padding: 2rem;
+    text-align: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--surface-2-rgb), 0.05);
+    border-radius: var(--radius-md);
+    
+    h3 {
+      margin: 1rem 0 0.5rem;
+      color: var(--text-primary);
+    }
+    
+    p {
+      margin: 0 0 1.5rem;
+      color: var(--text-secondary);
+      max-width: 24rem;
+    }
+    
+    button {
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      background: var(--primary-500);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: var(--primary-600);
+        transform: translateY(-2px);
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  background-color: rgba(var(--surface-2-rgb), 0.1);
+  position: relative;
+  display: block;
+}
+
+// Ensure the container is still visible in various states
+.map-widget-wrapper {
+  &.loading, 
+  &.error {
+    .map-container {
+      opacity: 0.5;
+    }
+  }
 } 
