@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { MapWidget as MapWidgetClass } from './map-widget';
 import type { MapData } from './map-widget';
 import './map-widget.scss';
@@ -26,49 +26,44 @@ export const MapWidget: React.FC<MapWidgetProps> = (props) => {
   }, []);
 
   useEffect(() => {
-    // Avoid re-initialization if widget already exists
-    if (widgetInstanceRef.current) {
-      widgetInstanceRef.current.setData(props);
-      return;
-    }
-    
     const initWidget = async () => {
       if (!containerRef.current || !isMountedRef.current) return;
-      
-      // Prevent excessive retries
+
       if (initAttemptRef.current > 3) {
-        setError("Failed to initialize map after multiple attempts");
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setError("Failed to initialize map after multiple attempts");
+          setIsLoading(false);
+        }
         return;
       }
-      
+
       initAttemptRef.current++;
-      setIsLoading(true);
-      setError(null);
+      if (isMountedRef.current) {
+        setIsLoading(true);
+        setError(null);
+      }
 
       try {
-        // Ensure DOM is fully ready before initializing
         await new Promise(resolve => setTimeout(resolve, 200));
-        
+
         if (!isMountedRef.current || !containerRef.current) return;
-        
-        // Create new widget instance if needed
+
         if (!widgetInstanceRef.current) {
           widgetInstanceRef.current = new MapWidgetClass(props);
+        } else {
+          widgetInstanceRef.current.setData(props);
         }
 
-        // Render HTML first
         const html = await widgetInstanceRef.current.render();
-        
+
         if (!isMountedRef.current || !containerRef.current) return;
         containerRef.current.innerHTML = html;
 
-        // Short delay before post-render to ensure HTML is processed
         await new Promise(resolve => setTimeout(resolve, 50));
-        
+
         if (!isMountedRef.current || !containerRef.current) return;
         await widgetInstanceRef.current.postRender(containerRef.current);
-        
+
         if (isMountedRef.current) {
           setIsLoading(false);
         }
@@ -82,7 +77,13 @@ export const MapWidget: React.FC<MapWidgetProps> = (props) => {
     };
 
     initWidget();
-  }, [props.origin, props.destination]); // Only re-initialize on critical prop changes
+  }, [props.origin, props.destination]);
+
+  const handleRetry = useCallback(() => {
+    initAttemptRef.current = 0;
+    setError(null);
+    setIsLoading(true);
+  }, []);
 
   return (
     <div className={`map-widget-wrapper ${isLoading ? 'loading' : ''} ${error ? 'error' : ''}`}>
@@ -100,22 +101,7 @@ export const MapWidget: React.FC<MapWidgetProps> = (props) => {
           <span className="material-symbols-outlined">error_outline</span>
           <h3>Unable to load map</h3>
           <p>{error}</p>
-          <button onClick={() => {
-            initAttemptRef.current = 0;
-            setError(null);
-            const initWidget = async () => {
-              if (widgetInstanceRef.current && containerRef.current) {
-                try {
-                  await widgetInstanceRef.current.postRender(containerRef.current);
-                  setIsLoading(false);
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Unknown error');
-                  setIsLoading(false);
-                }
-              }
-            };
-            initWidget();
-          }}>
+          <button onClick={handleRetry}>
             <span className="material-symbols-outlined">refresh</span>
             Retry
           </button>

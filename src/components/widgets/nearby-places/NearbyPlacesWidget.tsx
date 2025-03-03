@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { withWidget } from '../withWidget';
 import { NearbyPlacesWidget as NearbyPlacesWidgetClass } from './nearby-places-widget';
 import type { NearbyPlacesData } from './nearby-places-widget';

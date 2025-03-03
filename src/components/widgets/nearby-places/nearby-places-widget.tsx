@@ -24,6 +24,8 @@ export interface NearbyPlacesData extends BaseWidgetData {
 export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
   private mapInitialized = false;
   private readonly mapId: string;
+  private markers: google.maps.Marker[] = [];
+  private map: google.maps.Map | null = null;
 
   constructor(data?: NearbyPlacesData) {
     super('Nearby Places');
@@ -36,12 +38,12 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
   }
 
   async render(data: NearbyPlacesData = this.data): Promise<string> {
-    // Update internal data
     this.data = { ...this.data, ...data };
     
-    // Reset map state when new data arrives
-    this.mapInitialized = false;
-    
+    if (!data.isLoading) {
+      this.mapInitialized = false;
+    }
+
     if (this.data.isLoading) {
       return this.renderLoadingState();
     }
@@ -54,7 +56,7 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
       return this.renderEmptyState();
     }
 
-    setTimeout(() => this.initializeMap(), 100);
+    this.initializeMap();
 
     return `
       <div class="nearby-places-widget">
@@ -171,7 +173,9 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
   private renderPlaceCard(place: Place): string {
     const { name, address, rating, userRatings, priceLevel, photos, businessStatus, types } = place;
     const mainPhotoUrl = photos && photos.length > 0 ? photos[0] : '';
-    const isOpen = businessStatus === 'OPERATIONAL';
+    const isOpen = businessStatus?.toUpperCase() === 'OPERATIONAL';
+    
+    console.log(`Rendering place:`, place);
     
     return `
       <div class="place-card">
@@ -255,13 +259,11 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
     const mapElement = document.getElementById(this.mapId);
     if (!mapElement || !window.google || !window.google.maps) return;
     
-    // Get center coordinates from first place or default to a fallback
     const firstPlace = this.data.places?.[0];
     const center = firstPlace ? 
       { lat: firstPlace.latitude, lng: firstPlace.longitude } : 
-      { lat: -37.8136, lng: 144.9631 }; // Default to Melbourne CBD
+      { lat: -37.8136, lng: 144.9631 };
     
-    // Enhanced map styling for dark theme
     const mapOptions: google.maps.MapOptions = {
       center,
       zoom: 14,
@@ -353,24 +355,17 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
     
     const map = new google.maps.Map(mapElement, mapOptions);
     
-    // Create map attribution
     const attribution = document.createElement('div');
     attribution.className = 'map-attribution';
     attribution.innerHTML = 'Map data ©2025 Google';
     mapElement.appendChild(attribution);
     
-    // Add enhanced markers for each place
-    const markers: google.maps.Marker[] = [];
-    const infoWindows: google.maps.InfoWindow[] = [];
-    
     this.data.places?.forEach((place, index) => {
       if (place.latitude && place.longitude) {
         const position = { lat: place.latitude, lng: place.longitude };
         
-        // Get place type color
         const placeColor = this.getMarkerColorForPlaceType(place.types?.[0] || '');
         
-        // Create custom icon with dynamic color and proper typing
         const icon: google.maps.Symbol = {
           path: google.maps.SymbolPath.CIRCLE,
           fillColor: placeColor,
@@ -390,9 +385,8 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
           zIndex: 1000 - index
         });
         
-        markers.push(marker);
+        this.markers.push(marker);
         
-        // Create improved info window
         const infoWindow = new google.maps.InfoWindow({
           content: `
             <div class="place-info-window">
@@ -405,32 +399,23 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
           pixelOffset: new google.maps.Size(0, -10)
         });
         
-        infoWindows.push(infoWindow);
+        infoWindow.open(map, marker);
         
-        // Add marker click event with improved animation
         marker.addListener('click', () => {
-          // Close all other info windows
           infoWindows.forEach(iw => iw.close());
           
-          // Open this info window
           infoWindow.open(map, marker);
           
-          // Add bounce animation
           marker.setAnimation(google.maps.Animation.BOUNCE);
           setTimeout(() => marker.setAnimation(null), 750);
           
-          // Center map on this marker
           map.panTo(position);
           
-          // Animate the symbol size with proper typing
           const symbolIcon = marker.getIcon() as google.maps.Symbol;
           const originalScale = symbolIcon.scale || 10;
           
-          // Create animation sequence
           const animateMarker = () => {
-            // Make sure we're working with a Symbol
             if (symbolIcon) {
-              // Create a copy of the icon to modify
               const newIcon: google.maps.Symbol = { ...symbolIcon, scale: originalScale * 1.3 };
               marker.setIcon(newIcon);
               
@@ -441,13 +426,11 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
             }
           };
           
-          // Run the animation
           animateMarker();
         });
       }
     });
     
-    // Add map control event listeners
     const mapControls = mapElement.parentElement?.querySelector('.map-controls');
     if (mapControls) {
       const buttons = mapControls.querySelectorAll('.control-button');
@@ -469,6 +452,7 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
     }
     
     this.mapInitialized = true;
+    this.map = map;
   }
 
   private getMarkerColorForPlaceType(type: string): string {
@@ -487,7 +471,6 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
       default: '#E91E63'
     };
     
-    // Find matching type or use default
     for (const key of Object.keys(typeColors)) {
       if (type.toLowerCase().includes(key)) {
         return typeColors[key];
@@ -552,7 +535,31 @@ export class NearbyPlacesWidget extends BaseWidget<NearbyPlacesData> {
     `;
   }
 
+  public setData(data: NearbyPlacesData): void {
+    const queryChanged = data.query !== this.data.query;
+    this.data = { ...this.data, ...data };
+
+    if (queryChanged) {
+      this.mapInitialized = false;
+      if (this.map) {
+        this.markers.forEach(marker => marker.setMap(null));
+        this.markers = [];
+      }
+    }
+
+    if (!this.data.isLoading) {
+      this.initializeMap();
+    }
+  }
+
   destroy(): void {
     this.mapInitialized = false;
+    this.markers.forEach(marker => marker.setMap(null));
+    this.markers = [];
+
+    if (this.map) {
+      google.maps.event.clearInstanceListeners(this.map);
+      this.map = null;
+    }
   }
 } 

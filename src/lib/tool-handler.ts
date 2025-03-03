@@ -20,6 +20,7 @@ import { generateExplanation } from './tools/explainer-api';
 import { NearbyPlacesWidget } from '../components/widgets/nearby-places/nearby-places-widget';
 import { ExplainerWidget } from '../components/widgets/explainer/ExplainerWidget';
 import { SearchWidget } from '../components/widgets/search/search-widget';
+import { executeRouteSearch } from './tools/search-along-route-tool';
 
 interface SearchWidgetData extends BaseWidgetData {
   groundingMetadata: GroundingMetadata;
@@ -306,12 +307,13 @@ export class ToolHandler {
 
   async handleWithStatus(toolName: ToolName, args: any, apiCall: () => Promise<any>) {
     console.log(`Handling ${toolName} with args:`, args);
+    const widgetType = this.mapToolToWidgetType(toolName);
+
     try {
       const result = await apiCall();
       console.log(`${toolName} result:`, result);
 
       // Create widget with the current active tab ID
-      const widgetType = this.mapToolToWidgetType(toolName);
       const widgetId = await this.widgetManager.createWidget(
         widgetType,
         {
@@ -325,7 +327,16 @@ export class ToolHandler {
       return result;
     } catch (error: any) {
       console.error(`Error in ${toolName}:`, error);
-      throw error;
+      // Centralized error handling (create an error widget)
+      await this.widgetManager.createWidget(
+        widgetType,
+        {
+          title: `Error: ${toolName}`,
+          error: error.message || 'An unknown error occurred',
+        },
+        this.activeTabId
+      );
+      throw error; // Re-throw the error for higher-level handling if needed
     }
   }
 
@@ -371,6 +382,8 @@ export class ToolHandler {
         return 'Code Execution';
       case 'explain_topic':
         return `Explanation - ${result.topic}`;
+      case 'search_along_route':
+        return `Search Along Route`;
       default:
         return 'Widget';
     }
@@ -677,25 +690,44 @@ export class ToolHandler {
         throw new Error(`Polyline not found for routeId: ${args.routeId}`);
       }
 
-      // Create the widget with the SearchAlongRouteWidget class
+      // Await the search results *before* creating the widget
+      const searchResults = await executeRouteSearch({
+        query: args.query,
+        polyline,
+        origin: args.routeId.split('-')[0], // Extract origin from routeId
+      });
+
+      // Create the widget with the SearchAlongRouteWidget class and the search results
       const widgetId = await this.widgetManager.createWidget('search_along_route', {
         title: `Search: ${args.query} along route`,
         query: args.query,
         polyline,
         origin: args.routeId.split('-')[0],
-        isLoading: true
+        places: searchResults.places, // Pass the actual search results
+        isLoading: false, // Set loading to false
       }, this.activeTabId);
 
       return {
         success: true,
         widgetId,
-        message: 'Search along route widget created successfully'
+        message: 'Search along route widget created successfully',
+        places: searchResults.places, // Return the places
       };
     } catch (error: any) {
       console.error('Error in handleSearchAlongRoute:', error);
+      // Create an error widget
+      await this.widgetManager.createWidget(
+        'search_along_route',
+        {
+          title: `Error: Search Along Route`,
+          error: error.message || 'An unknown error occurred',
+          isLoading: false,
+        },
+        this.activeTabId
+      );
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }

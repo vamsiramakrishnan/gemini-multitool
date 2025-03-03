@@ -29,6 +29,8 @@ export interface PlacesData extends BaseWidgetData {
 export class PlacesWidget extends BaseWidget<PlacesData> {
   private mapInitialized = false;
   private readonly mapId: string;
+  private markers: google.maps.Marker[] = [];
+  private map: google.maps.Map | null = null;
 
   constructor(data?: PlacesData) {
     super('Places');
@@ -44,8 +46,10 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     // Update internal data
     this.data = { ...this.data, ...data };
     
-    // Reset map state when new data arrives
-    this.mapInitialized = false;
+    // Reset map state when new data arrives, OR if the query changes
+    if (!data.isLoading) {
+      this.mapInitialized = false;
+    }
     
     if (this.data.isLoading) {
       return this.renderLoadingState();
@@ -59,7 +63,7 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
       return this.renderEmptyState();
     }
 
-    setTimeout(() => this.initializeMap(), 100);
+    this.initializeMap();
 
     return `
       <div class="places-widget">
@@ -257,6 +261,8 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
         icon: markerIcon
       });
       
+      this.markers.push(marker);
+      
       // Add click listener for marker
       marker.addListener('click', () => {
         // Find the card element and scroll to it
@@ -289,6 +295,7 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     });
 
     this.mapInitialized = true;
+    this.map = map;
 
     // Add event listeners to control buttons
     document.querySelectorAll('.map-controls .control-button').forEach(button => {
@@ -325,7 +332,7 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     // Debug to see what we're rendering
     console.log('Rendering place:', { id, name, address, types });
     
-    const isOpen = businessStatus?.toLowerCase() === 'operational';
+    const isOpen = businessStatus?.toUpperCase() === 'OPERATIONAL';
     const mainPhotoUrl = photos.length > 0 ? photos[0] : '';
 
     return `
@@ -499,7 +506,31 @@ export class PlacesWidget extends BaseWidget<PlacesData> {
     `;
   }
 
+  public setData(data: PlacesData): void {
+    const queryChanged = data.query !== this.data.query;
+    this.data = { ...this.data, ...data };
+
+    if (queryChanged) {
+      this.mapInitialized = false;
+      if (this.map) {
+        this.markers.forEach(marker => marker.setMap(null));
+        this.markers = [];
+      }
+    }
+
+    if (!this.data.isLoading) {
+      this.initializeMap();
+    }
+  }
+
   destroy(): void {
     this.mapInitialized = false;
+    this.markers.forEach(marker => marker.setMap(null));
+    this.markers = [];
+
+    if (this.map) {
+      google.maps.event.clearInstanceListeners(this.map);
+      this.map = null;
+    }
   }
 }

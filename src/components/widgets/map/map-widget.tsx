@@ -120,6 +120,9 @@ export class MapWidget extends BaseWidget<MapData> {
   private debouncedResize: (((entries: ResizeObserverEntry[]) => void) & { cancel: () => void }) | null = null;
   private animationFrameId: number | null = null;
   
+  // Add a flag to track whether directions have been shown.
+  private directionsShown = false;
+  
   // Maps-specific event handler
   private handleWheelZoom = (e: WheelEvent): void => {
     if (!this.map) return;
@@ -140,7 +143,7 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   async render(data: MapData = this.data): Promise<string> {
-    // Update internal data
+    // Update internal data, but only set loading if _rawResponse is not present
     this.data = { ...this.data, ...data };
     this.loading = !this.data._rawResponse;
     
@@ -240,7 +243,8 @@ export class MapWidget extends BaseWidget<MapData> {
 
       await this.initializeMap();
 
-      if (this.data.origin && this.data.destination && this.map && this.mapInitialized) {
+      // Only show directions if they haven't been shown yet.
+      if (this.data.origin && this.data.destination && this.map && this.mapInitialized && !this.directionsShown) {
         await this.showDirections();
       }
     } catch (error) {
@@ -856,13 +860,6 @@ export class MapWidget extends BaseWidget<MapData> {
       // Remove loading indicator
       loadingIndicator.remove();
       this.mapInitialized = true;
-      
-      // If we have directions data, show it after a small delay to ensure the map is fully loaded
-      if (this.data.origin && this.data.destination && this.map) {
-        setTimeout(() => {
-          this.showDirections();
-        }, 100);
-      }
     } catch (error) {
       console.error('Error initializing map:', error);
       loadingIndicator.remove();
@@ -872,7 +869,17 @@ export class MapWidget extends BaseWidget<MapData> {
   }
 
   public setData(data: MapData): void {
+    // Only update directions if origin/destination change.  This is KEY.
+    const directionsNeedUpdate = data.origin !== this.data.origin || data.destination !== this.data.destination;
+
     this.data = { ...this.data, ...data };
+
+    if (directionsNeedUpdate) {
+      this.directionsShown = false; // Reset the flag
+      if (this.mapInitialized && this.map) {
+        this.showDirections(); // Update directions
+      }
+    }
   }
 
   async showDirections(): Promise<void> {
@@ -937,6 +944,7 @@ export class MapWidget extends BaseWidget<MapData> {
             this.map.fitBounds(result.routes[0].bounds);
           }
           
+          this.directionsShown = true; // Set the flag here
           console.log('Directions displayed successfully');
         } else {
           console.error(`Directions request failed: ${status}`);

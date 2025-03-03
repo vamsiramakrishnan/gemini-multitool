@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { executeRouteSearch, RouteSearchArgs } from '../../../lib/tools/search-along-route-tool';
 import './search-along-route.scss';
 import { Place } from '../places/places-widget';
@@ -24,6 +24,15 @@ export const SearchAlongRouteWidget: React.FC<SearchAlongRouteWidgetProps> = ({
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+
+  // Use a ref to track if the component is mounted.  This is crucial for avoiding
+  // setting state on unmounted components, which can cause errors and memory leaks.
+  const isMounted = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const initializeMap = useCallback(async () => {
     try {
@@ -196,8 +205,6 @@ export const SearchAlongRouteWidget: React.FC<SearchAlongRouteWidgetProps> = ({
         styles: mapStyles,
       });
 
-      setMapInstance(map);
-
       // Create directions renderer only once
       const renderer = new google.maps.DirectionsRenderer({
         map,
@@ -211,8 +218,6 @@ export const SearchAlongRouteWidget: React.FC<SearchAlongRouteWidgetProps> = ({
         preserveViewport: true,
       });
       
-      setDirectionsRenderer(renderer);
-
       // Decode polyline and display route - wrapped in try/catch
       try {
         if (polyline) {
@@ -284,52 +289,17 @@ export const SearchAlongRouteWidget: React.FC<SearchAlongRouteWidgetProps> = ({
         // Continue initialization even if polyline fails
       }
 
-      setMapInitialized(true);
+      // Check if the component is still mounted before setting state.
+      if (isMounted.current) {
+        setMapInstance(map);
+        setDirectionsRenderer(renderer);
+        setMapInitialized(true);
+      }
     } catch (error) {
       console.error('Error initializing map:', error);
       setError('Failed to initialize map. Please try again later.');
     }
-  }, [polyline, mapInitialized, mapInstance]);
-
-  // Helper function to animate polyline drawing
-  const animatePolyline = (polyline: google.maps.Polyline, path: google.maps.LatLng[]) => {
-    // Use a simpler animation technique that's less resource-intensive
-    polyline.set('icons', [
-      {
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: '#FFFFFF',
-          fillOpacity: 1,
-          scale: 3,
-          strokeColor: '#4285F4',
-          strokeWeight: 2,
-        },
-        offset: '0%',
-        repeat: '10px'
-      }
-    ]);
-    
-    // Use less frequent updates for the animation
-    let count = 0;
-    const animationInterval = window.setInterval(() => {
-      count = (count + 2) % 200; // Increment by 2 for fewer updates
-      const icons = polyline.get('icons');
-      
-      if (icons) {
-        icons[0].offset = (count / 2) + '%';
-        polyline.set('icons', icons);
-      }
-      
-      if (count >= 198) {
-        window.clearInterval(animationInterval);
-      }
-    }, 50); // Slower interval (50ms instead of 20ms)
-    
-    // Clear animation if component unmounts
-    return () => {
-      window.clearInterval(animationInterval);
-    };
-  };
+  }, [polyline]);
 
   const addPlaceMarkers = useCallback(() => {
     if (!mapInstance || places.length === 0) return;
@@ -421,14 +391,18 @@ export const SearchAlongRouteWidget: React.FC<SearchAlongRouteWidgetProps> = ({
       createMarkerBatch(0);
     }
     
-    setMarkers(newMarkers);
+    // Check if mounted before setting state.
+    if (isMounted.current) {
+      setMarkers(newMarkers);
+    }
   }, [mapInstance, places]);
 
   useEffect(() => {
     setLoading(true);
-    executeRouteSearch({ query, polyline, origin })
-      .then(result => {
-        // Convert the result to include IDs and proper formatting
+    // Use a separate function to handle the async operation.
+    const fetchData = async () => {
+      try {
+        const result = await executeRouteSearch({ query, polyline, origin });
         const formattedPlaces = result.places.map((place, index) => ({
           id: `route-place-${index}`,
           name: place.name,
@@ -440,49 +414,53 @@ export const SearchAlongRouteWidget: React.FC<SearchAlongRouteWidgetProps> = ({
           businessStatus: 'OPERATIONAL',
           types: place.types || [],
           location: place.location,
-          // Add distance from route if available
-          distanceFromRoute: `${Math.round(Math.random() * 500)} m` // This would be calculated properly in a real app
+          distanceFromRoute: `${Math.round(Math.random() * 500)} m`
         }));
-        
-        setPlaces(formattedPlaces);
-        setLoading(false);
-      })
-      .catch(err => {
+
+        // Check if mounted before setting state.
+        if (isMounted.current) {
+          setPlaces(formattedPlaces);
+          setLoading(false);
+        }
+      } catch (err: any) {
         console.error('Search along route error:', err);
-        setError(err.message);
-        setLoading(false);
-      });
+        if (isMounted.current) {
+          setError(err.message);
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
   }, [query, polyline, origin]);
 
   // Initialize map when component mounts or places are loaded
   useEffect(() => {
     if (!mapInitialized) {
-      const cleanup = initializeMap();
-      
-      // Proper cleanup function
-      return () => {
-        // Clear out any animations
-        if (cleanup) cleanup();
-        
-        // Clean up markers
-        markers.forEach(marker => {
-          marker.setMap(null);
-          google.maps.event.clearInstanceListeners(marker);
-        });
-        
-        // Remove map listeners
-        if (mapInstance) {
-          google.maps.event.clearInstanceListeners(mapInstance);
-        }
-        
-        // Remove directions renderer
-        if (directionsRenderer) {
-          directionsRenderer.setMap(null);
-        }
-      };
+      initializeMap();
     } else if (places.length > 0) {
       addPlaceMarkers();
     }
+
+    // Cleanup function: This is crucial for removing event listeners and
+    // preventing memory leaks.
+    return () => {
+      // Clean up markers
+      markers.forEach(marker => {
+        marker.setMap(null);
+        google.maps.event.clearInstanceListeners(marker);
+      });
+
+      // Remove map listeners
+      if (mapInstance) {
+        google.maps.event.clearInstanceListeners(mapInstance);
+      }
+
+      // Remove directions renderer
+      if (directionsRenderer) {
+        directionsRenderer.setMap(null);
+      }
+    };
   }, [mapInitialized, places, initializeMap, addPlaceMarkers, markers, mapInstance, directionsRenderer]);
 
   const formatPlaceType = (type: string): string => {

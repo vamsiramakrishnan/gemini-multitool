@@ -156,12 +156,12 @@ export class SearchAlongRouteWidget extends BaseWidget<SearchAlongRouteData> {
         
         // Re-render with results
         element.innerHTML = await this.render();
-        this.postRender(element);
+        this.postRender(element); // Call postRender again to handle potential retry button
       } catch (error: any) {
         this.data.error = error.message || 'Search failed';
         this.data.isLoading = false;
         element.innerHTML = await this.render();
-        this.postRender(element);
+        this.postRender(element); // Call postRender again to handle potential retry button
       }
     }
   }
