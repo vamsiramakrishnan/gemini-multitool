@@ -1,0 +1,34 @@
+{
+  "id": "WF5947R",
+  "itemUuid": "9bf19c8e-ca55-4ce9-b40e-e5bbe31d99da",
+  "title": "Bacterium Blue",
+  "author": "PixelSquid360",
+  "authorUrl": "/user/PixelSquid360",
+  "authorId": "60f6c1bf-eb44-4dab-856e-1fb16718b968",
+  "imageSrcSet": "https://elements-resized.envatousercontent.com/elements-cover-images/7f45fbf5-39f5-4ba7-8142-5c2e7fd785a1?w=316&cf_fit=scale-down&q=94&format=jpeg&s=8f8660ac711a7befb7cc1d8ac859f0d2202257c6508cbe4b24a1b4922fbd4ca9 316w, https://elements-resized.envatousercontent.com/elements-cover-images/7f45fbf5-39f5-4ba7-8142-5c2e7fd785a1?w=355&cf_fit=scale-down&q=94&format=jpeg&s=81478e24016b58b80e56380afccbbce47834d91c415a3c78051cb228affc03a2 355w, https://elements-resized.envatousercontent.com/elements-cover-images/7f45fbf5-39f5-4ba7-8142-5c2e7fd785a1?w=433&cf_fit=scale-down&q=85&format=auto&s=1697827bd6b96d1b91916c9c0ae8398c548c90c73e1e057d71c13b99f4e5b49f 433w, https://elements-resized.envatousercontent.com/elements-cover-images/7f45fbf5-39f5-4ba7-8142-5c2e7fd785a1?w=632&cf_fit=scale-down&q=85&format=auto&s=e2942bcdb9e036f570cfa8753920c09be05b78ce94dd3f827368af6b97302d55 632w, https://elements-resized.envatousercontent.com/elements-cover-images/7f45fbf5-39f5-4ba7-8142-5c2e7fd785a1?w=710&cf_fit=scale-down&q=85&format=auto&s=a4240d5277ef222ad5da5c9d8c99b979a237a42ba51c3a75e4943ca8b4f3ff2c 710w",
+  "aspectRatio": 1,
+  "displayType": "pixelsquid",
+  "bpm": null,
+  "trackDurations": [
+    null
+  ],
+  "audioSourceUrl": null,
+  "waveformUrl": null,
+  "itemUrl": "/bacterium-blue-WF5947R",
+  "isNew": false,
+  "video": null,
+  "fallbackSrc": "https://elements-resized.envatousercontent.com/elements-cover-images/7f45fbf5-39f5-4ba7-8142-5c2e7fd785a1?w=433&cf_fit=scale-down&q=85&format=auto&s=1697827bd6b96d1b91916c9c0ae8398c548c90c73e1e057d71c13b99f4e5b49f",
+  "blurredBackgroundSrc": null,
+  "itemType": "3d",
+  "itemTypeName": "3D",
+  "itemTypeNameEn": "3D",
+  "categories": [
+    "Pixelsquid"
+  ],
+  "categoryNames": [
+    "Renders"
+  ],
+  "similarItemsUrl": "/3d/similar-to-WF5947R",
+  "editItemUrl": null,
+  "musicVariants": null
+}

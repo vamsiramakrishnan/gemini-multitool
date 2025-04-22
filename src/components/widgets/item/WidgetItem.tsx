@@ -14,7 +14,7 @@ import { WidgetRegistry, WidgetType } from '../registry';
 import { cn } from '../../../utils/cn';
 import { debounce } from 'lodash';
 import { TableWidget } from '../table/TableWidget';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { WidgetType as WidgetTypeEnum } from '../../../types/widget-types';
 
 interface WidgetItemProps {
@@ -22,6 +22,8 @@ interface WidgetItemProps {
     id: string;
     type: WidgetTypeEnum;
     title: string;
+    position?: { x: number; y: number };
+    size?: { width: number; height: number };
   };
   index: number;
   widgetData: any;
@@ -32,6 +34,12 @@ interface WidgetItemProps {
   isCollapsible?: boolean;
   isExpandable?: boolean;
   defaultCollapsed?: boolean;
+  onPositionChange?: (id: string, position: { x: number; y: number }) => void;
+  onSizeChange?: (id: string, size: { width: number; height: number }) => void;
+  isDraggable?: boolean;
+  isResizable?: boolean;
+  gridLayout?: boolean;
+  [key: string]: any; // Allow any other props
 }
 
 const getWidgetTitle = (type: WidgetTypeEnum, data: any): string => {
@@ -92,42 +100,44 @@ export function WidgetItem({
   onDestroy,
   isCollapsible = true,
   isExpandable = true,
-  defaultCollapsed = false
+  defaultCollapsed = false,
+  onPositionChange,
+  onSizeChange,
+  isDraggable = true,
+  isResizable = true,
+  gridLayout = false,
+  ...otherProps
 }: WidgetItemProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const widgetRef = useRef<HTMLDivElement>(null);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [isContentCollapsed, setIsContentCollapsed] = useState(defaultCollapsed);
   const [isMaximized, setIsMaximized] = useState(false);
-
-  // Widget Components Mapping (moved inside the component)
-  // const WidgetComponents: Record<string, React.ComponentType<any>> = {
-  //   weather: WeatherWidget,
-  //   stock: StockWidget,
-  //   map: MapWidget,
-  //   places: PlacesWidget,
-  //   nearby_places: NearbyPlacesWidget,
-  //   google_search: SearchWidget,
-  //   chat: ChatWidgetComponent,
-  //   altair: AltairWidget,
-  //   code_execution: CodeExecutionWidget,
-  //   table: TableWidget
-  // };
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState(item.position || { x: 0, y: 0 });
+  const [size, setSize] = useState(item.size || { width: 0, height: 0 });
+  const dragControls = useDragControls();
+  
+  // Get position of the resize handle start
+  const [resizeStartPosition, setResizeStartPosition] = useState({ x: 0, y: 0 });
+  const [originalSize, setOriginalSize] = useState({ width: 0, height: 0 });
+  const [isResizing, setIsResizing] = useState(false);
 
   // Current title based on widget type and data
   const currentTitle = useMemo(() => {
     return getWidgetTitle(item.type, widgetData);
   }, [item.type, widgetData]);
 
-  // useEffect(() => {
-  //   if (isMaximized) {
-  //     document.body.style.overflow = 'hidden';
-  //   } else {
-  //     document.body.style.overflow = '';
-  //   }
-  //   return () => {
-  //     document.body.style.overflow = '';
-  //   };
-  // }, [isMaximized]);
+  useEffect(() => {
+    if (isMaximized) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMaximized]);
 
   useEffect(() => {
     if (!contentRef.current) return;
@@ -164,6 +174,17 @@ export function WidgetItem({
     };
   }, [isContentCollapsed]);
 
+  // Initialize size based on the widget's current dimensions
+  useEffect(() => {
+    if (widgetRef.current && !size.width && !size.height) {
+      const rect = widgetRef.current.getBoundingClientRect();
+      setSize({
+        width: rect.width,
+        height: rect.height
+      });
+    }
+  }, [size.width, size.height]);
+
   const handleCollapse = useCallback(() => {
     setIsContentCollapsed(!isContentCollapsed);
     onStateChange({ ...widgetState, isMinimized: !isContentCollapsed });
@@ -190,7 +211,60 @@ export function WidgetItem({
     }
   }, [item.id, onDestroy, setWidgets]);
 
-  // Get the appropriate widget component.  Use WidgetRegistry.
+  // Handle drag start
+  const handleDragStart = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggable || isMaximized) return;
+    setIsDragging(true);
+    // Start drag control with the current event
+    dragControls.start(event as any);
+  }, [dragControls, isDraggable, isMaximized]);
+
+  // Handle drag end
+  const handleDragEnd = useCallback((e: any, info: any) => {
+    setIsDragging(false);
+    const newPosition = {
+      x: position.x + info.offset.x,
+      y: position.y + info.offset.y
+    };
+    setPosition(newPosition);
+    onPositionChange?.(item.id, newPosition);
+  }, [item.id, onPositionChange, position]);
+
+  // Handle resize start
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    if (!isResizable || isMaximized) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStartPosition({ x: e.clientX, y: e.clientY });
+    setOriginalSize({ ...size });
+    
+    // Add event listeners for resize
+    const handleResize = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      const deltaX = e.clientX - resizeStartPosition.x;
+      const deltaY = e.clientY - resizeStartPosition.y;
+      
+      const newWidth = Math.max(250, originalSize.width + deltaX);
+      const newHeight = Math.max(200, originalSize.height + deltaY);
+      
+      setSize({ width: newWidth, height: newHeight });
+    };
+    
+    const handleResizeEnd = () => {
+      setIsResizing(false);
+      onSizeChange?.(item.id, size);
+      
+      document.removeEventListener('mousemove', handleResize);
+      document.removeEventListener('mouseup', handleResizeEnd);
+    };
+    
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', handleResizeEnd);
+  }, [isResizable, isMaximized, size, item.id, onSizeChange, isResizing, resizeStartPosition, originalSize]);
+
+  // Get the appropriate widget component. Use WidgetRegistry.
   const WidgetComponent = WidgetRegistry[item.type];
   if (!WidgetComponent) {
     console.error(`No component found for widget type: ${item.type}`);
@@ -200,13 +274,46 @@ export function WidgetItem({
   return (
     <AnimatePresence>
       <motion.div
-        className={cn('widget-item', { maximized: isMaximized, minimized: isContentCollapsed })}
+        ref={widgetRef}
+        className={cn('widget-item', { 
+          maximized: isMaximized, 
+          minimized: isContentCollapsed,
+          dragging: isDragging,
+          resizing: isResizing,
+          'grid-layout': gridLayout
+        })}
+        data-widget-id={item.id}
+        {...otherProps}
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1,
+          x: isMaximized ? 0 : position.x,
+          y: isMaximized ? 0 : position.y,
+          width: isMaximized ? '100%' : (size.width || 'auto'),
+          height: isMaximized ? '100%' : (size.height || 'auto'),
+        }}
         exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{ 
+          duration: 0.3, 
+          ease: 'easeInOut',
+          layout: true
+        }}
+        drag={isDraggable && !isMaximized}
+        dragControls={dragControls}
+        dragMomentum={false}
+        dragElastic={0}
+        dragConstraints={{ left: 0, top: 0, right: 0, bottom: 0 }}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={handleDragEnd}
+        layout
       >
-        <div className="widget-header">
+        <div 
+          className="widget-header"
+          onMouseDown={handleDragStart}
+          style={{ cursor: isDraggable && !isMaximized ? 'grab' : 'default' }}
+        >
           <h3 className="widget-title">
             {currentTitle}
           </h3>
@@ -247,11 +354,26 @@ export function WidgetItem({
         </div>
         <div className={cn('widget-content', { 'collapsed': isContentCollapsed })}>
           <div className="widget-scroll-area" ref={contentRef}>
-            <div className="widget-container">
-              <WidgetComponent {...widgetData} />
+            <div className="widget-container" data-widget-id={item.id}>
+              <WidgetComponent
+                {...widgetData}
+                state={widgetState}
+                onStateChange={onStateChange}
+              />
             </div>
           </div>
         </div>
+        
+        {isResizable && !isMaximized && !isContentCollapsed && (
+          <div 
+            className="resize-handle"
+            onMouseDown={handleResizeStart}
+          >
+            <span className="material-symbols-outlined">
+              drag_handle
+            </span>
+          </div>
+        )}
       </motion.div>
     </AnimatePresence>
   );

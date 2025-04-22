@@ -1,0 +1,209 @@
+[
+  {
+    "id": "numberOfPeople",
+    "title": "People",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "No people",
+        "url": "/photos/number-of-people-no-people",
+        "label": "No People",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "1 person",
+        "url": "/photos/number-of-people-1-person",
+        "label": "1 person",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "2 people",
+        "url": "/photos/number-of-people-2-people",
+        "label": "2 people",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "3+ people",
+        "url": "/photos/number-of-people-3-people",
+        "label": "3+ people",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "colors",
+    "title": "Colors",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "colors",
+    "data": [
+      {
+        "id": "Pink",
+        "url": "/photos/color-pink",
+        "label": "Pink",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Red",
+        "url": "/photos/color-red",
+        "label": "Red",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Orange",
+        "url": "/photos/color-orange",
+        "label": "Orange",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Yellow",
+        "url": "/photos/color-yellow",
+        "label": "Yellow",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Green",
+        "url": "/photos/color-green",
+        "label": "Green",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Teal",
+        "url": "/photos/color-teal",
+        "label": "Teal",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Blue",
+        "url": "/photos/color-blue",
+        "label": "Blue",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Purple",
+        "url": "/photos/color-purple",
+        "label": "Purple",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Brown",
+        "url": "/photos/color-brown",
+        "label": "Brown",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Black",
+        "url": "/photos/color-black",
+        "label": "Black",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "Grey",
+        "url": "/photos/color-grey",
+        "label": "Grey",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      },
+      {
+        "id": "White",
+        "url": "/photos/color-white",
+        "label": "White",
+        "selected": false,
+        "nofollow": true,
+        "disabled": false
+      }
+    ]
+  },
+  {
+    "id": "orientation",
+    "title": "Orientation",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Landscape",
+        "url": "/photos/orientation-landscape",
+        "label": "Landscape",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Portrait",
+        "url": "/photos/orientation-portrait",
+        "label": "Portrait",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Square",
+        "url": "/photos/orientation-square",
+        "label": "Square",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "background",
+    "title": "Background",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Isolated",
+        "url": "/photos/background-isolated",
+        "label": "Isolated",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Blurred",
+        "url": "/photos/background-blurred",
+        "label": "Blurred",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  }
+]

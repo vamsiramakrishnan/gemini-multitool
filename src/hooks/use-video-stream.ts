@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveAPIContext } from '../contexts/LiveAPIContext';
 
 interface VideoStreamHookProps {
@@ -11,7 +11,11 @@ const TARGET_FPS = 10; // Limit to 10 FPS to reduce bandwidth
 const FRAME_INTERVAL = 1000 / TARGET_FPS;
 
 export function useVideoStream({ videoRef, activeVideoStream }: VideoStreamHookProps) {
-  const { client, connected } = useLiveAPIContext();
+  const liveApiContext = useLiveAPIContext();
+  const { client, connected } = useMemo(() => ({
+    client: liveApiContext.client,
+    connected: liveApiContext.connected
+  }), [liveApiContext]);
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
   const frameRequestRef = useRef<number>();
   const lastFrameTimeRef = useRef<number>(0);

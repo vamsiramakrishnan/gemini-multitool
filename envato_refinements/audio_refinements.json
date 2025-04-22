@@ -1,0 +1,996 @@
+[
+  {
+    "id": "mood",
+    "title": "Mood",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "upbeat",
+        "url": "/audio/mood-upbeat",
+        "label": "Upbeat/Energetic",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "happy",
+        "url": "/audio/mood-happy",
+        "label": "Happy/Cheerful",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "inspiring",
+        "url": "/audio/mood-inspiring",
+        "label": "Inspiring/Uplifting",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "epic",
+        "url": "/audio/mood-epic",
+        "label": "Epic/Powerful",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "dramatic",
+        "url": "/audio/mood-dramatic",
+        "label": "Dramatic/Emotional",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "chill",
+        "url": "/audio/mood-chill",
+        "label": "Chill/Mellow",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "funny",
+        "url": "/audio/mood-funny",
+        "label": "Funny/Quirky",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "angry",
+        "url": "/audio/mood-angry",
+        "label": "Angry/Aggressive",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "dark",
+        "url": "/audio/mood-dark",
+        "label": "Dark/Suspenseful",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "relaxing",
+        "url": "/audio/mood-relaxing",
+        "label": "Relaxing/Peaceful",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "romantic",
+        "url": "/audio/mood-romantic",
+        "label": "Romantic/Sentimental",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "sad",
+        "url": "/audio/mood-sad",
+        "label": "Sad/Somber",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "genre",
+    "title": "Genre",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "cinematic",
+        "url": "/audio/genre-cinematic",
+        "label": "Cinematic",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "corporate",
+        "url": "/audio/genre-corporate",
+        "label": "Corporate",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "hip hop",
+        "url": "/audio/genre-hip-hop",
+        "label": "Hip hop/Rap",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "rock",
+        "url": "/audio/genre-rock",
+        "label": "Rock",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "electronic",
+        "url": "/audio/genre-electronic",
+        "label": "Electronic",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "ambient",
+        "url": "/audio/genre-ambient",
+        "label": "Ambient",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "funk",
+        "url": "/audio/genre-funk",
+        "label": "Funk",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "classical",
+        "url": "/audio/genre-classical",
+        "label": "Classical",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "blues",
+        "url": "/audio/genre-blues",
+        "label": "Blues",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "children",
+        "url": "/audio/genre-children",
+        "label": "Children/Kids",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "chiptune",
+        "url": "/audio/genre-chiptune",
+        "label": "Chiptune",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "country",
+        "url": "/audio/genre-country",
+        "label": "Country",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "dance",
+        "url": "/audio/genre-dance",
+        "label": "Dance/EDM",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "dubstep",
+        "url": "/audio/genre-dubstep",
+        "label": "Dubstep",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "folk",
+        "url": "/audio/genre-folk",
+        "label": "Folk",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "future bass",
+        "url": "/audio/genre-future-bass",
+        "label": "Future bass",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "house",
+        "url": "/audio/genre-house",
+        "label": "House",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "indie",
+        "url": "/audio/genre-indie",
+        "label": "Indie",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "jazz",
+        "url": "/audio/genre-jazz",
+        "label": "Jazz",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "latin",
+        "url": "/audio/genre-latin",
+        "label": "Latin",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "lofi",
+        "url": "/audio/genre-lofi",
+        "label": "Lofi",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "lounge",
+        "url": "/audio/genre-lounge",
+        "label": "Lounge",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "metal",
+        "url": "/audio/genre-metal",
+        "label": "Metal",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "orchestral hybrid",
+        "url": "/audio/genre-orchestral-hybrid",
+        "label": "Orchestral hybrid",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "percussive",
+        "url": "/audio/genre-percussive",
+        "label": "Percussive",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "pop",
+        "url": "/audio/genre-pop",
+        "label": "Pop",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "rnb soul",
+        "url": "/audio/genre-rnb-soul",
+        "label": "R&B and Soul",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "reggae",
+        "url": "/audio/genre-reggae",
+        "label": "Reggae",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "techno",
+        "url": "/audio/genre-techno",
+        "label": "Techno",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "trap",
+        "url": "/audio/genre-trap",
+        "label": "Trap",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "world",
+        "url": "/audio/genre-world",
+        "label": "World",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "theme",
+    "title": "Theme",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "corporate",
+        "url": "/audio/theme-corporate",
+        "label": "Corporate",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "documentary",
+        "url": "/audio/theme-documentary",
+        "label": "Documentary",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "action",
+        "url": "/audio/theme-action",
+        "label": "Action",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "lifestyle",
+        "url": "/audio/theme-lifestyle",
+        "label": "Lifestyle",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "sports",
+        "url": "/audio/theme-sports",
+        "label": "Sports",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "drama",
+        "url": "/audio/theme-drama",
+        "label": "Drama",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "nature",
+        "url": "/audio/theme-nature",
+        "label": "Nature",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "technology",
+        "url": "/audio/theme-technology",
+        "label": "Technology",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "celebration",
+        "url": "/audio/theme-celebration",
+        "label": "Celebration",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "comedy",
+        "url": "/audio/theme-comedy",
+        "label": "Comedy",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "family",
+        "url": "/audio/theme-family",
+        "label": "Family",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "romance",
+        "url": "/audio/theme-romance",
+        "label": "Romance",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "sci-fi",
+        "url": "/audio/theme-sci-fi",
+        "label": "Sci-Fi/Fantasy",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "showbiz",
+        "url": "/audio/theme-showbiz",
+        "label": "Showbiz",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "travel",
+        "url": "/audio/theme-travel",
+        "label": "Travel",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "audioLength",
+    "label": "Length",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "range",
+    "rangeVariant": "duration",
+    "steps": [
+      0,
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      45,
+      50,
+      55,
+      60,
+      90,
+      120,
+      150,
+      180,
+      210,
+      240,
+      270,
+      300,
+      360,
+      420,
+      480,
+      540,
+      600,
+      3600
+    ],
+    "selectedValues": [
+      0,
+      3600
+    ]
+  },
+  {
+    "id": "tempo",
+    "title": "Tempo",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Very Slow (Below 60 BPM)",
+        "url": "/audio/tempo-very-slow-(below-60-bpm)",
+        "label": "Very Slow (Below 60 BPM)",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Slow (60-90 BPM)",
+        "url": "/audio/tempo-slow-(60-90-bpm)",
+        "label": "Slow (60-90 BPM)",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Medium (90-110 BPM)",
+        "url": "/audio/tempo-medium-(90-110-bpm)",
+        "label": "Medium (90-110 BPM)",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Upbeat (110-140 BPM)",
+        "url": "/audio/tempo-upbeat-(110-140-bpm)",
+        "label": "Upbeat (110-140 BPM)",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Fast (140-160 BPM)",
+        "url": "/audio/tempo-fast-(140-160-bpm)",
+        "label": "Fast (140-160 BPM)",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Very Fast (160+ BPM)",
+        "url": "/audio/tempo-very-fast-(160-bpm)",
+        "label": "Very Fast (160+ BPM)",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "instrument",
+    "title": "Instrument",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "piano",
+        "url": "/audio/instrument-piano",
+        "label": "Piano",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "acoustic guitar",
+        "url": "/audio/instrument-acoustic-guitar",
+        "label": "Acoustic Guitar",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "violin",
+        "url": "/audio/instrument-violin",
+        "label": "Violin",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "bass",
+        "url": "/audio/instrument-bass",
+        "label": "Bass",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "cello",
+        "url": "/audio/instrument-cello",
+        "label": "Cello",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "drums",
+        "url": "/audio/instrument-drums",
+        "label": "Drums",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "percussion",
+        "url": "/audio/instrument-percussion",
+        "label": "Percussion",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "electric guitar",
+        "url": "/audio/instrument-electric-guitar",
+        "label": "Electric Guitar",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "accordion",
+        "url": "/audio/instrument-accordion",
+        "label": "Accordion",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "banjo",
+        "url": "/audio/instrument-banjo",
+        "label": "Banjo",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "bells",
+        "url": "/audio/instrument-bells",
+        "label": "Bells",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "brass",
+        "url": "/audio/instrument-brass",
+        "label": "Brass",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "clarinet",
+        "url": "/audio/instrument-clarinet",
+        "label": "Clarinet",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "double bass",
+        "url": "/audio/instrument-double-bass",
+        "label": "Double Bass",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "flute",
+        "url": "/audio/instrument-flute",
+        "label": "Flute",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "harmonica",
+        "url": "/audio/instrument-harmonica",
+        "label": "Harmonica",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "harp",
+        "url": "/audio/instrument-harp",
+        "label": "Harp",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "keyboard",
+        "url": "/audio/instrument-keyboard",
+        "label": "Keyboard",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "mallets",
+        "url": "/audio/instrument-mallets",
+        "label": "Mallets",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "organ",
+        "url": "/audio/instrument-organ",
+        "label": "Organ",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "plucked",
+        "url": "/audio/instrument-plucked",
+        "label": "Plucked",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "saxophone",
+        "url": "/audio/instrument-saxophone",
+        "label": "Saxophone",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "sound effects",
+        "url": "/audio/instrument-sound-effects",
+        "label": "Sound Effects",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "strings",
+        "url": "/audio/instrument-strings",
+        "label": "Strings",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "synth",
+        "url": "/audio/instrument-synth",
+        "label": "Synth",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "trumpet",
+        "url": "/audio/instrument-trumpet",
+        "label": "Trumpet",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "ukulele",
+        "url": "/audio/instrument-ukulele",
+        "label": "Ukulele",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "woodwinds",
+        "url": "/audio/instrument-woodwinds",
+        "label": "Woodwinds",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "vocalsInAudio",
+    "title": "Vocals",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "No Vocals",
+        "url": "/audio/vocals-no-vocals",
+        "label": "No Vocals",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Background Vocals",
+        "url": "/audio/vocals-background-vocals",
+        "label": "Background Vocals",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Female Vocals",
+        "url": "/audio/vocals-female-vocals",
+        "label": "Female Vocals",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Lead Vocals",
+        "url": "/audio/vocals-lead-vocals",
+        "label": "Lead Vocals",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Vocal Samples",
+        "url": "/audio/vocals-vocal-samples",
+        "label": "Vocal Samples",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Male Vocals",
+        "url": "/audio/vocals-male-vocals",
+        "label": "Male Vocals",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Instrumental Included",
+        "url": "/audio/vocals-instrumental-included",
+        "label": "Instrumental Included",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "decade",
+    "title": "Decade",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "2000s",
+        "url": "/audio/decade-2000s",
+        "label": "2000s",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "80s & 90s",
+        "url": "/audio/decade-80s-and-90s",
+        "label": "80s & 90s",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "60s & 70s",
+        "url": "/audio/decade-60s-and-70s",
+        "label": "60s & 70s",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "50s and earlier",
+        "url": "/audio/decade-50s-and-earlier",
+        "label": "50s and earlier",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "properties",
+    "title": "Properties",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "checkboxItems": [
+      {
+        "id": "isLooped",
+        "url": "/audio/properties-looped",
+        "label": "Looped",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "excludeProAffiliated",
+        "url": "/audio/properties-excludes-pro",
+        "label": "Excludes P.R.O.",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "excludeAudioContentId",
+        "url": "/audio/properties-excludes-content-id",
+        "label": "Excludes Content ID",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "categories",
+    "title": "Categories",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Music Tracks",
+        "url": "/audio/royalty-free-music",
+        "label": "Royalty-Free Music",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Logos & Idents",
+        "url": "/audio/logos-and-idents",
+        "label": "Logos & Idents",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  }
+]

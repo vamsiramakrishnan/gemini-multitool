@@ -1,260 +1,82 @@
 @import '../../styles/shared/mixins';
 @import '../../styles/shared/design-system';
 
-// Mixins
-@mixin neon-glow($color, $intensity: 1) {
-  box-shadow: 
-    0 0 5px rgba($color, 0.2 * $intensity),
-    0 0 10px rgba($color, 0.1 * $intensity),
-    0 0 20px rgba($color, 0.05 * $intensity);
+// New mixins for enhanced visuals
+@mixin glass-effect {
+  background: rgba(var(--background-rgb), 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(var(--border-rgb), 0.2);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.2);
 }
 
-@mixin terminal-scanline {
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      transparent 50%,
-      rgba(0, 0, 0, 0.05) 50%
-    );
-    background-size: 100% 4px;
-    pointer-events: none;
-    opacity: 0.1;
-    animation: scanline 10s linear infinite;
+@mixin tab-hover-effect {
+  &:hover:not(.active) {
+    background-color: rgba(var(--primary-rgb), 0.08);
+    transform: translateY(-2px);
   }
 }
 
-@mixin custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--primary-rgb), 0.3) transparent;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--primary-rgb), 0.3);
-    border-radius: var(--radius-full);
-    
-    &:hover {
-      background: rgba(var(--primary-rgb), 0.5);
-    }
-  }
+// Animations
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-// Modern design variables
-:root {
-  --tab-container-elevation: 
-    0 4px 20px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.05);
-  --tab-active-elevation: 
-    0 4px 12px rgba(var(--primary-rgb), 0.1),
-    0 2px 4px rgba(var(--primary-rgb), 0.05);
-  --tab-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --tab-height: 48px;
-  --tab-font-size: 14px;
-  --tab-icon-size: 20px;
-  --tab-padding: 16px;
-  --tab-min-width: 140px;
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+// Enhanced tabs container
 .tabs-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
-  overflow: hidden;
+  height: 100%;
+  color: var(--fg-color);
   position: relative;
-  background: rgba(20, 20, 20, 0.95);
-  border-radius: 16px 16px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: var(--tab-container-elevation);
-  transform: translateZ(0);
-  will-change: transform;
-  @include terminal-scanline;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease-out;
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: 
-      radial-gradient(
-        circle at top right,
-        rgba(var(--primary-rgb), 0.1),
-        transparent 70%
-      );
-    pointer-events: none;
-    opacity: 0.5;
-  }
-
-  .tabs-header {
-    flex-shrink: 0;
-    height: var(--tab-height);
+  // Tabs header wrapper with scroll indicators
+  .tabs-header-wrapper {
+    position: relative;
+    width: 100%;
     display: flex;
     align-items: center;
-    padding: 0 var(--tab-padding);
-    background: rgba(30, 30, 30, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    position: relative;
-    z-index: 2;
-    backdrop-filter: blur(12px);
+    height: 46px;
     
-    &::-webkit-scrollbar { display: none; }
-    scroll-snap-type: x mandatory;
-    scroll-padding: var(--tab-padding);
-    scroll-behavior: smooth;
-    
-    // Add visual indicators for overflow
-    &::before,
-    &::after {
-      content: '';
+    .tabs-scroll-indicator {
       position: absolute;
       top: 0;
-      bottom: 0;
-      width: 20px;
-      pointer-events: none;
-      z-index: 3;
-      transition: opacity 0.3s ease;
-    }
-
-    &::before {
-      left: 0;
-      background: linear-gradient(to right, rgba(30, 30, 30, 0.7) 0%, transparent 100%);
-    }
-
-    &::after {
-      right: 0;
-      background: linear-gradient(to left, rgba(30, 30, 30, 0.7) 0%, transparent 100%);
-    }
-
-    // Hide indicators when not overflowing
-    &:not(:hover)::-webkit-scrollbar {
-      display: none;
-    }
-    
-    .tab {
-      position: relative;
-      scroll-snap-align: start;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: var(--tab-min-width);
-      max-width: calc(var(--tab-min-width) * 1.5);
-      height: calc(var(--tab-height) * 0.8);
-      padding: 0 12px;
-      margin-right: 8px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
-      color: var(--text-secondary);
-      font-size: var(--tab-font-size);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: pointer;
-      transition: var(--tab-transition);
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        
-        .tab-title {
-          color: var(--text-primary);
-        }
-      }
-      
-      &.active {
-        background: rgba(var(--primary-rgb), 0.1);
-        border-color: rgba(var(--primary-rgb), 0.2);
-        box-shadow: var(--tab-active-elevation);
-        transform: translateY(-2px);
-        
-        .tab-title {
-          color: var(--primary-400);
-          font-weight: 500;
-        }
-        
-        .material-symbols-outlined {
-          color: var(--primary-400);
-        }
-      }
-
-      .material-symbols-outlined {
-        font-size: var(--tab-icon-size);
-        flex-shrink: 0;
-        transition: var(--tab-transition);
-        color: var(--text-secondary);
-      }
-
-      .tab-title {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-weight: 400;
-        color: var(--text-secondary);
-        transition: var(--tab-transition);
-      }
-
-      .remove-tab {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        padding: 0;
-        background: transparent;
-        border: none;
-        color: var(--text-secondary);
-        border-radius: 4px;
-        cursor: pointer;
-        transition: var(--tab-transition);
-        flex-shrink: 0;
-        opacity: 0.6;
-
-        &:hover {
-          background: rgba(var(--error-rgb), 0.1);
-          color: var(--error-400);
-          opacity: 1;
-        }
-
-        .material-symbols-outlined {
-          font-size: 18px;
-        }
-      }
-    }
-
-    .add-tab {
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: var(--tab-transition);
+      width: 24px;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
       
-      &:hover {
-        background: rgba(var(--primary-rgb), 0.1);
-        border-color: rgba(var(--primary-rgb), 0.2);
-        color: var(--primary-400);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.1);
+      &.visible {
+        opacity: 0.7;
+      }
+      
+      &.left {
+        left: 0;
+        background: linear-gradient(to right, rgba(var(--background-rgb), 0.9), transparent);
+      }
+      
+      &.right {
+        right: 0;
+        background: linear-gradient(to left, rgba(var(--background-rgb), 0.9), transparent);
       }
       
       .material-symbols-outlined {
@@ -263,254 +85,295 @@
     }
   }
 
-  .tab-content {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-    overflow: hidden;
+  // Tabs header with scroll
+  .tabs-header {
     display: flex;
-    flex-direction: column;
-    background: var(--surface-0);
+    width: 100%;
+    overflow-x: auto;
+    align-items: center;
+    padding: 0 10px;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scroll-behavior: smooth;
     
-    .widgets-container {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding: 24px;
-      display: grid;
-      gap: 24px;
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-      align-content: start;
-      scroll-padding: 24px;
-      scroll-behavior: smooth;
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+
+    // Tab item
+    .tab {
+      display: flex;
+      align-items: center;
+      height: 36px;
+      padding: 0 12px;
+      margin-right: 8px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      background-color: rgba(var(--background-secondary-rgb), 0.5);
+      transition: all 0.2s ease;
+      position: relative;
+      border: 1px solid rgba(var(--border-rgb), 0.15);
       
-      &::-webkit-scrollbar {
-        width: 8px;
+      @include tab-hover-effect;
+      
+      // Tab icon
+      .tab-icon {
+        font-size: 16px;
+        margin-right: 6px;
+        opacity: 0.7;
       }
       
-      &::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.02);
+      // Tab title
+      .tab-title {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       
-      &::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+      // Title input for editing
+      .tab-title-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--fg-color);
+        font-size: 13px;
+        font-weight: 500;
+        width: 100px;
+        padding: 2px 4px;
+        margin: -2px 0;
         border-radius: 4px;
         
-        &:hover {
-          background: rgba(255, 255, 255, 0.15);
+        &:focus {
+          background: rgba(var(--primary-rgb), 0.1);
         }
       }
       
-      @media (max-width: 1200px) {
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
-        padding: 16px;
+      // Close button
+      .remove-tab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        margin-left: 6px;
+        opacity: 0.6;
+        transition: all 0.2s ease;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        color: var(--fg-color);
+        
+        &:hover {
+          opacity: 1;
+        }
+        
+        .material-symbols-outlined {
+          font-size: 14px;
+        }
       }
+      
+      // Active tab indicator (animated bar)
+      .active-tab-indicator {
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+        border-radius: 10px;
+      }
+      
+      // Active tab styles
+      &.active {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        border-color: rgba(var(--primary-rgb), 0.3);
+        color: var(--primary-color);
+        font-weight: 600;
+        
+        .tab-icon {
+          opacity: 1;
+          color: var(--primary-color);
+        }
+      }
+    }
+    
+    // Add tab button
+    .add-tab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      margin-left: 4px;
+      background: transparent;
+      color: var(--fg-color);
+      border: 1px dashed rgba(var(--border-rgb), 0.3);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        border-color: rgba(var(--primary-rgb), 0.4);
+        color: var(--primary-color);
+      }
+      
+      .material-symbols-outlined {
+        font-size: 16px;
+      }
+    }
+  }
+
+  // Tab content area
+  .tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    animation: slideUp 0.3s ease-out;
+    
+    // Widgets container
+    .widgets-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-auto-rows: minmax(min-content, max-content);
+      gap: 16px;
+      padding: 16px;
+      overflow-y: auto;
+      position: relative;
       
       @media (max-width: 768px) {
         grid-template-columns: 1fr;
-        padding: 12px;
-        gap: 16px;
       }
       
+      // Empty state styling
       .empty-state {
-        grid-column: 1 / -1;
-        min-height: 60vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 48px;
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 32px;
+        grid-column: 1 / -1;
+        min-height: 300px;
+        background: rgba(var(--background-secondary-rgb), 0.3);
+        border-radius: 12px;
+        border: 1px dashed rgba(var(--border-rgb), 0.3);
         
         .empty-icon {
-          font-size: 64px;
-          color: var(--text-secondary);
-          margin-bottom: 24px;
+          font-size: 48px;
+          margin-bottom: 16px;
           opacity: 0.5;
+          color: var(--primary-color);
         }
         
         h3 {
-          font-size: 24px;
-          color: var(--text-primary);
-          margin-bottom: 12px;
-          font-weight: 500;
+          font-size: 20px;
+          font-weight: 600;
+          margin-bottom: 8px;
+          color: var(--fg-color);
         }
         
         p {
-          font-size: 16px;
-          color: var(--text-secondary);
-          max-width: 400px;
+          font-size: 14px;
+          opacity: 0.7;
           margin-bottom: 24px;
-          line-height: 1.6;
+        }
+        
+        .add-widget-btn {
+          display: flex;
+          align-items: center;
+          padding: 10px 20px;
+          background: rgba(var(--primary-rgb), 0.1);
+          color: var(--primary-color);
+          border: 1px solid rgba(var(--primary-rgb), 0.3);
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          .material-symbols-outlined {
+            margin-right: 8px;
+            font-size: 18px;
+          }
+          
+          &:hover {
+            background: rgba(var(--primary-rgb), 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px -2px rgba(var(--primary-rgb), 0.2);
+          }
+          
+          &:active {
+            transform: translateY(0);
+          }
         }
       }
     }
   }
 }
 
-// Animations
-@keyframes pulse {
-  0%, 100% { 
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 0.8;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes scanline {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(100%);
-  }
-}
-
-// Reduced Motion
-@media (prefers-reduced-motion: reduce) {
+// Dark mode adjustments
+.dark-mode {
   .tabs-container {
-    .tab,
-    .add-tab,
-    .remove-tab {
-      transition: none !important;
-    }
-    
-    &::after {
-      animation: none !important;
-    }
-  }
-}
-
-// Mobile Optimizations
-@media (max-width: 768px) {
-  .tabs-container {
-    border-radius: 0;
-    
     .tabs-header {
       .tab {
-        min-width: 100px;
-        max-width: 150px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
         
-        .remove-tab {
-          opacity: 1;
-          visibility: visible;
+        &.active {
+          background-color: rgba(var(--primary-rgb), 0.15);
         }
       }
+    }
+    
+    .empty-state {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
     }
   }
 }
 
-// Touch Device Optimizations
-@media (pointer: coarse) {
+// High contrast mode
+.high-contrast-mode {
   .tabs-container {
     .tabs-header {
-      .tab, 
-      .add-tab {
-        min-height: 40px;
+      .tab {
+        border-width: 2px;
         
-        .remove-tab {
-          min-width: 32px;
-          min-height: 32px;
+        &.active {
+          border-color: var(--primary-color);
         }
       }
     }
   }
 }
 
-// Enhanced focus states
-.tabs-container {
-  .tab:focus-visible,
-  .add-tab:focus-visible {
-    outline: 2px solid var(--primary-400);
-    outline-offset: 2px;
-  }
-}
-
-// Container queries for ultra-responsive layouts
-@container (max-width: 600px) {
+// Responsive adjustments for mobile
+@media (max-width: 640px) {
   .tabs-container {
-    --tab-height: 40px;
-    --tab-font-size: 13px;
-    --tab-icon-size: 16px;
-    --tab-padding: 8px;
-    --tab-min-width: 80px;
-  }
-}
-
-// Animations
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Theme variables
-:root {
-  --Neutral-5: #f8f9fa;
-  --Neutral-10: #f1f3f5;
-  --Neutral-15: #e9ecef;
-  --Neutral-20: #dee2e6;
-  --Neutral-60: #868e96;
-  --Neutral-90: #212529;
-  --Blue-500: #339af0;
-}
-
-// Dark theme
-[data-theme="dark"] {
-  --Neutral-5: #212529;
-  --Neutral-10: #343a40;
-  --Neutral-15: #495057;
-  --Neutral-20: #868e96;
-  --Neutral-60: #adb5bd;
-  --Neutral-90: #f8f9fa;
-  --Blue-500: #74c0fc;
-}
-
-// Loading state with improved aesthetics
-.tab-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 120px;
-  background: linear-gradient(
-    145deg,
-    var(--surface-1) 0%,
-    var(--surface-0) 100%
-  );
-  border-radius: var(--radius-lg);
-  
-  .loading-indicator {
-    width: 32px;
-    height: 32px;
-    border: 3px solid rgba(var(--primary-400), 0.1);
-    border-top-color: var(--primary-400);
-    border-bottom-color: var(--primary-400);
-    border-radius: 50%;
-    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-}
-
-// Remove duplicate layout definitions
-.app-layout {
-  display: none;
-}
-
-// Add responsive adjustments for tab title
-@media (max-width: 768px) {
-  .tabs-container .tabs-header .tab {
-    .tab-title {
-      font-size: calc(var(--tab-font-size) * 0.9);
+    .tabs-header {
+      .tab {
+        padding: 0 8px;
+        height: 32px;
+        
+        .tab-icon {
+          margin-right: 4px;
+        }
+        
+        .tab-title {
+          max-width: 80px;
+        }
+      }
     }
   }
 } 

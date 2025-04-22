@@ -8,7 +8,8 @@ import { CodeExecutionWidget } from './code-execution/CodeExecutionWidget';
 import { NearbyPlacesWidget } from './nearby-places/NearbyPlacesWidget';
 import { TableWidget } from './table/TableWidget';
 import { ExplainerWidget } from './explainer/ExplainerWidget';
-import { OtherWidgets } from './other/OtherWidgets';
+import { EnvatoGalleryWidget } from './envato-gallery/EnvatoGalleryWidget';
+import React from 'react';
 
 export type WidgetType = 
   | 'weather'
@@ -20,7 +21,8 @@ export type WidgetType =
   | 'altair'
   | 'code_execution'
   | 'table'
-  | 'explainer';
+  | 'explainer'
+  | 'envato_gallery';
 
 export const WidgetRegistry: Record<WidgetType, React.ComponentType<any>> = {
   weather: WeatherWidget,
@@ -32,7 +34,8 @@ export const WidgetRegistry: Record<WidgetType, React.ComponentType<any>> = {
   altair: AltairWidget,
   code_execution: CodeExecutionWidget,
   table: TableWidget,
-  explainer: ExplainerWidget
+  explainer: ExplainerWidget,
+  envato_gallery: EnvatoGalleryWidget
 };
 
 // Add type for chart types

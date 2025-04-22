@@ -17,11 +17,14 @@
 import type {
   Content,
   FunctionCall,
+  FunctionResponse,
   GenerationConfig,
-  GenerativeContentBlob,
   Part,
   Tool,
-} from "@google/generative-ai";
+  LiveServerMessage,
+  Modality,
+  Blob,
+} from "@google/genai";
 
 /**
  * this module contains type-definitions and Type-Guards
@@ -29,20 +32,19 @@ import type {
 
 // Type-definitions
 
-/* outgoing types */
-
-/**
- * the config to initiate the session
- */
+// Configuration for initiating the session (may be simplified later)
 export type LiveConfig = {
   model: string;
   systemInstruction?: { parts: Part[] };
-  generationConfig?: Partial<LiveGenerationConfig>;
+  generationConfig?: Partial<GenerationConfig>; // Keep for now, might adjust
   tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }>;
+  // Add responseModalities for SDK compatibility
+  responseModalities?: Modality[];
 };
 
+// Keep GenerationConfig specifics if needed by the app, align with SDK if possible
 export type LiveGenerationConfig = GenerationConfig & {
-  responseModalities: "text" | "audio" | "image";
+  responseModalities?: Modality[]; // Now using SDK's Modality enum
   speechConfig?: {
     voiceConfig?: {
       prebuiltVoiceConfig?: {
@@ -52,87 +54,23 @@ export type LiveGenerationConfig = GenerationConfig & {
   };
 };
 
-export type LiveOutgoingMessage =
-  | SetupMessage
-  | ClientContentMessage
-  | RealtimeInputMessage
-  | ToolResponseMessage;
+// Export SDK message types for direct use in the app
+export type { LiveServerMessage };
 
-export type SetupMessage = {
-  setup: LiveConfig;
+// Keep LiveFunctionResponse if custom structure is needed, otherwise use SDK's FunctionResponse
+export type LiveFunctionResponse = FunctionResponse & {
+  // Potentially add custom fields if necessary, or just use FunctionResponse
+  id: string; // ID might be handled differently by the SDK, verify usage
 };
 
-export type ClientContentMessage = {
-  clientContent: {
-    turns: Content[];
-    turnComplete: boolean;
-  };
-};
-
-export type RealtimeInputMessage = {
-  realtimeInput: {
-    mediaChunks: GenerativeContentBlob[];
-  };
-};
-
-export type ToolResponseMessage = {
-  toolResponse: {
-    functionResponses: LiveFunctionResponse[];
-  };
-};
-
-export type ToolResponse = ToolResponseMessage["toolResponse"];
-
-export type LiveFunctionResponse = {
-  response: object;
-  id: string;
-};
-
-/** Incoming types */
-
-export type LiveIncomingMessage =
-  | ToolCallCancellationMessage
-  | ToolCallMessage
-  | ServerContentMessage
-  | SetupCompleteMessage;
-
-export type SetupCompleteMessage = { setupComplete: {} };
-
-export type ServerContentMessage = {
-  serverContent: ServerContent;
-};
-
-export type ServerContent = ModelTurn | TurnComplete | Interrupted;
-
-export type ModelTurn = {
-  modelTurn: {
-    parts: Part[];
-  };
-};
-
-export type TurnComplete = { turnComplete: boolean };
-
-export type Interrupted = { interrupted: true };
-
-export type ToolCallCancellationMessage = {
-  toolCallCancellation: {
-    ids: string[];
-  };
-};
-
-export type ToolCallCancellation =
-  ToolCallCancellationMessage["toolCallCancellation"];
-
-export type ToolCallMessage = {
-  toolCall: ToolCall;
-};
-
+// Keep LiveFunctionCall if custom structure is needed, otherwise use SDK's FunctionCall
 export type LiveFunctionCall = FunctionCall & {
-  id: string;
+  id: string; // ID might be handled differently by the SDK, verify usage
 };
 
 /**
- * A `toolCall` message
+ * Represents a tool call within the live session context.
+ * Might be replaceable by FunctionCallPart from the SDK if no custom ID is needed.
  */
 export type ToolCall = {
   functionCalls: LiveFunctionCall[];
@@ -141,11 +79,13 @@ export type ToolCall = {
 /** log types */
 export type StreamingLog = {
   date: Date;
-  type: string;
+  type: string; // e.g., 'request', 'response', 'error', 'info'
   count?: number;
-  message: string | LiveOutgoingMessage | LiveIncomingMessage;
+  message: string | object | { error: any }; // Use generic object for now, refine later
+  error?: any;
 };
 
+// Keep Grounding and Search types as they represent data structures within responses
 export interface GroundingMetadata {
   groundingChunks: GroundingChunk[];
   groundingSupports?: GroundingSupport[];
@@ -173,7 +113,7 @@ export interface GroundingSupport {
 export interface GroundingSupportSegment {
   startIndex: number;
   endIndex: number;
-  supportingChunkIndexes: number[];
+  supportingChunkIndexes: number[]; // SDK might use different naming
   text: string;
 }
 
@@ -194,144 +134,87 @@ export interface SearchChunk {
   };
 }
 
-// Type-Guards
-
-const prop = (a: any, prop: string, kind: string = "object") =>
-  typeof a === "object" && typeof a[prop] === "object";
-
-// outgoing messages
-export const isSetupMessage = (a: unknown): a is SetupMessage =>
-  prop(a, "setup");
-
-export const isClientContentMessage = (a: unknown): a is ClientContentMessage =>
-  prop(a, "clientContent");
-
-export const isRealtimeInputMessage = (a: unknown): a is RealtimeInputMessage =>
-  prop(a, "realtimeInput");
-
-export const isToolResponseMessage = (a: unknown): a is ToolResponseMessage =>
-  prop(a, "toolResponse");
-
-// incoming messages
-export const isSetupCompleteMessage = (a: unknown): a is SetupCompleteMessage =>
-  prop(a, "setupComplete");
-
-export const isServerContentMessage = (a: any): a is ServerContentMessage =>
-  prop(a, "serverContent");
-
-export const isToolCallMessage = (a: any): a is ToolCallMessage =>
-  prop(a, "toolCall");
-
-export const isToolCallCancellationMessage = (
-  a: unknown,
-): a is ToolCallCancellationMessage =>
-  prop(a, "toolCallCancellation") &&
-  isToolCallCancellation((a as any).toolCallCancellation);
-
-export const isModelTurn = (a: any): a is ModelTurn =>
-  typeof (a as ModelTurn).modelTurn === "object";
-
-export const isTurnComplete = (a: any): a is TurnComplete =>
-  typeof (a as TurnComplete).turnComplete === "boolean";
-
-export const isInterrupted = (a: any): a is Interrupted =>
-  (a as Interrupted).interrupted;
-
-export function isToolCall(value: unknown): value is ToolCall {
+// Type guards for relevant SDK types
+export function isContent(value: unknown): value is Content {
   if (!value || typeof value !== "object") return false;
+  const candidate = value as Content;
+  return typeof candidate.role === "string" && Array.isArray(candidate.parts);
+}
 
-  const candidate = value as Record<string, unknown>;
-
+export function isPart(value: unknown): value is Part {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Part;
   return (
-    Array.isArray(candidate.functionCalls) &&
-    candidate.functionCalls.every((call) => isLiveFunctionCall(call))
+    ("text" in candidate && typeof candidate.text === "string") ||
+    ("inlineData" in candidate && 
+      typeof candidate.inlineData === "object" &&
+      candidate.inlineData &&
+      "mimeType" in candidate.inlineData &&
+      "data" in candidate.inlineData) ||
+    ("functionCall" in candidate && typeof candidate.functionCall === "object")
   );
 }
 
-export function isToolResponse(value: unknown): value is ToolResponse {
+// isFunctionCall is likely available in the SDK, but keep if custom checks needed
+export function isFunctionCall(value: unknown): value is FunctionCall {
   if (!value || typeof value !== "object") return false;
-
-  const candidate = value as Record<string, unknown>;
-
+  const candidate = value as FunctionCall;
   return (
-    Array.isArray(candidate.functionResponses) &&
-    candidate.functionResponses.every((resp) => isLiveFunctionResponse(resp))
+    typeof candidate.name === "string" && 
+    (!candidate.args || typeof candidate.args === "object")
   );
 }
 
+// Keep custom LiveFunctionCall guard if needed
 export function isLiveFunctionCall(value: unknown): value is LiveFunctionCall {
+  if (!isFunctionCall(value)) return false;
+  const candidate = value as LiveFunctionCall;
+  return typeof candidate.id === "string"; // Check if ID is still relevant
+}
+
+// isFunctionResponse is likely available in the SDK, but keep if custom checks needed
+export function isFunctionResponse(value: unknown): value is FunctionResponse {
   if (!value || typeof value !== "object") return false;
-
-  const candidate = value as Record<string, unknown>;
-
+  const candidate = value as FunctionResponse;
   return (
-    typeof candidate.name === "string" &&
-    typeof candidate.id === "string" &&
-    typeof candidate.args === "object" &&
-    candidate.args !== null
+    typeof candidate.name === "string" && typeof candidate.response === "object"
   );
 }
 
+// Keep custom LiveFunctionResponse guard if needed
 export function isLiveFunctionResponse(
   value: unknown,
 ): value is LiveFunctionResponse {
-  if (!value || typeof value !== "object") return false;
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    typeof candidate.response === "object" && typeof candidate.id === "string"
-  );
+  if (!isFunctionResponse(value)) return false;
+  const candidate = value as LiveFunctionResponse;
+  return typeof candidate.id === "string"; // Check if ID is still relevant
 }
 
-export const isToolCallCancellation = (
-  a: unknown,
-): a is ToolCallCancellationMessage["toolCallCancellation"] =>
-  typeof a === "object" && Array.isArray((a as any).ids);
-
-// Define the grounding metadata interface separately
-export interface WithGroundingMetadata {
-  groundingMetadata?: {
-    searchEntryPoint?: SearchEntryPoint;
-    groundingChunks: SearchChunk[];
-    groundingSupports: GroundingSupport[];
-    webSearchQueries?: string[];
-  };
+// Helper function to check LiveServerMessage content
+export function hasModelTurn(msg: LiveServerMessage): boolean {
+  return !!msg.serverContent?.modelTurn;
 }
 
-// Use type intersection instead of interface extension
-export type ServerContentWithGrounding = ServerContent & WithGroundingMetadata;
-
-// Strengthen type validation with type predicates
-export function isGroundingMetadata(value: unknown): value is GroundingMetadata {
-  const candidate = value as GroundingMetadata;
-  return (
-    Array.isArray(candidate.groundingChunks) &&
-    candidate.groundingChunks.every(chunk =>
-      typeof chunk.text === 'string' &&
-      (chunk.source === 'web' || chunk.source === 'user' || chunk.source === 'assistant')
-    ) &&
-    (!candidate.groundingSupports || (
-      Array.isArray(candidate.groundingSupports) &&
-      candidate.groundingSupports.every(support =>
-        (!support.content || typeof support.content === 'string') &&
-        (!support.segments || support.segments.every(segment =>
-          typeof segment.startIndex === 'number' &&
-          typeof segment.endIndex === 'number'
-        ))
-      )
-    ))
-  );
+export function hasFunctionCalls(msg: LiveServerMessage): boolean {
+  // Check for function calls in the modelTurn parts
+  if (!msg.serverContent?.modelTurn?.parts) return false;
+  return msg.serverContent.modelTurn.parts.some(part => part.functionCall);
 }
 
-// Add validation for tool calls
-export function isValidToolCall(value: unknown): value is ToolCall {
-  if (!isToolCall(value)) return false;
-  return value.functionCalls.every(call => 
-    typeof call.id === 'string' &&
-    typeof call.name === 'string' &&
-    typeof call.args === 'object'
-  );
+export function hasFunctionResponses(msg: LiveServerMessage): boolean {
+  // Based on SDK samples, the LiveServerMessage might not directly have
+  // a field for function responses. Instead, it might be structured differently.
+  // Let's check if the message has any parts with functionResponse field
+  if (msg.serverContent?.modelTurn?.parts) {
+    return msg.serverContent.modelTurn.parts.some(
+      (part: any) => part.functionResponse
+    );
+  }
+  return false;
+}
+
+export function isTurnComplete(msg: LiveServerMessage): boolean {
+  return !!msg.serverContent?.turnComplete;
 }
 
 /**
@@ -382,4 +265,46 @@ export async function processGroundingSupports(supports?: GroundingSupport[]): P
   });
   // Filter out any null values (failed supports)
   return (await Promise.all(supportPromises)).filter((s): s is GroundingSupport => s !== null);
+}
+
+// Define the grounding metadata interface separately
+export interface WithGroundingMetadata {
+  groundingMetadata?: {
+    searchEntryPoint?: SearchEntryPoint;
+    groundingChunks: SearchChunk[];
+    groundingSupports: GroundingSupport[];
+    webSearchQueries?: string[];
+  };
+}
+
+// Use type intersection instead of interface extension
+export type ServerContentWithGrounding = Content & WithGroundingMetadata;
+
+// Strengthen type validation with type predicates
+export function isGroundingMetadata(value: unknown): value is GroundingMetadata {
+  const candidate = value as GroundingMetadata;
+  return (
+    Array.isArray(candidate.groundingChunks) &&
+    candidate.groundingChunks.every(chunk =>
+      typeof chunk.text === 'string' &&
+      (chunk.source === 'web' || chunk.source === 'user' || chunk.source === 'assistant')
+    ) &&
+    (!candidate.groundingSupports || (
+      Array.isArray(candidate.groundingSupports) &&
+      candidate.groundingSupports.every(support =>
+        (!support.content || typeof support.content === 'string') &&
+        (!support.segments || support.segments.every(segment =>
+          typeof segment.startIndex === 'number' &&
+          typeof segment.endIndex === 'number'
+        ))
+      )
+    ))
+  );
+}
+
+// Add validation for tool calls - Use the custom LiveFunctionCall if needed
+export function isValidToolCall(value: unknown): value is ToolCall {
+  if (typeof value !== "object" || value === null || !("functionCalls" in value) || !Array.isArray((value as any).functionCalls))
+    return false;
+  return (value as ToolCall).functionCalls.every((call) => isLiveFunctionCall(call)); // Use custom guard if LiveFunctionCall is kept
 }

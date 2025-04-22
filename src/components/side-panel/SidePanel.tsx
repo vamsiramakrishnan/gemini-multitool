@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import cn from 'classnames';
 import { RiSidebarFoldLine, RiSidebarUnfoldLine } from 'react-icons/ri';
+import { FiMaximize2, FiMinimize2, FiSend, FiMessageSquare, FiVideo, FiSmile } from 'react-icons/fi';
 import { useLiveAPIContext } from '../../contexts/LiveAPIContext';
 import { useLoggerStore } from '../../lib/store-logger';
 import Logger from '../logger/Logger';
@@ -25,19 +26,75 @@ import './side-panel.scss';
 import { useLayout } from '../../contexts/LayoutContext';
 import { useWidget } from '../../contexts/RootContext';
 
+// Define the props type for the CollapsibleSection component
+interface CollapsibleSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+// Define the collapsible section component
+const CollapsibleSection = ({ title, icon, children, defaultOpen = true }: CollapsibleSectionProps) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  
+  return (
+    <div className="collapsible-section">
+      <button 
+        className="section-header" 
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <div className="section-title">
+          {icon}
+          <span>{title}</span>
+        </div>
+        <span className="section-chevron">
+          {isOpen ? '▲' : '▼'}
+        </span>
+      </button>
+      {isOpen && (
+        <div className="section-content">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Define the store state type
+interface LoggerStoreState {
+  maxLogs: number;
+  logs: any[];
+  log: (streamingLog: any) => void;
+  clearLogs: () => void;
+  setMaxLogs?: (n: number) => void;
+}
+
 interface SidePanelProps {
   videoStream: MediaStream | null;
 }
 
 export default function SidePanel({ videoStream }: SidePanelProps) {
-  const { connected, client } = useLiveAPIContext();
+  // Get the context values and memoize them
+  const liveApiContext = useLiveAPIContext();
+  const { connected, client } = useMemo(() => ({
+    connected: liveApiContext.connected,
+    client: liveApiContext.client
+  }), [liveApiContext]);
+
   const { panelOpen, setPanelOpen } = useLayout();
   const { widgetData } = useWidget();
   const loggerRef = useRef<HTMLDivElement>(null);
-  const { log, logs } = useLoggerStore();
+  
+  // Access the logger store with individual selectors for better memoization
+  const log = useLoggerStore(state => state.log);
+  const logs = useLoggerStore(state => state.logs);
 
   const [textInput, setTextInput] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [videoFullscreen, setVideoFullscreen] = useState(false);
 
   // Scroll to bottom of logger when new logs arrive
   useEffect(() => {
@@ -74,13 +131,21 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
     }
   }, [handleSubmit]);
 
+  // Mock emoji insertion
+  const insertEmoji = (emoji: string) => {
+    setTextInput(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  // Array of emojis for the picker
+  const emojis = ["😊", "👍", "🎉", "❤️", "😂", "🤔", "👏", "🙏", "🔥", "✨", "💯", "🤝"];
+
   return (
     <>
       <button
         className={cn('panel-toggle', { open: panelOpen })}
         onClick={() => setPanelOpen(!panelOpen)}
         aria-label={panelOpen ? 'Close activity panel' : 'Open activity panel'}
-        style={{ transition: 'transform 0.3s ease', transform: panelOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
       >
         {panelOpen ? (
           <RiSidebarFoldLine />
@@ -98,36 +163,86 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
         </div>
 
         <div className="panel-content">
-          <div className="video-stream-section">
-            <VideoStream stream={videoStream} />
-          </div>
-
-          <div className="logger-section">
-            <div className="logger-content" ref={loggerRef}>
-              <Logger />
+          <CollapsibleSection 
+            title="Video Stream" 
+            icon={<FiVideo />}
+            defaultOpen={true}
+          >
+            <div className={cn(
+              "video-container",
+              { fullscreen: videoFullscreen }
+            )}>
+              <VideoStream stream={videoStream} />
+              <button 
+                className="fullscreen-toggle"
+                onClick={() => setVideoFullscreen(!videoFullscreen)}
+                aria-label={videoFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              >
+                {videoFullscreen ? <FiMinimize2 /> : <FiMaximize2 />}
+              </button>
             </div>
-          </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection 
+            title="System Logs" 
+            icon={<FiMessageSquare />}
+            defaultOpen={true}
+          >
+            <div className="logger-section">
+              <div className="logger-content" ref={loggerRef}>
+                <Logger />
+              </div>
+            </div>
+          </CollapsibleSection>
 
           <div className={cn('input-container', { disabled: !connected })}>
             <div className="input-content">
-              <textarea
-                className="input-area"
-                ref={inputRef}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setTextInput(e.target.value)}
-                value={textInput}
-                placeholder="Type something..."
-                disabled={!connected}
-                aria-label="Message input"
-              />
-              <button
-                className="send-button material-symbols-outlined"
-                onClick={handleSubmit}
-                disabled={!connected}
-                aria-label="Send message"
-              >
-                send
-              </button>
+              <div className="input-wrapper">
+                <textarea
+                  className="input-area"
+                  ref={inputRef}
+                  onKeyDown={handleKeyDown}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  value={textInput}
+                  placeholder="Type something..."
+                  disabled={!connected}
+                  aria-label="Message input"
+                />
+                <div className="input-actions">
+                  <button
+                    className="emoji-button"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    aria-label="Add emoji"
+                    type="button"
+                  >
+                    <FiSmile />
+                  </button>
+                  <button
+                    className="send-button"
+                    onClick={handleSubmit}
+                    disabled={!connected}
+                    aria-label="Send message"
+                    type="button"
+                  >
+                    <FiSend />
+                  </button>
+                </div>
+              </div>
+
+              {showEmojiPicker && (
+                <div className="emoji-picker">
+                  {emojis.map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => insertEmoji(emoji)}
+                      className="emoji-option"
+                      type="button"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

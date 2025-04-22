@@ -1,0 +1,249 @@
+[
+  {
+    "id": "categories",
+    "title": "Categories",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Stock Footage",
+        "url": "/stock-video/stock-footage",
+        "label": "Stock Footage",
+        "count": "6,577,771",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Motion Graphics",
+        "url": "/stock-video/motion-graphics",
+        "label": "Motion Graphics",
+        "count": "946,181",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "orientation",
+    "title": "Orientation",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Horizontal",
+        "url": "/stock-video/orientation-horizontal",
+        "label": "Horizontal",
+        "count": "7,279,223",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Vertical",
+        "url": "/stock-video/orientation-vertical",
+        "label": "Vertical",
+        "count": "244,397",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "resolution",
+    "title": "Resolution",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "720p (HD)",
+        "url": "/stock-video/resolution-720p-(hd)",
+        "label": "720p (HD)",
+        "count": "8,728",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "1080p (Full HD)",
+        "url": "/stock-video/resolution-1080p-(full-hd)",
+        "label": "1080p (Full HD)",
+        "count": "1,888,826",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "2K",
+        "url": "/stock-video/resolution-2k",
+        "label": "2K",
+        "count": "30,651",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "4K (UHD)",
+        "url": "/stock-video/resolution-4k-(uhd)",
+        "label": "4K (UHD)",
+        "count": "5,595,124",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "frameRate",
+    "title": "Frame Rate",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "23.98 fps",
+        "url": "/stock-video/frame-rate-2398-fps",
+        "label": "23.98 fps",
+        "count": "675,534",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "24 fps",
+        "url": "/stock-video/frame-rate-24-fps",
+        "label": "24 fps",
+        "count": "516,236",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "25 fps",
+        "url": "/stock-video/frame-rate-25-fps",
+        "label": "25 fps",
+        "count": "3,041,348",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "29.97 fps",
+        "url": "/stock-video/frame-rate-2997-fps",
+        "label": "29.97 fps",
+        "count": "1,981,922",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "30 fps",
+        "url": "/stock-video/frame-rate-30-fps",
+        "label": "30 fps",
+        "count": "763,341",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "50 fps",
+        "url": "/stock-video/frame-rate-50-fps",
+        "label": "50 fps",
+        "count": "188,495",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "60 fps",
+        "url": "/stock-video/frame-rate-60-fps",
+        "label": "60 fps",
+        "count": "119,879",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "More than 60 fps",
+        "url": "/stock-video/frame-rate-more-than-60-fps",
+        "label": "More than 60 fps",
+        "count": "64",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "videoLength",
+    "label": "Length",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "range",
+    "rangeVariant": "duration",
+    "steps": [
+      0,
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      45,
+      50,
+      55,
+      60,
+      90,
+      120,
+      150,
+      180,
+      210,
+      240,
+      270,
+      300,
+      3600
+    ],
+    "selectedValues": [
+      0,
+      3600
+    ]
+  },
+  {
+    "id": "properties",
+    "title": "Properties",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "checkboxItems": [
+      {
+        "id": "hasAlphaChannel",
+        "url": "/stock-video/properties-alpha-channel",
+        "label": "Alpha Channel",
+        "count": "236,274",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "isLooped",
+        "url": "/stock-video/properties-looped",
+        "label": "Looped",
+        "count": "397,174",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  }
+]

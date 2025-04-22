@@ -1,0 +1,34 @@
+{
+  "id": "GCRPPG",
+  "itemUuid": "273112f7-81d4-40ff-a5d2-da015ae85ccc",
+  "title": "Mr Blue Sky Font",
+  "author": "simonok",
+  "authorUrl": "/user/simonok",
+  "authorId": "3510b930-793b-400d-a311-0f4fa1da4a87",
+  "imageSrcSet": "https://elements-resized.envatousercontent.com/elements-cover-images/ede5d86f-1dc0-4819-9ecb-99fae6d45954?w=316&cf_fit=scale-down&q=94&format=jpeg&s=c3d894cb9a0eb1ac344db435e1627c01efc89fd97115c3eefb399c515d31a529 316w, https://elements-resized.envatousercontent.com/elements-cover-images/ede5d86f-1dc0-4819-9ecb-99fae6d45954?w=355&cf_fit=scale-down&q=94&format=jpeg&s=ada92756f8d1e92aa3f9351597e9ea7d6dbbfb3674bc77e15cd89fdd34953f68 355w, https://elements-resized.envatousercontent.com/elements-cover-images/ede5d86f-1dc0-4819-9ecb-99fae6d45954?w=433&cf_fit=scale-down&q=85&format=auto&s=0f171d2a1e088c1b8bcde5cedcaf160d89520ab952c6835dd982665f80d14a19 433w, https://elements-resized.envatousercontent.com/elements-cover-images/ede5d86f-1dc0-4819-9ecb-99fae6d45954?w=632&cf_fit=scale-down&q=85&format=auto&s=413117f223ad57f4772fa85ef3d04f9f5c20321ab67b99fdd759061c79cdb446 632w, https://elements-resized.envatousercontent.com/elements-cover-images/ede5d86f-1dc0-4819-9ecb-99fae6d45954?w=710&cf_fit=scale-down&q=85&format=auto&s=cb4dd6ab509332a050b208dc9664a1fd581353b042ad8a6cdfab955c923d449e 710w",
+  "aspectRatio": 1.5,
+  "displayType": "generic",
+  "bpm": null,
+  "trackDurations": [
+    null
+  ],
+  "audioSourceUrl": null,
+  "waveformUrl": null,
+  "itemUrl": "/mr-blue-sky-font-GCRPPG",
+  "isNew": false,
+  "video": null,
+  "fallbackSrc": "https://elements-resized.envatousercontent.com/elements-cover-images/ede5d86f-1dc0-4819-9ecb-99fae6d45954?w=433&cf_fit=scale-down&q=85&format=auto&s=0f171d2a1e088c1b8bcde5cedcaf160d89520ab952c6835dd982665f80d14a19",
+  "blurredBackgroundSrc": null,
+  "itemType": "fonts",
+  "itemTypeName": "Fonts",
+  "itemTypeNameEn": "Fonts",
+  "categories": [
+    "Sans-Serif"
+  ],
+  "categoryNames": [
+    "Sans-Serif"
+  ],
+  "similarItemsUrl": "/fonts/similar-to-GCRPPG",
+  "editItemUrl": null,
+  "musicVariants": null
+}

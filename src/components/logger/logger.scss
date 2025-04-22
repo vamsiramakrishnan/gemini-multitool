@@ -1,617 +1,119 @@
 @import '../../styles/shared/mixins';
 
+// Variables
+:root {
+  --logger-bg: rgba(20, 20, 20, 0.95);
+  --logger-border: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(30, 30, 30, 0.8);
+  --sidebar-bg: rgba(22, 22, 22, 0.8);
+  --main-bg: rgba(25, 25, 25, 0.8);
+  --item-bg: rgba(35, 35, 35, 0.6);
+  --item-hover-bg: rgba(45, 45, 45, 0.8);
+  --text-primary: rgba(255, 255, 255, 0.9);
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --divider-color: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+  
+  // Element heights
+  --header-height: 50px;
+  --toolbar-height: 50px;
+  --footer-height: 0px;
+}
+
+// Mixins
+@mixin glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@mixin custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+@mixin pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 100px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+// Component Styles
+.logger-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.2s ease;
+  @include glass-effect;
+}
+
 .logger {
   width: 100%;
   height: 100%;
-  background: rgba(20, 20, 20, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--logger-bg);
+  border: 1px solid var(--logger-border);
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   font-size: 13px;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-xl);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   animation: fadeIn 0.5s ease;
-
-  // Variables for height management
-  --expanded-height: 100%;
-  --collapsed-height: 42px;
-  height: var(--expanded-height);
-
-  // Collapsed state
-  &.collapsed {
-    height: var(--collapsed-height);
-    min-height: var(--collapsed-height);
-
-    .logger-toolbar,
-    .logger-virtual-scroll {
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.2s ease, visibility 0s linear 0.2s;
-    }
-
-    .logger-header {
-      border-bottom: none;
-      background: rgba(30, 30, 30, 0.7);
-
-      .view-controls .toolbar-button {
-        &[title="Expand"] {
-          color: var(--primary-400);
-          background: rgba(var(--primary-rgb), 0.1);
-          
-          &:hover {
-            background: rgba(var(--primary-rgb), 0.15);
-          }
-        }
-      }
-    }
-  }
-
-  // Non-collapsed state transitions
-  .logger-toolbar,
-  .logger-virtual-scroll {
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.3s ease;
-  }
-
-  // Pop-out state
-  &.popped-out {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90vw;
-    height: 90vh;
-    z-index: 1000;
-    background: rgba(20, 20, 20, 0.95) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(16px);
-
-    .view-controls .toolbar-button {
-      &[title="Minimize"] {
-        color: var(--primary-400);
-        background: rgba(var(--primary-rgb), 0.1);
-        
-        &:hover {
-          background: rgba(var(--primary-rgb), 0.15);
-        }
-      }
-    }
-  }
-
-  // Enhanced header with controls
-  .logger-header {
-    --header-height: 42px;
-    height: var(--header-height);
-    padding: 0 16px;
-    background: rgba(30, 30, 30, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    backdrop-filter: blur(10px);
-    
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-
-      h2 {
-        font-size: 15px;
-        color: var(--text-primary);
-        margin: 0;
-        font-weight: 500;
-      }
-
-      .log-stats {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: var(--text-secondary);
-        
-        .stat {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 2px 8px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          
-          .material-symbols-outlined {
-            font-size: 14px;
-          }
-        }
-      }
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .view-controls {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 2px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 6px;
-
-        .toolbar-button {
-          padding: 4px;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: transparent;
-          border: none;
-          border-radius: 4px;
-          color: var(--text-secondary);
-          transition: all 0.2s ease;
-
-          &:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-          }
-
-          &.active {
-            background: rgba(var(--primary-rgb), 0.1);
-            color: var(--primary-400);
-          }
-
-          .material-symbols-outlined {
-            font-size: 16px;
-          }
-        }
-      }
-    }
-  }
-
-  // Improved toolbar with better organization
-  .logger-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background: rgba(30, 30, 30, 0.5);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-
-    .toolbar-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .toolbar-button {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      height: 32px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 6px;
-      color: var(--text-secondary);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      .material-symbols-outlined {
-        font-size: 16px;
-      }
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text-primary);
-      }
-
-      &.active {
-        background: rgba(var(--primary-rgb), 0.1);
-        border-color: rgba(var(--primary-rgb), 0.2);
-        color: var(--primary-400);
-      }
-
-      &.icon-only {
-        padding: 6px;
-        width: 32px;
-      }
-    }
-    
-    .search-input {
-      height: 32px;
-      padding: 0 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 6px;
-      color: var(--text-primary);
-      font-size: 12px;
-      min-width: 180px;
-      transition: all 0.2s ease;
-      
-      &:focus {
-        outline: none;
-        border-color: rgba(var(--primary-rgb), 0.3);
-        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
-      }
-      
-      &::placeholder {
-        color: rgba(255, 255, 255, 0.4);
-      }
-    }
-  }
-
-  // Improved scroll container with horizontal scroll support
-  .logger-virtual-scroll {
-    flex: 1;
-    overflow: auto;
-    position: relative;
-    z-index: 2;
-    padding: 12px;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.15);
-      }
-    }
-
-    &::-webkit-scrollbar-corner {
-      background: rgba(255, 255, 255, 0.02);
-    }
-    
-    .logger-empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--text-secondary);
-      gap: 16px;
-      opacity: 0.6;
-      
-      .material-symbols-outlined {
-        font-size: 32px;
-      }
-      
-      span {
-        font-size: 14px;
-      }
-    }
-  }
-
-  // Enhanced log list with better horizontal scroll handling
-  .logger-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    min-width: min-content;
-    width: 100%;
-
-    .plain-log {
-      display: flex;
-      align-items: flex-start;
-      padding: 10px 12px;
-      gap: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.2) !important;
-      margin-bottom: 8px;
-      transition: all 0.2s ease;
-      min-width: min-content;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-      }
-
-      .timestamp {
-        color: var(--text-secondary);
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0.8;
-        min-width: 70px;
-      }
-
-      .source {
-        color: var(--primary-400);
-        font-size: 11px;
-        white-space: nowrap;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        opacity: 0.9;
-        min-width: 140px;
-        padding-right: 12px;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-      }
-
-      .message {
-        flex: 1;
-        min-width: 300px;
-        white-space: pre;
-        color: var(--text-primary);
-        line-height: 1.5;
-        font-size: 12px;
-        padding-left: 12px;
-        overflow-x: auto;
-      }
-
-      .count {
-        padding: 2px 8px;
-        background: rgba(var(--primary-rgb), 0.1);
-        border: 1px solid rgba(var(--primary-rgb), 0.2);
-        border-radius: 12px;
-        font-size: 11px;
-        color: var(--primary-400);
-      }
-
-      &.source-client {
-        background: rgba(var(--primary-rgb), 0.05) !important;
-        border-left: 2px solid rgba(var(--primary-rgb), 0.3);
-      }
-
-      &.source-server {
-        background: rgba(var(--secondary-rgb), 0.05) !important;
-        border-left: 2px solid rgba(var(--secondary-rgb), 0.3);
-      }
-
-      &.receive {
-        border-left: 2px solid rgba(var(--success-rgb), 0.3);
-      }
-
-      &.send {
-        border-left: 2px solid rgba(var(--warning-rgb), 0.3);
-      }
-    }
-  }
-
-  .rich-log {
-    padding: 12px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    margin-bottom: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    h4 {
-      margin: 0 0 8px;
-      font-size: 13px;
-      color: var(--primary-400);
-      font-weight: 500;
-      letter-spacing: 0.01em;
-    }
-
-    h5 {
-      margin: 0;
-      font-size: 12px;
-      color: var(--text-secondary);
-      font-weight: 500;
-      letter-spacing: 0.01em;
-    }
-
-    .part {
-      margin-bottom: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 6px;
-      overflow: hidden;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      &.part-text {
-        padding: 12px;
-        color: var(--text-primary);
-        line-height: 1.6;
-        font-size: 12px;
-      }
-
-      &.part-executableCode, &.part-functioncall {
-        h5 {
-          padding: 6px 12px;
-          background: rgba(0, 0, 0, 0.2);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          font-size: 11px;
-        }
-
-        pre {
-          font-size: 12px !important;
-          
-          code {
-            font-size: 12px !important;
-          }
-        }
-      }
-
-      &.part-codeExecutionResult {
-        h5 {
-          padding: 6px 12px;
-          background: rgba(0, 0, 0, 0.2);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          font-size: 11px;
-          
-          &.success {
-            color: var(--success-400);
-          }
-          
-          &.error {
-            color: var(--error-400);
-          }
-        }
-
-        pre {
-          font-size: 12px !important;
-          
-          code {
-            font-size: 12px !important;
-          }
-        }
-      }
-    }
-
-    pre {
-      margin: 0;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3) !important;
-      border-radius: 0;
-      font-size: 12px !important;
-      line-height: 1.5;
-      overflow-x: auto;
-
-      code {
-        font-size: 12px !important;
-      }
-
-      &::-webkit-scrollbar {
-        height: 4px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.02);
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 2px;
-      }
-    }
-
-    &.client-content {
-      background: rgba(var(--primary-rgb), 0.05);
-      border-color: rgba(var(--primary-rgb), 0.1);
-    }
-
-    &.model-turn {
-      background: rgba(var(--secondary-rgb), 0.05);
-      border-color: rgba(var(--secondary-rgb), 0.1);
-    }
-
-    &.tool-call, &.tool-response, &.tool-call-cancellation {
-      .part {
-        font-size: 12px;
-        
-        h5 {
-          font-size: 12px;
-        }
-        
-        pre, code {
-          font-size: 12px !important;
-        }
-      }
-    }
-  }
-
-  .inline-code {
-    font-family: monospace;
-    font-size: 12px;
-    color: var(--primary-400);
-    background: rgba(var(--primary-rgb), 0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid rgba(var(--primary-rgb), 0.2);
-    margin: 0 2px;
-  }
-
-  // Animation keyframes
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes popIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-  }
-
-  @keyframes fadeOut {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
-  }
-}
-
-.logger-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  z-index: 999;
-  animation: fadeIn 0.3s ease;
-}
-
-// Responsive adjustments
-@media (max-width: 768px) {
-  .logger {
-    .logger-header {
-      .header-left {
-        gap: 8px;
-        
-        h2 {
-          font-size: 14px;
-        }
-        
-        .log-stats {
-          .stat {
-            padding: 2px 6px;
-            font-size: 10px;
-          }
-        }
-      }
-    }
-    
-    .logger-toolbar {
-      padding: 6px 12px;
-      flex-wrap: wrap;
-      gap: 8px;
-      
-      .toolbar-group {
-        flex-wrap: wrap;
-      }
-      
-      .search-input {
-        min-width: 120px;
-      }
-    }
-    
-    .logger-virtual-scroll {
-      padding: 8px;
-    }
+  
+  // Light theme styles
+  &.light-theme {
+    --logger-bg: rgba(245, 245, 245, 0.95);
+    --logger-border: rgba(0, 0, 0, 0.1);
+    --header-bg: rgba(235, 235, 235, 0.8);
+    --sidebar-bg: rgba(240, 240, 240, 0.8);
+    --main-bg: rgba(248, 248, 248, 0.8);
+    --item-bg: rgba(255, 255, 255, 0.8);
+    --item-hover-bg: rgba(255, 255, 255, 1);
+    --text-primary: rgba(0, 0, 0, 0.9);
+    --text-secondary: rgba(0, 0, 0, 0.6);
+    --text-muted: rgba(0, 0, 0, 0.4);
+    --divider-color: rgba(0, 0, 0, 0.1);
+    --scrollbar-thumb: rgba(0, 0, 0, 0.2);
   }
 }

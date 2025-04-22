@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Message } from '../types/chat';
 import { useLiveAPIContext } from './LiveAPIContext';
 
@@ -21,7 +21,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isVisible, setIsVisible] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [shouldCleanup, setShouldCleanup] = useState(false);
-  const { client } = useLiveAPIContext();
+  
+  const liveApiContext = useLiveAPIContext();
+  const { client } = useMemo(() => ({
+    client: liveApiContext.client
+  }), [liveApiContext]);
   
   const currentMessageId = useRef<string | null>(null);
   const currentAudioChunks = useRef<Uint8Array[]>([]);

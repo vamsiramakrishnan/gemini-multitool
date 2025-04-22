@@ -1,0 +1,477 @@
+[
+  {
+    "id": "categories",
+    "title": "Categories",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Models",
+        "url": "/3d/models",
+        "label": "Models",
+        "count": "13,115",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Templates",
+        "url": "/3d/templates",
+        "label": "Templates",
+        "count": "156",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Pixelsquid",
+        "url": "/3d/renders",
+        "label": "Renders",
+        "count": "305,126",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "threeDFileTypes",
+    "title": "File Formats",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "blend",
+        "url": "/3d/file-types-blend",
+        "label": "Blender (BLEND)",
+        "count": "5,419",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false,
+        "icon": "blender",
+        "groupLabel": "Software Formats"
+      },
+      {
+        "id": "spline",
+        "url": "/3d/file-types-spline",
+        "label": "Spline (SPLINE)",
+        "count": "151",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false,
+        "icon": "spline",
+        "groupLabel": "Software Formats"
+      },
+      {
+        "id": "obj",
+        "url": "/3d/file-types-obj",
+        "label": "OBJ",
+        "count": "9,565",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false,
+        "groupLabel": "Universal Formats"
+      },
+      {
+        "id": "fbx",
+        "url": "/3d/file-types-fbx",
+        "label": "FBX",
+        "count": "5,722",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false,
+        "groupLabel": "Universal Formats"
+      },
+      {
+        "id": "gltf",
+        "url": "/3d/file-types-gltf",
+        "label": "GLTF",
+        "count": "1,316",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false,
+        "groupLabel": "Universal Formats"
+      },
+      {
+        "id": "glb",
+        "url": "/3d/file-types-glb",
+        "label": "GLB",
+        "count": "4,074",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false,
+        "groupLabel": "Universal Formats"
+      }
+    ]
+  },
+  {
+    "id": "threeDPolyCount",
+    "label": "Polycount",
+    "isNew": true,
+    "featureCallout": "polycount",
+    "type": "range",
+    "rangeVariant": "integer",
+    "steps": [
+      0,
+      2000,
+      4000,
+      6000,
+      8000,
+      10000,
+      25000,
+      50000,
+      75000,
+      100000,
+      250000,
+      500000,
+      750000,
+      1000000,
+      5000000,
+      10000000,
+      20000000,
+      30000000,
+      40000000,
+      50000000,
+      999999999
+    ],
+    "quickSelect": {
+      "label": "Low Poly",
+      "begin": 0,
+      "end": 10000,
+      "count": "6,237"
+    },
+    "selectedValues": [
+      0,
+      999999999
+    ]
+  },
+  {
+    "id": "properties",
+    "title": "Properties",
+    "isNew": true,
+    "featureCallout": null,
+    "type": "multiselect",
+    "checkboxItems": [
+      {
+        "id": "threeDHasAnimation",
+        "url": "/3d/properties-animated",
+        "label": "Animated",
+        "count": "137",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "threeDRigging",
+        "url": "/3d/properties-rigged",
+        "label": "Rigged",
+        "count": "166",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "threeDHasTextures",
+        "url": "/3d/properties-textured",
+        "label": "Textured",
+        "count": "6,214",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "threeDHasInteraction",
+        "url": "/3d/properties-interactive",
+        "label": "Interactive",
+        "count": "89",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "threeDThemes",
+    "title": "Themes",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Technology",
+        "url": "/3d/theme-technology",
+        "label": "Technology",
+        "count": "1,245",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Characters",
+        "url": "/3d/theme-characters",
+        "label": "Characters",
+        "count": "989",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Architecture",
+        "url": "/3d/theme-architecture",
+        "label": "Architecture",
+        "count": "335",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Animals",
+        "url": "/3d/theme-animals",
+        "label": "Animals",
+        "count": "320",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Design",
+        "url": "/3d/theme-design",
+        "label": "Design",
+        "count": "988",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Seasons",
+        "url": "/3d/theme-seasons",
+        "label": "Seasons",
+        "count": "235",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Nature",
+        "url": "/3d/theme-nature",
+        "label": "Nature",
+        "count": "1,191",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Furniture",
+        "url": "/3d/theme-furniture",
+        "label": "Furniture",
+        "count": "690",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Abstract",
+        "url": "/3d/theme-abstract",
+        "label": "Abstract",
+        "count": "180",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Adventure",
+        "url": "/3d/theme-adventure",
+        "label": "Adventure",
+        "count": "134",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Agriculture",
+        "url": "/3d/theme-agriculture",
+        "label": "Agriculture",
+        "count": "57",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Arts",
+        "url": "/3d/theme-arts",
+        "label": "Arts",
+        "count": "189",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Business",
+        "url": "/3d/theme-business",
+        "label": "Business",
+        "count": "747",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Celebrations",
+        "url": "/3d/theme-celebrations",
+        "label": "Celebrations",
+        "count": "666",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Construction",
+        "url": "/3d/theme-construction",
+        "label": "Construction",
+        "count": "351",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Education",
+        "url": "/3d/theme-education",
+        "label": "Education",
+        "count": "181",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Fashion",
+        "url": "/3d/theme-fashion",
+        "label": "Fashion",
+        "count": "282",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Finance",
+        "url": "/3d/theme-finance",
+        "label": "Finance",
+        "count": "222",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Food",
+        "url": "/3d/theme-food",
+        "label": "Food",
+        "count": "936",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Gaming",
+        "url": "/3d/theme-gaming",
+        "label": "Gaming",
+        "count": "345",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Health",
+        "url": "/3d/theme-health",
+        "label": "Health",
+        "count": "296",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Kids",
+        "url": "/3d/theme-kids",
+        "label": "Kids",
+        "count": "119",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Marketing",
+        "url": "/3d/theme-marketing",
+        "label": "Marketing",
+        "count": "146",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Medical",
+        "url": "/3d/theme-medical",
+        "label": "Medical",
+        "count": "289",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Places",
+        "url": "/3d/theme-places",
+        "label": "Places",
+        "count": "114",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Retail",
+        "url": "/3d/theme-retail",
+        "label": "Retail",
+        "count": "323",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Science",
+        "url": "/3d/theme-science",
+        "label": "Science",
+        "count": "223",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Sports",
+        "url": "/3d/theme-sports",
+        "label": "Sports",
+        "count": "294",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Tools and Appliances",
+        "url": "/3d/theme-tools-and-appliances",
+        "label": "Tools and Appliances",
+        "count": "191",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Transportation",
+        "url": "/3d/theme-transportation",
+        "label": "Transportation",
+        "count": "391",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  }
+]

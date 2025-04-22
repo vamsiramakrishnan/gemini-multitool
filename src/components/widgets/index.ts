@@ -10,6 +10,7 @@ export * from './code-execution/CodeExecutionWidget';
 export * from './nearby-places/NearbyPlacesWidget';
 export * from './table/TableWidget';
 export * from './explainer/ExplainerWidget';
+export * from './envato-gallery/EnvatoGalleryWidget';
 
 export const ImageWidget = {
   render: (data: any) => `

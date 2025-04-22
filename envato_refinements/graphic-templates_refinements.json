@@ -1,0 +1,258 @@
+[
+  {
+    "id": "categories",
+    "title": "Categories",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Print Templates",
+        "url": "/graphic-templates/print-templates",
+        "label": "Print Templates",
+        "count": "146,741",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Product Mockups",
+        "url": "/graphic-templates/product-mockups",
+        "label": "Product Mockups",
+        "count": "79,384",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Websites",
+        "url": "/graphic-templates/websites",
+        "label": "Websites",
+        "count": "33,862",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "UX and UI Kits",
+        "url": "/graphic-templates/ux-and-ui-kits",
+        "label": "UX and UI Kits",
+        "count": "45,965",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Infographics",
+        "url": "/graphic-templates/infographics",
+        "label": "Infographics",
+        "count": "5,511",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Logos",
+        "url": "/graphic-templates/logos",
+        "label": "Logos",
+        "count": "45,933",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Scene Generators",
+        "url": "/graphic-templates/scene-generators",
+        "label": "Scene Generators",
+        "count": "16,009",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Social Media",
+        "url": "/graphic-templates/social-media",
+        "label": "Social Media",
+        "count": "23,691",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "colorSpace",
+    "title": "Color Space",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "RGB",
+        "url": "/graphic-templates/color-space-rgb",
+        "label": "RGB",
+        "count": "180,962",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "CMYK",
+        "url": "/graphic-templates/color-space-cmyk",
+        "label": "CMYK",
+        "count": "153,121",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "orientation",
+    "title": "Orientation",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Landscape",
+        "url": "/graphic-templates/orientation-landscape",
+        "label": "Landscape",
+        "count": "130,229",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Portrait",
+        "url": "/graphic-templates/orientation-portrait",
+        "label": "Portrait",
+        "count": "148,735",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Square",
+        "url": "/graphic-templates/orientation-square",
+        "label": "Square",
+        "count": "33,475",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "graphicTemplatesApplicationsSupported",
+    "title": "Applications Supported",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Adobe Photoshop",
+        "url": "/graphic-templates/compatible-with-adobe-photoshop",
+        "label": "Adobe Photoshop",
+        "count": "244,826",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Adobe Illustrator",
+        "url": "/graphic-templates/compatible-with-adobe-illustrator",
+        "label": "Adobe Illustrator",
+        "count": "155,329",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Adobe InDesign",
+        "url": "/graphic-templates/compatible-with-adobe-indesign",
+        "label": "Adobe InDesign",
+        "count": "32,081",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Adobe XD",
+        "url": "/graphic-templates/compatible-with-adobe-xd",
+        "label": "Adobe XD",
+        "count": "27,872",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Figma",
+        "url": "/graphic-templates/compatible-with-figma",
+        "label": "Figma",
+        "count": "41,141",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Sketch",
+        "url": "/graphic-templates/compatible-with-sketch",
+        "label": "Sketch",
+        "count": "26,172",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Canva",
+        "url": "/graphic-templates/compatible-with-canva",
+        "label": "Canva",
+        "count": "2,091",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Microsoft Word",
+        "url": "/graphic-templates/compatible-with-microsoft-word",
+        "label": "Microsoft Word",
+        "count": "1,872",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "properties",
+    "title": "Properties",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "checkboxItems": [
+      {
+        "id": "isVector",
+        "url": "/graphic-templates/properties-vector",
+        "label": "Vector",
+        "count": "200,598",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "isLayered",
+        "url": "/graphic-templates/properties-layered",
+        "label": "Layered",
+        "count": "323,980",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  }
+]

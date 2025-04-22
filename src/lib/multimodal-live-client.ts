@@ -14,80 +14,75 @@
  * limitations under the License.
  */
 
-import { Content, GenerativeContentBlob, Part } from "@google/generative-ai";
+import {
+  GoogleGenAI,
+  Content,
+  Part,
+  FunctionCall,
+  FunctionResponse,
+  Tool,
+  Blob,
+  LiveServerMessage,
+  Modality
+} from "@google/genai";
 import { EventEmitter } from "eventemitter3";
 import { difference } from "lodash";
 import {
-  ClientContentMessage,
   GroundingMetadata,
-  isInterrupted,
-  isModelTurn,
-  isServerContentMessage,
-  isSetupCompleteMessage,
-  isToolCallCancellationMessage,
-  isToolCallMessage,
-  isTurnComplete,
-  LiveIncomingMessage,
-  ModelTurn,
-  RealtimeInputMessage,
-  ServerContent,
-  SetupMessage,
+  LiveFunctionCall,
+  LiveFunctionResponse,
   StreamingLog,
   ToolCall,
-  ToolCallCancellation,
-  ToolResponseMessage,
   type LiveConfig,
   GroundingSupport,
+  hasModelTurn,
+  hasFunctionCalls,
+  hasFunctionResponses,
+  isTurnComplete,
+  processGroundingChunks,
+  processGroundingSupports
 } from "../multimodal-live-types";
 import { blobToJSON, base64ToArrayBuffer } from "./utils";
 
-/**
- * the events that this client will emit
- */
+// Define event types using SDK types where possible
 interface MultimodalLiveClientEventTypes {
   open: () => void;
   log: (log: StreamingLog) => void;
-  close: (event: CloseEvent) => void;
+  close: (reason?: string) => void;
   audio: (data: ArrayBuffer) => void;
-  content: (data: ServerContent) => void;
+  content: (data: Content) => void;
   interrupted: () => void;
   setupcomplete: () => void;
   turncomplete: () => void;
-  toolcall: (toolCall: ToolCall) => void;
-  toolcallcancellation: (toolcallCancellation: ToolCallCancellation) => void;
+  toolcall: (toolCalls: FunctionCall[]) => void;
   grounding: (metadata: GroundingMetadata) => void;
 }
 
-type ServerContentWithGrounding = ServerContent & {
-  groundingMetadata?: GroundingMetadata;
-};
-
 export type MultimodalLiveAPIClientConnection = {
-  url?: string;
+  url?: string; // Used only for backward compatibility
   apiKey: string;
 };
 
-/**
- * A event-emitting class that manages the connection to the websocket and emits
- * events to the rest of the application.
- * If you dont want to use react you can still use this.
- */
 export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEventTypes> {
-  public ws: WebSocket | null = null;
+  private genAI: GoogleGenAI;
+  private session: any = null; // Type will be based on SDK's LiveSession
   protected config: LiveConfig | null = null;
-  public url: string = "";
+
   public getConfig() {
     return { ...this.config };
   }
 
   constructor({ url, apiKey }: MultimodalLiveAPIClientConnection) {
     super();
-    url =
-      url ||
-      `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
-    url += `?key=${apiKey}`;
-    this.url = url;
+    // Initialize the GoogleGenAI client
+    this.genAI = new GoogleGenAI({apiKey: apiKey, vertexai: false});
+    
+    // Bind methods to avoid issues with 'this' context
     this.send = this.send.bind(this);
+    this.sendRealtimeInput = this.sendRealtimeInput.bind(this);
+    this.sendToolResponse = this.sendToolResponse.bind(this);
+    this.connect = this.connect.bind(this);
+    this.disconnect = this.disconnect.bind(this);
   }
 
   log(type: string, message: StreamingLog["message"]) {
@@ -99,294 +94,289 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
     this.emit("log", log);
   }
 
-  connect(config: LiveConfig): Promise<boolean> {
+  /**
+   * Connect to the Gemini Live API with the given configuration
+   */
+  async connect(config: LiveConfig): Promise<boolean> {
     this.config = config;
 
-    const ws = new WebSocket(this.url);
+    if (this.session) {
+      this.log("client.warn", "Already connected or connecting.");
+      return true;
+    }
 
-    ws.addEventListener("message", async (evt: MessageEvent) => {
-      if (evt.data instanceof Blob) {
-        this.receive(evt.data);
-      } else {
-        console.log("non blob message", evt);
+    try {
+      // Prepare connection options
+      const connectionConfig: any = {};
+      
+      // Add configuration fields if present
+      if (config.systemInstruction) {
+        connectionConfig.systemInstruction = config.systemInstruction;
       }
-    });
-    return new Promise((resolve, reject) => {
-      const onError = (ev: Event) => {
-        this.disconnect(ws);
-        const message = `Could not connect to "${this.url}"`;
-        this.log(`server.${ev.type}`, message);
-        reject(new Error(message));
-      };
-      ws.addEventListener("error", onError);
-      ws.addEventListener("open", (ev: Event) => {
-        if (!this.config) {
-          reject("Invalid config sent to `connect(config)`");
-          return;
-        }
-        this.log(`client.${ev.type}`, `connected to socket`);
-        this.emit("open");
+      
+      if (config.tools) {
+        connectionConfig.tools = config.tools;
+      }
+      
+      if (config.generationConfig) {
+        connectionConfig.generationConfig = config.generationConfig;
+      }
+      
+      if (config.responseModalities) {
+        connectionConfig.responseModalities = config.responseModalities;
+      }
 
-        this.ws = ws;
-
-        const setupMessage: SetupMessage = {
-          setup: this.config,
-        };
-        this._sendDirect(setupMessage);
-        this.log("client.send", "setup");
-
-        ws.removeEventListener("error", onError);
-        ws.addEventListener("close", (ev: CloseEvent) => {
-          console.log(ev);
-          this.disconnect(ws);
-          let reason = ev.reason || "";
-          if (reason.toLowerCase().includes("error")) {
-            const prelude = "ERROR]";
-            const preludeIndex = reason.indexOf(prelude);
-            if (preludeIndex > 0) {
-              reason = reason.slice(
-                preludeIndex + prelude.length + 1,
-                Infinity,
-              );
-            }
+      // Connect to the Live API with callbacks for events
+      this.session = await this.genAI.live.connect({
+        model: config.model,
+        config: connectionConfig,
+        callbacks: {
+          onopen: () => {
+            this.log("client.connect", `Live session opened for model ${config.model}`);
+            this.emit("open");
+            this.emit("setupcomplete");
+          },
+          onmessage: (message: LiveServerMessage) => {
+            this.log("server.response", message);
+            this.handleServerMessage(message);
+          },
+          onerror: (error: any) => {
+            console.error("Live session error:", error);
+            this.log("server.error", { error });
+            this.disconnect();
+          },
+          onclose: (event: any) => {
+            const reason = event?.reason || "Connection closed";
+            console.log("Live session closed:", reason);
+            this.log("client.close", { reason });
+            this.session = null;
+            this.emit("close", reason);
           }
-          this.log(
-            `server.${ev.type}`,
-            `disconnected ${reason ? `with reason: ${reason}` : ``}`,
-          );
-          this.emit("close", ev);
-        });
-        resolve(true);
+        }
       });
-    });
+
+      return true;
+    } catch (error) {
+      const message = `Failed to connect: ${error instanceof Error ? error.message : String(error)}`;
+      console.error(message, error);
+      this.log("client.error", { error: message });
+      this.session = null;
+      this.emit("close", message);
+      return false;
+    }
   }
 
-  disconnect(ws?: WebSocket) {
-    // could be that this is an old websocket and theres already a new instance
-    // only close it if its still the correct reference
-    if ((!ws || this.ws === ws) && this.ws) {
-      this.ws.close();
-      this.ws = null;
-      this.log("client.close", `Disconnected`);
-      return true;
+  /**
+   * Process incoming server messages and emit appropriate events
+   */
+  private handleServerMessage(message: LiveServerMessage) {
+    // Check for model response content (text, images)
+    if (hasModelTurn(message)) {
+      const modelTurn = message.serverContent?.modelTurn;
+      
+      if (modelTurn) {
+        // Process audio content
+        const audioParts = modelTurn.parts?.filter(
+          (part: any) => part.inlineData?.mimeType?.startsWith('audio/')
+        );
+        
+        if (audioParts?.length) {
+          audioParts.forEach((part: any) => {
+            if (part.inlineData?.data) {
+              try {
+                const audioBuffer = base64ToArrayBuffer(part.inlineData.data);
+                this.emit("audio", audioBuffer);
+                this.log("server.audio", `Received audio buffer of ${audioBuffer.byteLength} bytes`);
+              } catch (e) {
+                console.error("Error processing audio data:", e);
+                this.log("server.audio.error", { error: e });
+              }
+            }
+          });
+        }
+        
+        // Process non-audio content
+        const nonAudioParts = modelTurn.parts?.filter(
+          (part: any) => !part.inlineData?.mimeType?.startsWith('audio/')
+        );
+        
+        if (nonAudioParts?.length) {
+          const content: Content = {
+            role: 'model',
+            parts: nonAudioParts
+          };
+          this.emit("content", content);
+        }
+      }
+    }
+    
+    // Check for function calls
+    if (hasFunctionCalls(message)) {
+      // Extract function calls from the parts
+      const functionCalls: FunctionCall[] = [];
+      
+      message.serverContent?.modelTurn?.parts?.forEach((part: any) => {
+        if (part.functionCall) {
+          functionCalls.push(part.functionCall);
+        }
+      });
+      
+      if (functionCalls.length > 0) {
+        this.emit("toolcall", functionCalls);
+      }
+    }
+    
+    // Check for function responses
+    if (hasFunctionResponses(message)) {
+      // Handle function responses if needed
+    }
+    
+    // Check for turn completion
+    if (isTurnComplete(message)) {
+      this.emit("turncomplete");
+    }
+    
+    // Process grounding metadata if present
+    if (message.groundingMetadata) {
+      this.handleGroundingMetadata(message.groundingMetadata);
+    }
+  }
+
+  /**
+   * Process and emit grounding metadata
+   */
+  private async handleGroundingMetadata(metadata: GroundingMetadata) {
+    try {
+      if (!metadata || !Array.isArray(metadata.groundingChunks)) {
+        console.warn("Invalid grounding metadata received", metadata);
+        return;
+      }
+      
+      // Process grounding chunks
+      const processedChunks = await processGroundingChunks(metadata.groundingChunks);
+      
+      // Process grounding supports
+      const processedSupports = await processGroundingSupports(metadata.groundingSupports);
+      
+      // Emit processed grounding data
+      this.emit("grounding", {
+        ...metadata,
+        groundingChunks: processedChunks,
+        groundingSupports: processedSupports
+      });
+    } catch (error) {
+      console.error("Error processing grounding data:", error);
+      this.log("grounding.error", {
+        error: `Error processing grounding data: ${error instanceof Error ? error.message : "Unknown error"}`
+      });
+    }
+  }
+
+  /**
+   * Disconnect from the Live API
+   */
+  async disconnect(): Promise<boolean> {
+    if (this.session) {
+      try {
+        await this.session.close();
+        this.log("client.disconnect", "Disconnected");
+        // onclose callback will handle setting session to null and emitting close event
+        return true;
+      } catch (error) {
+        console.error("Error closing session:", error);
+        this.log("client.disconnect.error", { error });
+        this.session = null;
+        this.emit("close", "Error during disconnect");
+        return false;
+      }
     }
     return false;
   }
 
-  protected async receive(blob: Blob) {
-    const response: LiveIncomingMessage = (await blobToJSON(
-      blob,
-    )) as LiveIncomingMessage;
-
-    if (isToolCallMessage(response)) {
-      this.log("server.toolCall", response);
-      this.emit("toolcall", response.toolCall);
+  /**
+   * Send realtime input (e.g., audio stream)
+   */
+  async sendRealtimeInput(media: Blob | Part[] | any): Promise<void> {
+    if (!this.session) {
+      this.log("client.error", "Cannot send realtime input, not connected");
       return;
     }
-
-    if (isToolCallCancellationMessage(response)) {
-      this.log("receive.toolCallCancellation", response);
-      this.emit("toolcallcancellation", response.toolCallCancellation);
-      return;
-    }
-
-    if (isSetupCompleteMessage(response)) {
-      this.log("server.send", "setupComplete");
-      this.emit("setupcomplete");
-      return;
-    }
-
-    if (isServerContentMessage(response)) {
-      const { serverContent } = response;
-      
-      // Handle grounding metadata if present
-      const contentWithGrounding = serverContent as ServerContentWithGrounding;
-      if (contentWithGrounding.groundingMetadata) {
-        this.handleConcurrentGrounding(contentWithGrounding.groundingMetadata)
-          .catch(console.error);
-      }
-
-      if (isInterrupted(serverContent)) {
-        this.log("receive.serverContent", "interrupted");
-        this.emit("interrupted");
-        return;
-      }
-
-      if (isTurnComplete(serverContent)) {
-        this.log("server.send", "turnComplete");
-        this.emit("turncomplete");
-      }
-
-      if (isModelTurn(serverContent)) {
-        let parts: Part[] = serverContent.modelTurn.parts;
-
-        // Handle audio parts
-        const audioParts = parts.filter(
-          (p) => p.inlineData && p.inlineData.mimeType.startsWith("audio/pcm"),
-        );
-        const base64s = audioParts.map((p) => p.inlineData?.data);
-        const otherParts = difference(parts, audioParts);
-
-        base64s.forEach((b64) => {
-          if (b64) {
-            const data = base64ToArrayBuffer(b64);
-            this.emit("audio", data);
-            this.log(`server.audio`, `buffer (${data.byteLength})`);
-          }
-        });
-
-        if (!otherParts.length) {
-          return;
-        }
-
-        parts = otherParts;
-        const content: ModelTurn = { modelTurn: { parts } };
-        this.emit("content", content);
-        this.log(`server.content`, response);
-      }
-    } else {
-      console.log("received unmatched message", response);
-    }
-  }
-
-  /**
-   * send realtimeInput, this is base64 chunks of "audio/pcm" and/or "image/jpg"
-   */
-  sendRealtimeInput(chunks: GenerativeContentBlob[]) {
-    let hasAudio = false;
-    let hasVideo = false;
-    for (let i = 0; i < chunks.length; i++) {
-      const ch = chunks[i];
-      if (ch.mimeType.includes("audio")) {
-        hasAudio = true;
-      }
-      if (ch.mimeType.includes("image")) {
-        hasVideo = true;
-      }
-      if (hasAudio && hasVideo) {
-        break;
-      }
-    }
-    const message =
-      hasAudio && hasVideo
-        ? "audio + video"
-        : hasAudio
-          ? "audio"
-          : hasVideo
-            ? "video"
-            : "unknown";
-
-    const data: RealtimeInputMessage = {
-      realtimeInput: {
-        mediaChunks: chunks,
-      },
-    };
-    this._sendDirect(data);
-    this.log(`client.realtimeInput`, message);
-  }
-
-  /**
-   *  send a response to a function call and provide the id of the functions you are responding to
-   */
-  sendToolResponse(toolResponse: ToolResponseMessage["toolResponse"]) {
-    const message: ToolResponseMessage = {
-      toolResponse,
-    };
-
-    this._sendDirect(message);
-    this.log(`client.toolResponse`, message);
-  }
-
-  /**
-   * send normal content parts such as { text }
-   */
-  send(parts: Part | Part[], turnComplete: boolean = true) {
-    parts = Array.isArray(parts) ? parts : [parts];
-    const content: Content = {
-      role: "user",
-      parts,
-    };
-
-    const clientContentRequest: ClientContentMessage = {
-      clientContent: {
-        turns: [content],
-        turnComplete,
-      },
-    };
-
-    this._sendDirect(clientContentRequest);
-    this.log(`client.send`, clientContentRequest);
-  }
-
-  /**
-   *  used internally to send all messages
-   *  don't use directly unless trying to send an unsupported message type
-   */
-  _sendDirect(request: object) {
-    if (!this.ws) {
-      throw new Error("WebSocket is not connected");
-    }
-    const str = JSON.stringify(request);
-    this.ws.send(str);
-  }
-
-  private async handleConcurrentGrounding(metadata: GroundingMetadata) {
+    
     try {
-      // Process chunks in parallel with validation
-      const chunkPromises = metadata.groundingChunks?.map(async (chunk) => ({
-        ...chunk,
-        // Add timestamp and validate required fields
-        metadata: {
-          ...chunk.metadata,
-          timestamp: chunk.metadata?.timestamp || new Date().toISOString(),
-          source: chunk.source || 'web'
-        }
-      })) || [];
-
-      const processedChunks = await Promise.all(chunkPromises);
+      // Handle both Blob and Part[] inputs
+      if (typeof media === 'object' && 'mimeType' in media && 'data' in media) {
+        // It's a Blob
+        await this.session.sendRealtimeInput({ media });
+      } else if (Array.isArray(media)) {
+        // It's an array of parts
+        await this.session.sendRealtimeInput({ parts: media });
+      } else {
+        // Assume it's already formatted correctly
+        await this.session.sendRealtimeInput(media);
+      }
       
-      // Process supports with error handling
-      const supportPromises = metadata.groundingSupports
-        ?.filter(support => support != null)
-        ?.map(async (support) => {
-          try {
-            // Check for required fields with fallbacks
-            if (!support?.content) {
-              console.warn('Skipping support with missing content', support);
-              return null;
-            }
-
-            return {
-              ...support,
-              content: support.content.trim(),
-              segments: support.segments?.map(segment => ({
-                ...segment,
-                startIndex: Math.max(0, segment.startIndex || 0),
-                endIndex: Math.max((segment.startIndex || 0) + 1, segment.endIndex || 0)
-              })) || []
-            };
-          } catch (error) {
-            console.error('Error processing support:', error);
-            return null;
-          }
-        }) || [];
-
-      const processedSupports = (await Promise.all(supportPromises)).filter(Boolean);
-
-      // Emit updated metadata with processed values
-      this.emit("grounding", {
-        ...metadata,
-        groundingChunks: processedChunks,
-        groundingSupports: processedSupports as GroundingSupport[]
-      });
-      
+      this.log("client.realtimeInput", "Sent realtime input");
     } catch (error) {
-      console.error('Error processing grounding data:', error);
-      this.emit("log", {
-        date: new Date(),
-        type: 'grounding.error',
-        message: `Grounding processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      console.error("Error sending realtime input:", error);
+      this.log("client.send.error", { type: 'realtimeInput', error });
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Send a response to a function call
+   */
+  async sendToolResponse(functionResponse: FunctionResponse): Promise<void> {
+    if (!this.session) {
+      this.log("client.error", "Cannot send tool response, not connected");
+      return;
+    }
+    
+    try {
+      await this.session.sendToolResponse({ 
+        functionResponses: [functionResponse] 
       });
+      
+      this.log("client.toolResponse", { response: functionResponse });
+    } catch (error) {
+      console.error("Error sending tool response:", error);
+      this.log("client.send.error", { type: 'toolResponse', error });
+      await this.disconnect();
+    }
+  }
+
+  /**
+   * Send content to the model
+   */
+  async send(parts: Part | Part[] | string, turnComplete: boolean = true): Promise<void> {
+    if (!this.session) {
+      this.log("client.error", "Cannot send content, not connected");
+      return;
+    }
+    
+    try {
+      let payload: any;
+      
+      // Handle different input types
+      if (typeof parts === 'string') {
+        // Simple string input
+        payload = parts;
+      } else {
+        // Parts array or single part
+        payload = Array.isArray(parts) ? parts : [parts];
+      }
+      
+      // Send the content
+      await this.session.sendClientContent({
+        turns: payload,
+        turnComplete
+      });
+      
+      this.log("client.send", { turns: payload, turnComplete });
+    } catch (error) {
+      console.error("Error sending content:", error);
+      this.log("client.send.error", { type: 'clientContent', error });
+      await this.disconnect();
     }
   }
 }

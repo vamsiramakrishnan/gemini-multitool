@@ -1,0 +1,204 @@
+[
+  {
+    "id": "categories",
+    "title": "Categories",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Broadcast Packages",
+        "url": "/video-templates/broadcast-packages",
+        "label": "Broadcast Packages",
+        "count": "4,177",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Elements",
+        "url": "/video-templates/elements",
+        "label": "Elements",
+        "count": "29,192",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Infographics",
+        "url": "/video-templates/infographics",
+        "label": "Infographics",
+        "count": "1,598",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Logo Stings",
+        "url": "/video-templates/logo-stings",
+        "label": "Logo Stings",
+        "count": "19,476",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Openers",
+        "url": "/video-templates/openers",
+        "label": "Openers",
+        "count": "34,668",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Product Promo",
+        "url": "/video-templates/product-promo",
+        "label": "Product Promo",
+        "count": "12,013",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Titles",
+        "url": "/video-templates/titles",
+        "label": "Titles",
+        "count": "21,257",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Video Displays",
+        "url": "/video-templates/video-displays",
+        "label": "Video Displays",
+        "count": "12,979",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "applicationsSupported",
+    "title": "Applications Supported",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "After Effects",
+        "url": "/video-templates/compatible-with-after-effects",
+        "label": "After Effects",
+        "count": "79,946",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Premiere Pro",
+        "url": "/video-templates/compatible-with-premiere-pro",
+        "label": "Premiere Pro",
+        "count": "37,984",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Apple Motion",
+        "url": "/video-templates/compatible-with-apple-motion",
+        "label": "Apple Motion",
+        "count": "9,303",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Final Cut Pro",
+        "url": "/video-templates/compatible-with-final-cut-pro",
+        "label": "Final Cut Pro",
+        "count": "8,819",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "DaVinci Resolve",
+        "url": "/video-templates/compatible-with-davinci-resolve",
+        "label": "DaVinci Resolve",
+        "count": "8,127",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "requiredPlugins",
+    "title": "Plugins",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "None required",
+        "url": "/video-templates/plugins-none-required",
+        "label": "No plugins required",
+        "count": "132,151",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "resolution",
+    "title": "Resolution",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "720p (HD)",
+        "url": "/video-templates/resolution-720p-(hd)",
+        "label": "720p (HD)",
+        "count": "809",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "1080p (Full HD)",
+        "url": "/video-templates/resolution-1080p-(full-hd)",
+        "label": "1080p (Full HD)",
+        "count": "75,893",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "2K",
+        "url": "/video-templates/resolution-2k",
+        "label": "2K",
+        "count": "439",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "4K (UHD)",
+        "url": "/video-templates/resolution-4k-(uhd)",
+        "label": "4K (UHD)",
+        "count": "24,365",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  }
+]

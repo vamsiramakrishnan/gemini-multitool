@@ -13,6 +13,8 @@ export interface DragData {
 export interface WidgetState {
   isMaximized: boolean;
   isMinimized: boolean;
+  position?: { x: number; y: number };
+  size?: { width: number; height: number };
 }
 
 export interface WidgetItemProps {

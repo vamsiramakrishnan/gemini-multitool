@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import "./App.scss";
 import { RootProvider, useLiveAPIContext, useWidget, useTab, useActiveTab, useTabWidgets, useTabWidgetStates } from "./contexts/RootContext";
 import SidePanel from "./components/side-panel/SidePanel";
@@ -39,6 +39,8 @@ import { LayoutProvider } from './contexts/LayoutContext';
 import { WidgetRegistry, WidgetType } from './components/widgets/registry';
 import { ChatProvider, useChat } from './contexts/ChatContext';
 import { FocusStyleManager } from '@blueprintjs/core';
+import { GeminiToolsProvider } from './contexts/GeminiToolsContext';
+import { ToolDeclaration } from './lib/tool-declarations/types';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
@@ -58,10 +60,39 @@ declare global {
   }
 }
 
+// Error Container Component for better error visualization
+const ErrorContainer = ({ message }: { message: string }) => (
+  <div className="error-container">
+    <div className="error-card">
+      <div className="error-icon">⚠️</div>
+      <h2>Application Error</h2>
+      <p className="error-message">{message}</p>
+      <button className="error-button" onClick={() => window.location.reload()}>
+        Refresh Application
+      </button>
+    </div>
+  </div>
+);
+
+// Loading Indicator Component for better loading state
+const LoadingIndicator = ({ message = "Loading..." }: { message?: string }) => (
+  <div className="loading-container">
+    <div className="loading-spinner"></div>
+    <p className="loading-message">{message}</p>
+  </div>
+);
+
 function AppContent() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
-  const { client, config, setConfig } = useLiveAPIContext();
+  const liveApiContext = useLiveAPIContext();
+  const { client, config, setConfig, selectedTools, isConnected } = useMemo(() => ({
+    client: liveApiContext.client,
+    config: liveApiContext.config,
+    setConfig: liveApiContext.setConfig,
+    selectedTools: liveApiContext.selectedTools,
+    isConnected: liveApiContext.isConnected
+  }), [liveApiContext]);
   const { dispatch: widgetDispatch, widgetManager } = useWidget();
   const { activeTabId, setActiveTab } = useTab();
   const [configError, setConfigError] = useState<string | null>(null);
@@ -90,7 +121,7 @@ function AppContent() {
         toolHandlerRef.current = new ToolHandler(widgetManager);
 
         const systemInstructions = await loadSystemInstructions();
-        const config = createLiveConfig(systemInstructions);
+        const config = createLiveConfig(systemInstructions, selectedTools as ToolDeclaration[]);
         setConfig(config);
         
         // Mark as initialized
@@ -111,7 +142,7 @@ function AppContent() {
         delete window[isInitialized];
       }
     };
-  }, []);
+  }, [selectedTools]);
 
   // Update tool handler when active tab changes
   useEffect(() => {
@@ -201,20 +232,8 @@ function AppContent() {
     });
   }, [tabWidgetStates, updateTabWidgetStates]);
 
-  // Add debug effect
-  useEffect(() => {
-    console.debug('[App] Video stream changed:', {
-      hasStream: !!videoStream,
-      videoElement: !!videoRef.current
-    });
-  }, [videoStream]);
-
   if (configError) {
-    return (
-      <div className="error-container">
-        <div className="error-message">{configError}</div>
-      </div>
-    );
+    return <ErrorContainer message={configError} />;
   }
 
   return (
@@ -235,6 +254,7 @@ function AppContent() {
             videoRef={videoRef}
             supportsVideo={true}
             onVideoStreamChange={setVideoStream}
+            isConnected={isConnected}
           />
         </div>
       </div>
@@ -258,7 +278,26 @@ function App() {
   FocusStyleManager.onlyShowFocusOnTabs();
 
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [systemInstructions, setSystemInstructions] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
   const widgetManager = useRef(new WidgetManager()).current;
+  
+  // Load system instructions
+  useEffect(() => {
+    const loadInstructions = async () => {
+      setIsLoading(true);
+      try {
+        const instructions = await loadSystemInstructions();
+        setSystemInstructions(instructions);
+      } catch (error) {
+        console.error('Failed to load system instructions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadInstructions();
+  }, []);
   
   // Check if user has seen onboarding
   useEffect(() => {
@@ -273,15 +312,32 @@ function App() {
     setShowOnboarding(false);
   };
 
+  // Show loading indicator while system instructions are loading
+  if (isLoading) {
+    return <LoadingIndicator message="Loading system instructions..." />;
+  }
+
+  // Don't render until system instructions are loaded
+  if (!systemInstructions) {
+    return <ErrorContainer message="Failed to load system instructions. Please refresh the page." />;
+  }
+
   return (
-    <RootProvider url={uri} apiKey={API_KEY} widgetManager={widgetManager}>
+    <RootProvider 
+      url={uri} 
+      apiKey={API_KEY} 
+      widgetManager={widgetManager}
+      systemInstructions={systemInstructions}
+    >
       <LayoutProvider>
         <ChatProvider>
-          {showOnboarding ? (
-            <Onboarding onComplete={handleOnboardingComplete} />
-          ) : (
-            <AppContent />
-          )}
+          <GeminiToolsProvider>
+            {showOnboarding ? (
+              <Onboarding onComplete={handleOnboardingComplete} />
+            ) : (
+              <AppContent />
+            )}
+          </GeminiToolsProvider>
         </ChatProvider>
       </LayoutProvider>
     </RootProvider>

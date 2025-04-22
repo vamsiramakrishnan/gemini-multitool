@@ -1,0 +1,54 @@
+{
+  "id": "YXCMTNS",
+  "itemUuid": "8020f285-ff06-430f-9db5-cc5293bf467f",
+  "title": "Blue Waltz",
+  "author": "Remstunes",
+  "authorUrl": "/user/Remstunes",
+  "authorId": null,
+  "imageSrcSet": null,
+  "aspectRatio": null,
+  "displayType": "audio",
+  "bpm": 160,
+  "trackDurations": [
+    146,
+    92
+  ],
+  "audioSourceUrl": "https://audio-previews.elements.envatousercontent.com/files/220709350/preview.mp3",
+  "waveformUrl": "https://waveform.envatousercontent.com/tsunami/220709350/preview.mp3",
+  "itemUrl": "/blue-waltz-YXCMTNS",
+  "isNew": false,
+  "video": null,
+  "fallbackSrc": null,
+  "blurredBackgroundSrc": null,
+  "itemType": "music",
+  "itemTypeName": "Music",
+  "itemTypeNameEn": "Music",
+  "categories": null,
+  "categoryNames": null,
+  "similarItemsUrl": "/audio/similar-to-YXCMTNS",
+  "editItemUrl": null,
+  "musicVariants": {
+    "mainTrack": {
+      "id": "b2cd8e90-66d3-41cb-a5a3-07fd9538a232",
+      "title": "Blue Waltz",
+      "duration": 146.32,
+      "waveformUrl": "https://waveform.envatousercontent.com/tsunami/variant/Web/83/c8/1c/27/04/v1_E11/E111RN5G.mp3",
+      "audioSourceUrl": {
+        "mp3": "https://audio-variant-previews.envatousercontent.com/Web/83/c8/1c/27/04/v1_E11/E111RN5G.mp3",
+        "m4a": "https://audio-variant-previews.envatousercontent.com/M4A/d6/08/2a/e0/30/v1_E11/E111RN5G.m4a"
+      }
+    },
+    "variantTracks": [
+      {
+        "id": "145f848b-f805-4868-9591-5dbad0f1afa3",
+        "title": "Blue Waltz short version",
+        "duration": 92.02,
+        "waveformUrl": "https://waveform.envatousercontent.com/tsunami/variant/Web/9a/d2/0f/cb/93/v1_E11/E111RN4B.mp3",
+        "audioSourceUrl": {
+          "mp3": "https://audio-variant-previews.envatousercontent.com/Web/9a/d2/0f/cb/93/v1_E11/E111RN4B.mp3",
+          "m4a": "https://audio-variant-previews.envatousercontent.com/M4A/5d/b0/94/d8/06/v1_E11/E111RN4B.m4a"
+        }
+      }
+    ]
+  }
+}

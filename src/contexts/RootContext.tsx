@@ -7,11 +7,12 @@ import { WidgetManager } from '../lib/widget-manager';
 interface RootProviderProps extends LiveAPIProviderProps {
   children: ReactNode;
   widgetManager: WidgetManager;
+  systemInstructions: any; // Add systemInstructions to the interface
 }
 
-export function RootProvider({ children, url, apiKey, widgetManager }: RootProviderProps) {
+export function RootProvider({ children, url, apiKey, systemInstructions, widgetManager }: RootProviderProps) {
   return (
-    <LiveAPIProvider url={url} apiKey={apiKey}>
+    <LiveAPIProvider url={url} apiKey={apiKey} systemInstructions={systemInstructions}>
       <WidgetProvider widgetManager={widgetManager}>
         <TabProvider>
           {children}
@@ -25,4 +26,4 @@ export function RootProvider({ children, url, apiKey, widgetManager }: RootProvi
 export { useLiveAPIContext } from './LiveAPIContext';
 export { useWidget, useWidgetState, useWidgetData } from './WidgetContext';
 export { useTab, useActiveTab, useTabWidgets, useTabWidgetStates } from './TabContext';
-export { useLayout } from './LayoutContext'; 
+export { useLayout } from './LayoutContext';

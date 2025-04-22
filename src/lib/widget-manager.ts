@@ -10,6 +10,7 @@ import { AltairWidget } from '../components/widgets/altair/altair-widget';
 import { CodeExecutionWidget } from '../components/widgets/code-execution/code-execution-widget';
 import { TableWidget } from '../components/widgets/table/table-widget';
 import { ExplainerWidget } from '../components/widgets/explainer/explainer-widget';
+import { EnvatoGalleryWidget } from '../components/widgets/envato-gallery/envato-gallery-widget';
 
 export type WidgetType =
   | 'weather'
@@ -26,7 +27,8 @@ export type WidgetType =
   | 'search_nearby'
   | 'code_execution'
   | 'table'
-  | 'explainer';
+  | 'explainer'
+  | 'envato_gallery';
 
 // Define a type that allows both sync and async render methods
 interface WidgetBase<T extends BaseWidgetData = BaseWidgetData> extends BaseWidget<T> {
@@ -72,7 +74,8 @@ export class WidgetManager extends EventEmitter {
     search_nearby: NearbyPlacesWidget,
     code_execution: CodeExecutionWidget,
     table: TableWidget,
-    explainer: ExplainerWidget
+    explainer: ExplainerWidget,
+    envato_gallery: EnvatoGalleryWidget
   } as unknown as Record<WidgetType, WidgetConstructor>;
   
   private activeWidgets: Map<string, WidgetEntry> = new Map();
@@ -108,25 +111,55 @@ export class WidgetManager extends EventEmitter {
   ): Promise<string> {
     const targetTabId = tabId || this.currentTabId || this.defaultTabId;
     
+    // Log the incoming data to see if searchResults is an array
+    console.log(`[DEBUG] createWidget for ${type} - incoming data:`, {
+      dataKeys: Object.keys(data),
+      searchResultsExists: 'searchResults' in data,
+      searchResultsType: data.searchResults ? 
+        `${typeof data.searchResults} (isArray: ${Array.isArray(data.searchResults)})` : 'undefined',
+      searchResultsValue: data.searchResults,
+    });
+    
     // Get widget class
     const WidgetClass = this.widgetRegistry[type];
     if (!WidgetClass) {
       throw new Error(`No widget registered for type: ${type}`);
     }
 
-    // Create new widget instance with proper title
-    const title = data.title || this.getWidgetTitle(type);
-    const widget = new WidgetClass({ ...data, title });
+    // Create a unique ID for the widget
     const id = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Ensure data is properly formatted - especially for searchResults
+    const sanitizedData = { ...data };
+    if ('searchResults' in sanitizedData && !Array.isArray(sanitizedData.searchResults)) {
+      console.warn(`Widget ${id} had non-array searchResults - fixing`);
+      sanitizedData.searchResults = Array.isArray(sanitizedData.searchResults) ? 
+        sanitizedData.searchResults : [];
+    }
+
+    // Create new widget instance with proper title
+    const title = sanitizedData.title || this.getWidgetTitle(type);
+    const widget = new WidgetClass({ ...sanitizedData, title });
 
     // Pre-render content
-    const content = await widget.render({ ...data, title });
+    const content = await widget.render({ ...sanitizedData, title });
+    
+    // Cache the content for later use
+    this.cacheWidgetContent(id, content);
+    
+    // Log the data being emitted in the event
+    console.log(`[DEBUG] createWidget for ${type} - emitting event with data:`, {
+      dataKeys: Object.keys({ ...sanitizedData, title }),
+      searchResultsExists: 'searchResults' in sanitizedData,
+      searchResultsType: sanitizedData.searchResults ? 
+        `${typeof sanitizedData.searchResults} (isArray: ${Array.isArray(sanitizedData.searchResults)})` : 'undefined'
+    });
     
     // Emit creation event first
     this.emit('widgetCreated', {
       id,
       type,
-      data: { ...data, title },
+      data: { ...sanitizedData, title },
       tabId: targetTabId,
       content
     });
@@ -143,9 +176,6 @@ export class WidgetManager extends EventEmitter {
     };
     this.activeWidgets.set(id, widgetEntry);
 
-    // Cache content for later use
-    this.cacheWidgetContent(id, content);
-
     return id;
   }
 
@@ -158,23 +188,82 @@ export class WidgetManager extends EventEmitter {
 
   async renderWidget<T extends BaseWidgetData>(id: string, data: T): Promise<void> {
     const activeWidget = this.activeWidgets.get(id);
-    if (!activeWidget?.widget) return;
+    if (!activeWidget?.widget) {
+      console.error(`[ERROR] Widget ${id} not found in activeWidgets map`);
+      return;
+    }
+
+    // Debug the incoming data format
+    console.log(`[DEBUG] renderWidget ${id} - incoming data:`, {
+      dataKeys: Object.keys(data),
+      searchResultsExists: 'searchResults' in data,
+      searchResultsType: data.searchResults ? 
+        `${typeof data.searchResults} (isArray: ${Array.isArray(data.searchResults)})` : 'undefined',
+      searchResultsLength: Array.isArray(data.searchResults) ? data.searchResults.length : 'N/A',
+    });
+
+    // Debug the widget instance
+    console.log(`[DEBUG] Rendering widget ${id}:`, {
+      widgetType: activeWidget.widget.constructor.name,
+      currentDataSize: Object.keys(activeWidget.widget.getData() || {}).length,
+      newDataSize: Object.keys(data || {}).length,
+      hasSearchResults: data.searchResults ? true : false,
+      searchResultsLength: Array.isArray(data.searchResults) ? data.searchResults.length : 'not array'
+    });
 
     // Merge new data with existing data
     const mergedData = {
       ...activeWidget.widget.getData(),
       ...data
     };
+    
+    // Check if searchResults was transformed during merge
+    console.log(`[DEBUG] renderWidget ${id} - after merge:`, {
+      mergedDataKeys: Object.keys(mergedData),
+      searchResultsExists: 'searchResults' in mergedData,
+      searchResultsType: mergedData.searchResults ? 
+        `${typeof mergedData.searchResults} (isArray: ${Array.isArray(mergedData.searchResults)})` : 'undefined',
+      searchResultsValue: mergedData.searchResults,
+    });
 
     try {
+      // We don't need to explicitly update the widget's data 
+      // as the render method will handle that internally
+      
       const container = document.querySelector(`[data-widget-id="${id}"]`);
       if (!container) {
+        console.log(`No container found for widget ${id}, caching content only`);
+        
+        // Store deeper debug information
+        console.log(`[DEBUG] Widget ${id} data before render:`, {
+          dataKeys: Object.keys(mergedData),
+          searchResultsCount: mergedData.searchResults?.length || 0,
+          totalItems: mergedData.searchResults?.reduce((count, result) => 
+            count + (result?.items?.length || 0), 0) || 0
+        });
+        
         const content = await activeWidget.widget.render(mergedData);
         this.cacheWidgetContent(id, content);
+        
+        // Still notify that the widget was updated even if not currently visible
+        this.emit('widgetUpdated', {
+          id,
+          data: mergedData
+        });
         return;
       }
 
       activeWidget.container = container as HTMLElement;
+      
+      console.log(`Rendering widget ${id} with data:`, { 
+        dataKeys: Object.keys(mergedData),
+        hasSearchResults: mergedData.searchResults ? 
+          `Yes (${mergedData.searchResults.length} results)` : 'No',
+        totalItems: mergedData.searchResults?.reduce((count, result) => 
+            count + (result?.items?.length || 0), 0) || 0,
+        containerSize: `${container.clientWidth}x${container.clientHeight}`
+      });
+      
       const content = await activeWidget.widget.render(mergedData);
       container.innerHTML = content;
       
@@ -188,6 +277,12 @@ export class WidgetManager extends EventEmitter {
       });
 
       await activeWidget.widget.postRender(container as HTMLElement);
+      
+      // Notify that the widget was updated
+      this.emit('widgetUpdated', {
+        id,
+        data: mergedData
+      });
 
     } catch (error) {
       console.error(`Error rendering widget ${id}:`, error);
@@ -292,22 +387,23 @@ export class WidgetManager extends EventEmitter {
   private getWidgetTitle(type: WidgetType): string {
     const titles: Record<WidgetType, string> = {
       weather: 'Weather',
-      stock: 'Stock Price',
+      stock: 'Stock',
       map: 'Map',
       places: 'Places',
       nearby_places: 'Nearby Places',
-      google_search: 'Search Results',
+      google_search: 'Google Search',
       altair: 'Visualization',
       get_directions: 'Directions',
       get_weather: 'Weather',
-      get_stock_price: 'Stock Price',
+      get_stock_price: 'Stock',
       search_places: 'Places',
-      search_nearby: 'Nearby Places',
-      code_execution: 'Code Execution',
+      search_nearby: 'Nearby',
+      code_execution: 'Code',
       table: 'Table',
-      explainer: 'Explanation'
+      explainer: 'Explanation',
+      envato_gallery: 'Envato Gallery'
     };
-    return titles[type] || 'Widget';
+    return titles[type];
   }
 
   // Add helper method for chart creation

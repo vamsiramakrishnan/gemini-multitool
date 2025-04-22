@@ -1,0 +1,194 @@
+[
+  {
+    "id": "categories",
+    "title": "Categories",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Backgrounds",
+        "url": "/graphics/backgrounds",
+        "label": "Backgrounds",
+        "count": "19,647",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Textures",
+        "url": "/graphics/textures",
+        "label": "Textures",
+        "count": "8,639",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Social",
+        "url": "/graphics/social",
+        "label": "Social",
+        "count": "8,368",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Patterns",
+        "url": "/graphics/patterns",
+        "label": "Patterns",
+        "count": "12,994",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Icons",
+        "url": "/graphics/icons",
+        "label": "Icons",
+        "count": "60,760",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Objects",
+        "url": "/graphics/objects",
+        "label": "Objects",
+        "count": "55,535",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Illustrations",
+        "url": "/graphics/illustrations",
+        "label": "Illustrations",
+        "count": "94,611",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "graphicsApplicationsSupported",
+    "title": "Applications Supported",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Adobe Photoshop",
+        "url": "/graphics/compatible-with-adobe-photoshop",
+        "label": "Adobe Photoshop",
+        "count": "127,552",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Adobe Illustrator",
+        "url": "/graphics/compatible-with-adobe-illustrator",
+        "label": "Adobe Illustrator",
+        "count": "204,929",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Figma",
+        "url": "/graphics/compatible-with-figma",
+        "label": "Figma",
+        "count": "70,890",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Sketch",
+        "url": "/graphics/compatible-with-sketch",
+        "label": "Sketch",
+        "count": "62,439",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Affinity Designer",
+        "url": "/graphics/compatible-with-affinity-designer",
+        "label": "Affinity Designer",
+        "count": "66,811",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "graphicsFileTypes",
+    "title": "File Types",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "JPG",
+        "url": "/graphics/file-types-jpg",
+        "label": "JPG",
+        "count": "110,187",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "PNG",
+        "url": "/graphics/file-types-png",
+        "label": "PNG",
+        "count": "164,540",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "properties",
+    "title": "Properties",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "checkboxItems": [
+      {
+        "id": "isVector",
+        "url": "/graphics/properties-vector",
+        "label": "Vector",
+        "count": "186,344",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "isLayered",
+        "url": "/graphics/properties-layered",
+        "label": "Layered",
+        "count": "126,757",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "isTileable",
+        "url": "/graphics/properties-tileable",
+        "label": "Tileable",
+        "count": "49,858",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  }
+]

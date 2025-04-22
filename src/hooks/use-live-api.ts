@@ -38,6 +38,7 @@ export function useLiveAPI({
   url,
   apiKey,
 }: MultimodalLiveAPIClientConnection): UseLiveAPIResults {
+  // Initialize the client with the API key - url is kept for backward compatibility
   const client = useMemo(
     () => new MultimodalLiveClient({ url, apiKey }),
     [url, apiKey],
@@ -46,7 +47,7 @@ export function useLiveAPI({
 
   const [connected, setConnected] = useState(false);
   const [config, setConfig] = useState<LiveConfig>({
-    model: "models/gemini-2.0-flash-exp",
+    model: "gemini-2.0-flash-live-001", // Updated model name format for SDK
   });
   const [volume, setVolume] = useState(0);
 
@@ -67,20 +68,26 @@ export function useLiveAPI({
   }, [audioStreamerRef]);
 
   useEffect(() => {
-    const onClose = () => {
+    // Event handler for connection closure
+    const onClose = (reason?: string) => {
+      console.log(`Live connection closed: ${reason || 'No reason provided'}`);
       setConnected(false);
     };
 
+    // Event handler for stopping audio streamer when session is interrupted
     const stopAudioStreamer = () => audioStreamerRef.current?.stop();
 
+    // Event handler for processing incoming audio data
     const onAudio = (data: ArrayBuffer) =>
       audioStreamerRef.current?.addPCM16(new Uint8Array(data));
 
+    // Register event listeners
     client
       .on("close", onClose)
       .on("interrupted", stopAudioStreamer)
       .on("audio", onAudio);
 
+    // Cleanup function to remove event listeners when component unmounts
     return () => {
       client
         .off("close", onClose)
@@ -90,16 +97,21 @@ export function useLiveAPI({
   }, [client]);
 
   const connect = useCallback(async () => {
-    console.log(config);
+    console.log("Connecting with config:", config);
     if (!config) {
-      throw new Error("config has not been set");
+      throw new Error("Connection config has not been set");
     }
+
+    // Ensure we're disconnected before attempting to connect
     client.disconnect();
+
+    // Connect with the current configuration
     await client.connect(config);
     setConnected(true);
   }, [client, setConnected, config]);
 
   const disconnect = useCallback(async () => {
+    // Disconnect the client and update state
     client.disconnect();
     setConnected(false);
   }, [setConnected, client]);

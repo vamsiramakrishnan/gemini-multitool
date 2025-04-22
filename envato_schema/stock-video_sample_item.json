@@ -1,0 +1,36 @@
+{
+  "id": "Q4A7CUR",
+  "itemUuid": "3975dced-8e29-4d1f-8b3c-22aeef455daa",
+  "title": "Milky Way over Mountains Blue Night",
+  "author": "pavlas25",
+  "authorUrl": "/user/pavlas25",
+  "authorId": "302fc41b-b895-4f76-8ad2-fb05a63f6784",
+  "imageSrcSet": "https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=200&cf_fit=cover&q=94&format=jpeg&s=3b4133174b1f79a528fe216e19e33af7c7ad10acefcd3593916d6d4cdf042f85 200w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=300&cf_fit=cover&q=94&format=jpeg&s=655beeb38cea049a8677421d9ac8d50a5f908c3d61058fcbe8f12bc993cad917 300w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=400&cf_fit=cover&q=85&format=auto&s=9fcfc84064e82e2311fca51bf1dba4eb37bad4917e7354a0729c50dfa07351fd 400w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=500&cf_fit=cover&q=85&format=auto&s=703fe6b32d5d9667c214d5c6b139cffc5df7ce4df8c9431d7c663eb4aecc00eb 500w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=600&cf_fit=cover&q=85&format=auto&s=3e9c95dba45228616a39cae84ce1ef57034d772eba54ff4125952796d7e5ea69 600w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=700&cf_fit=cover&q=85&format=auto&s=9d420afc226dd80f0e6a58eddd8624a2e2295abced56e96d588b6569553d3f07 700w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=800&cf_fit=cover&q=85&format=auto&s=eb262173f613ff3311ba38a7c6be43bd5ce2f38f7642f3e46039766d52267618 800w",
+  "aspectRatio": 1.777777777777778,
+  "displayType": "video",
+  "bpm": null,
+  "trackDurations": [
+    null
+  ],
+  "audioSourceUrl": null,
+  "waveformUrl": null,
+  "itemUrl": "/milky-way-over-mountains-blue-night-Q4A7CUR",
+  "isNew": false,
+  "video": {
+    "standard": "https://video-previews.elements.envatousercontent.com/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/video_preview_h264.mp4"
+  },
+  "fallbackSrc": "https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=500&cf_fit=cover&q=85&format=auto&s=703fe6b32d5d9667c214d5c6b139cffc5df7ce4df8c9431d7c663eb4aecc00eb",
+  "blurredBackgroundSrc": "https://elements-resized.envatousercontent.com/elements-video-cover-images/files/5ad04c7e-6205-4756-9bc5-5587d5c1ce8d/inline_image_preview.jpg?w=50&h=50&cf_fit=contain&q=85&format=auto&s=61a18d24f8e116a1b1272c75ad53c24ade39da030b2d86414abc14f4181d0c23",
+  "itemType": "stock-video",
+  "itemTypeName": "Stock Video",
+  "itemTypeNameEn": "Stock Video",
+  "categories": [
+    "Stock Footage"
+  ],
+  "categoryNames": [
+    "Stock Footage"
+  ],
+  "similarItemsUrl": "/stock-video/similar-to-Q4A7CUR",
+  "editItemUrl": null,
+  "musicVariants": null
+}

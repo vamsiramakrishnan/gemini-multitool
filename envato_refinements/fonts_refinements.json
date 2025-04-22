@@ -1,0 +1,158 @@
+[
+  {
+    "id": "categories",
+    "title": "Categories",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Serif",
+        "url": "/fonts/serif",
+        "label": "Serif",
+        "count": "12,600",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Sans-Serif",
+        "url": "/fonts/sans-serif",
+        "label": "Sans-Serif",
+        "count": "17,896",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Script and Handwritten",
+        "url": "/fonts/script-and-handwritten",
+        "label": "Script and Handwritten",
+        "count": "24,733",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      },
+      {
+        "id": "Decorative",
+        "url": "/fonts/decorative",
+        "label": "Decorative",
+        "count": "17,664",
+        "selected": false,
+        "disabled": false,
+        "nofollow": false
+      }
+    ]
+  },
+  {
+    "id": "spacing",
+    "title": "Spacing",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Normal",
+        "url": "/fonts/spacing-normal",
+        "label": "Normal",
+        "count": "55,701",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Monospace",
+        "url": "/fonts/spacing-monospace",
+        "label": "Monospace",
+        "count": "3,703",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Condensed",
+        "url": "/fonts/spacing-condensed",
+        "label": "Condensed",
+        "count": "4,417",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Expanded",
+        "url": "/fonts/spacing-expanded",
+        "label": "Expanded",
+        "count": "3,788",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "optimumSize",
+    "title": "Optimum Size",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "maxItems": 8,
+    "checkboxItems": [
+      {
+        "id": "Large (Display / Poster)",
+        "url": "/fonts/optimum-size-large-(display-poster)",
+        "label": "Large (Display / Poster)",
+        "count": "9,758",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Small (Book / Magazine)",
+        "url": "/fonts/optimum-size-small-(book-magazine)",
+        "label": "Small (Book / Magazine)",
+        "count": "427",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Condensed",
+        "url": "/fonts/optimum-size-condensed",
+        "label": "Condensed",
+        "count": "381",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      },
+      {
+        "id": "Any Size",
+        "url": "/fonts/optimum-size-any-size",
+        "label": "Any Size",
+        "count": "45,174",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  },
+  {
+    "id": "properties",
+    "title": "Properties",
+    "isNew": null,
+    "featureCallout": null,
+    "type": "multiselect",
+    "checkboxItems": [
+      {
+        "id": "isWebfont",
+        "url": "/fonts/properties-web-font",
+        "label": "Web Font",
+        "count": "45,492",
+        "selected": false,
+        "disabled": false,
+        "nofollow": true
+      }
+    ]
+  }
+]

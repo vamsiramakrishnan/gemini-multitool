@@ -1,0 +1,36 @@
+{
+  "id": "VSERYUJ",
+  "itemUuid": "7cf05374-96f6-42b8-bed0-3a9495c503d6",
+  "title": "Blue Impact",
+  "author": "EnhanceTv",
+  "authorUrl": "/user/EnhanceTv",
+  "authorId": "832c94ec-123b-4ce9-a551-87d56062c95e",
+  "imageSrcSet": "https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=200&cf_fit=cover&q=94&format=jpeg&s=6eef8c8f178450cab872bcccbdf232db6bd15cfbb5b3d555a57017e3d9ba6b58 200w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=300&cf_fit=cover&q=94&format=jpeg&s=75a0e87a71def81c27c8d9b11ddfb4270ac4a64c5ffd3629ea184ba5c2f09499 300w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=400&cf_fit=cover&q=85&format=auto&s=ec60894463bb435aecd89cd703a74fd7cef469d8fffb682e576c1b82c67a67d0 400w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=500&cf_fit=cover&q=85&format=auto&s=f5eb85f52cbe93418a8e7a1f927bf653218cfea64f1acee7d36e39058654b8ae 500w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=600&cf_fit=cover&q=85&format=auto&s=9f3e5327981ea67bf8c7f401165cea789d999c2012526ff30e2924a1ab0fb5ae 600w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=700&cf_fit=cover&q=85&format=auto&s=956612d4b20ae143b349ff7b03c1ab257c0ffe487ea8ca3aa71146c512e698e0 700w, https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=800&cf_fit=cover&q=85&format=auto&s=76285e26dfc6f69be26b5524350fc1b592297901e7d5726abb77ddbccb98ab25 800w",
+  "aspectRatio": 1.777777777777778,
+  "displayType": "video",
+  "bpm": null,
+  "trackDurations": [
+    null
+  ],
+  "audioSourceUrl": null,
+  "waveformUrl": null,
+  "itemUrl": "/blue-impact-VSERYUJ",
+  "isNew": false,
+  "video": {
+    "standard": "https://video-previews.elements.envatousercontent.com/h264-video-previews/690060.mp4"
+  },
+  "fallbackSrc": "https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=500&cf_fit=cover&q=85&format=auto&s=f5eb85f52cbe93418a8e7a1f927bf653218cfea64f1acee7d36e39058654b8ae",
+  "blurredBackgroundSrc": "https://elements-resized.envatousercontent.com/elements-video-cover-images/files/7984866/Inline_Preview_Image.jpg?w=50&h=50&cf_fit=contain&q=85&format=auto&s=94b3c29ae8e4d39f314cb8009595e4a431fa1280b35ccfe1cd656f196e96440e",
+  "itemType": "video-templates",
+  "itemTypeName": "Video Templates",
+  "itemTypeNameEn": "Video Templates",
+  "categories": [
+    "Video Displays"
+  ],
+  "categoryNames": [
+    "Video Displays"
+  ],
+  "similarItemsUrl": "/video-templates/similar-to-VSERYUJ",
+  "editItemUrl": null,
+  "musicVariants": null
+}
