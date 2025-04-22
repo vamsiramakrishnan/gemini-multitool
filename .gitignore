@@ -24,3 +24,4 @@ yarn-error.log*
 
 # ENV 
 .env
+/envato_refinements

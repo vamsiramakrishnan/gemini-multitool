@@ -47,7 +47,7 @@ const CollapsibleSection = ({ title, icon, children, defaultOpen = true }: Colla
       >
         <div className="section-title">
           {icon}
-          <span>{title}</span>
+          <span className="section-title-text">{title}</span>
         </div>
         <span className="section-chevron">
           {isOpen ? '▲' : '▼'}
@@ -131,11 +131,42 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
     }
   }, [handleSubmit]);
 
-  // Mock emoji insertion
-  const insertEmoji = (emoji: string) => {
-    setTextInput(prev => prev + emoji);
-    setShowEmojiPicker(false);
-  };
+  // Enhanced emoji insertion with cursor position support
+  const insertEmoji = useCallback((emoji: string) => {
+    if (inputRef.current) {
+      const start = inputRef.current.selectionStart;
+      const end = inputRef.current.selectionEnd;
+      const text = textInput.slice(0, start) + emoji + textInput.slice(end);
+      setTextInput(text);
+      setShowEmojiPicker(false);
+      // Set cursor position after emoji
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.selectionStart = inputRef.current.selectionEnd = start + emoji.length;
+        }
+      }, 0);
+    }
+  }, [textInput]);
+
+  // Video fullscreen toggle with escape key support
+  const handleFullscreenToggle = useCallback(() => {
+    setVideoFullscreen(!videoFullscreen);
+  }, [videoFullscreen]);
+
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && videoFullscreen) {
+        setVideoFullscreen(false);
+      }
+    };
+    if (videoFullscreen) {
+      window.addEventListener('keydown', handleEsc);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [videoFullscreen]);
 
   // Array of emojis for the picker
   const emojis = ["😊", "👍", "🎉", "❤️", "😂", "🤔", "👏", "🙏", "🔥", "✨", "💯", "🤝"];
@@ -146,6 +177,7 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
         className={cn('panel-toggle', { open: panelOpen })}
         onClick={() => setPanelOpen(!panelOpen)}
         aria-label={panelOpen ? 'Close activity panel' : 'Open activity panel'}
+        aria-expanded={panelOpen}
       >
         {panelOpen ? (
           <RiSidebarFoldLine />
@@ -154,9 +186,9 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
         )}
       </button>
 
-      <div className={cn('side-panel', { open: panelOpen })}>
+      <aside className={cn('side-panel', { open: panelOpen })} aria-hidden={!panelOpen}>
         <div className="panel-header">
-          <h2>Activity Panel</h2>
+          <h2 className="panel-title">Activity Panel</h2>
           <div className={cn('streaming-indicator', { connected })}>
             {connected ? '🟢 Live' : '⏸️ Paused'}
           </div>
@@ -173,13 +205,15 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
               { fullscreen: videoFullscreen }
             )}>
               <VideoStream stream={videoStream} />
-              <button 
-                className="fullscreen-toggle"
-                onClick={() => setVideoFullscreen(!videoFullscreen)}
-                aria-label={videoFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              >
-                {videoFullscreen ? <FiMinimize2 /> : <FiMaximize2 />}
-              </button>
+              <div className="video-controls">
+                <button 
+                  className="fullscreen-toggle"
+                  onClick={handleFullscreenToggle}
+                  aria-label={videoFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                >
+                  {videoFullscreen ? <FiMinimize2 /> : <FiMaximize2 />}
+                </button>
+              </div>
             </div>
           </CollapsibleSection>
 
@@ -213,6 +247,7 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
                     className="emoji-button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     aria-label="Add emoji"
+                    aria-expanded={showEmojiPicker}
                     type="button"
                   >
                     <FiSmile />
@@ -220,7 +255,7 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
                   <button
                     className="send-button"
                     onClick={handleSubmit}
-                    disabled={!connected}
+                    disabled={!connected || !textInput.trim()}
                     aria-label="Send message"
                     type="button"
                   >
@@ -230,13 +265,15 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
               </div>
 
               {showEmojiPicker && (
-                <div className="emoji-picker">
+                <div className="emoji-picker" role="grid" aria-label="Emoji picker">
                   {emojis.map(emoji => (
                     <button
                       key={emoji}
                       onClick={() => insertEmoji(emoji)}
                       className="emoji-option"
                       type="button"
+                      role="gridcell"
+                      aria-label={`${emoji} emoji`}
                     >
                       {emoji}
                     </button>
@@ -246,7 +283,7 @@ export default function SidePanel({ videoStream }: SidePanelProps) {
             </div>
           </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
